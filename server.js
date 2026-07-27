@@ -438,3 +438,63 @@ app.post('/telegram-webhook', (req, res) => {
   
   res.sendStatus(200);
 });
+
+// ====== API: Маршруты фулфилментов ======
+
+// Список всех маршрутов (видят все авторизованные)
+app.get('/api/routes', auth, (req, res) => {
+  const db = loadDB();
+  if (!db.routes) db.routes = [];
+  // Сортируем по дате — ближайшие сверху
+  const routes = [...db.routes].sort((a, b) => a.date.localeCompare(b.date));
+  res.json({ routes });
+});
+
+// Создать маршрут (только партнёр)
+app.post('/api/routes', auth, (req, res) => {
+  if (req.user.role !== 'partner') return res.status(403).json({ error: 'Только для партнёров' });
+
+  const { type, from, to, date, volume, note } = req.body;
+  if (!type || !from || !to || !date) {
+    return res.status(400).json({ error: 'Тип, откуда, куда и дата обязательны' });
+  }
+
+  const db = loadDB();
+  if (!db.routes) db.routes = [];
+  if (!db.nextRouteId) db.nextRouteId = 1;
+
+  const route = {
+    id: db.nextRouteId++,
+    type, // 'vezem' или 'otvezti'
+    from, to, date,
+    volume: volume || '',
+    note: note || '',
+    partner_id: req.user.id,
+    partner_name: req.user.company || req.user.login,
+    partner_contact: req.user.contact || '',
+    partner_phone: req.user.phone || '',
+    created_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
+  };
+  db.routes.push(route);
+  saveDB(db);
+  res.json({ ok: true, route });
+});
+
+// Удалить свой маршрут
+app.delete('/api/routes/:id', auth, (req, res) => {
+  const db = loadDB();
+  if (!db.routes) db.routes = [];
+
+  const idx = db.routes.findIndex(r => r.id === +req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Маршрут не найден' });
+
+  const route = db.routes[idx];
+  // Только создатель или админ может удалить
+  if (route.partner_id !== req.user.id && req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Нет прав на удаление' });
+  }
+
+  db.routes.splice(idx, 1);
+  saveDB(db);
+  res.json({ ok: true });
+});

@@ -82,6 +82,7 @@ body,html{height:100vh;overflow:auto;font-family:-apple-system,BlinkMacSystemFon
 .login-box .err{color:#ef5350;font-size:13px;margin-top:10px;text-align:center}
 .top-bar{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:6px}
 .top-btn{background:rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer}
+#partner-panel .panel-section{padding-top:40px}
 .method-tabs{display:flex;gap:0;margin:0 0 20px 0;border-radius:10px;overflow:hidden;border:1px solid #333}
 .method-tab{flex:1;padding:10px 0;text-align:center;font-size:14px;font-weight:600;cursor:pointer;background:#1c1c1c;color:#888;transition:all .2s;border:none}
 .method-tab.active{background:#4da3ff;color:#fff}
@@ -195,15 +196,57 @@ td{padding:10px 12px;border-bottom:1px solid #222;color:#eee;vertical-align:midd
       <!-- Партнёрская панель -->
       <div id="partner-panel" class="hidden">
         <div class="panel-section">
-          <h2 style="margin:0">📦 Мои заявки</h2>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="display:flex;gap:0;border-radius:10px;overflow:hidden;border:1px solid #333">
+              <button class="method-tab active" id="partner-tab-orders" onclick="switchPartnerTab('orders')">📦 Заявки</button>
+              <button class="method-tab" id="partner-tab-routes" onclick="switchPartnerTab('routes')">🚛 Маршруты</button>
+            </div>
+            
+          </div>
           <p class="subtitle" id="partner-info"></p>
-          <div id="partner-orders-table" style="margin-top:16px"></div>
+
+          <!-- Таб заявок -->
+          <div id="partner-orders-view">
+            <div id="partner-orders-table" style="margin-top:16px"></div>
+          </div>
+
+          <!-- Таб маршрутов -->
+          <div id="partner-routes-view" class="hidden">
+            <div class="method-tabs" style="margin-bottom:16px">
+              <button class="method-tab active" id="route-tab-vezem" onclick="switchRouteType('vezem')">🚛 Везу</button>
+              <button class="method-tab" id="route-tab-otvezti" onclick="switchRouteType('otvezti')">📦 Отвезти</button>
+            </div>
+            <div id="routes-list" style="margin-bottom:16px"></div>
+            <button class="submit-btn" onclick="showRouteForm()" style="width:100%">+ Создать маршрут</button>
+            <div id="route-form-block" class="hidden" style="margin-top:16px;display:flex;flex-direction:column;gap:10px">
+              <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:#ccc">Откуда<input type="text" id="route-from" placeholder="Москва-Север" style="background:#1c1c1c;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#fff;font-size:15px;margin-top:4px" /></label>
+              <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:#ccc">Куда<input type="text" id="route-to" placeholder="Казань" style="background:#1c1c1c;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#fff;font-size:15px;margin-top:4px" /></label>
+              <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:#ccc">Дата<input type="date" id="route-date" style="background:#1c1c1c;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#fff;font-size:15px;margin-top:4px" /></label>
+              <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:#ccc">Объём<input type="text" id="route-volume" placeholder="2 паллета / 3 короба" style="background:#1c1c1c;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#fff;font-size:15px;margin-top:4px" /></label>
+              <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:#ccc">Примечание<input type="text" id="route-note" placeholder="Забрать до 14:00" style="background:#1c1c1c;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#fff;font-size:15px;margin-top:4px" /></label>
+              <div style="display:flex;gap:10px;margin-top:4px">
+                <button class="submit-btn" onclick="createRoute()" style="flex:1">Сохранить</button>
+                <button class="submit-btn" onclick="hideRouteForm()" style="flex:1;background:#444">Отмена</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  
+  <!-- НЕМЕДЛЕННОЕ переключение панели при загрузке (до app.js) -->
+  <script>
+    (function() {
+      var role = localStorage.getItem('ff_role');
+      if (role === 'partner') {
+        var cp = document.getElementById('client-panel');
+        var pp = document.getElementById('partner-panel');
+        if (cp) cp.classList.add('hidden');
+        if (pp) pp.classList.remove('hidden');
+      }
+    })();
+  </script>
   <script src="app.js"></script>
 </body>
 </html>

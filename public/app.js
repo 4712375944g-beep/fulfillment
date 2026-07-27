@@ -145,10 +145,23 @@ document.getElementById('login-btn').addEventListener('click', function() {
         localStorage.setItem('ff_token', d.token);
         localStorage.setItem('ff_role', d.role);
         localStorage.setItem('ff_user', JSON.stringify(d.user || {}));
+        // Обновляем глобальные переменные
+        TOKEN = localStorage.getItem('ff_token'); ROLE = d.role; USER = d.user || {};
+        // Скрываем оверлей и клиентскую панель, показываем нужное
         document.getElementById('login-overlay').classList.add('hidden');
-        if (d.role === 'partner') showPartnerPanel();
+        // Агрессивно скрываем ВСЕ клиентские элементы
+        var cp = document.getElementById('client-panel');
+        if (cp) cp.classList.add('hidden');
+        // Показываем кнопку выхода
         document.getElementById('show-login-btn').classList.add('hidden');
         document.getElementById('logout-btn').classList.remove('hidden');
+        // Для партнёра — показываем панель партнёра
+        if (d.role === 'partner') {
+          var pp = document.getElementById('partner-panel');
+          if (pp) pp.classList.remove('hidden');
+          document.getElementById('partner-info').textContent = (USER.city || '') + (USER.zone ? ' - ' + USER.zone : '');
+          loadPartnerOrders();
+        }
       } else {
         document.getElementById('login-err').textContent = d.error || 'Неверный email или пароль';
         document.getElementById('login-err').classList.remove('hidden');
@@ -248,11 +261,25 @@ if (TOKEN && ROLE === 'partner') {
 }
 
 function showPartnerPanel() {
-  document.getElementById('client-panel').classList.add('hidden');
-  document.getElementById('partner-panel').classList.remove('hidden');
-  document.getElementById('partner-info').textContent = (USER.city || '') + (USER.zone ? ' — ' + USER.zone : '');
+  // Агрессивно: style.display вместо классов
+  var cp = document.getElementById('client-panel');
+  var pp = document.getElementById('partner-panel');
+  if (cp) cp.style.display = 'none';
+  if (pp) { pp.style.display = 'block'; pp.classList.remove('hidden'); }
+  var info = document.getElementById('partner-info');
+  if (info) info.textContent = (USER.city || '') + (USER.zone ? ' - ' + USER.zone : '');
   loadPartnerOrders();
 }
+
+// Двойная подстраховка: ещё раз проверим через 300мс после загрузки
+setTimeout(function() {
+  if (TOKEN && ROLE === 'partner') {
+    var cp = document.getElementById('client-panel');
+    var pp = document.getElementById('partner-panel');
+    if (cp) cp.style.display = 'none';
+    if (pp) { pp.style.display = 'block'; pp.classList.remove('hidden'); }
+  }
+}, 300);
 
 function loadPartnerOrders() {
   fetch('/api/partner/orders?token=' + TOKEN)
@@ -272,4 +299,107 @@ function loadPartnerOrders() {
 
 function updOrder(id, st) {
   fetch('/api/partner/orders/' + id + '?token=' + TOKEN, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: st }) });
+}
+
+// ====== Маршруты ======
+var currentRouteType = 'vezem';
+
+function switchPartnerTab(tab) {
+  var isOrders = tab === 'orders';
+  document.getElementById('partner-tab-orders').classList.toggle('active', isOrders);
+  document.getElementById('partner-tab-routes').classList.toggle('active', !isOrders);
+  document.getElementById('partner-orders-view').classList.toggle('hidden', !isOrders);
+  document.getElementById('partner-routes-view').classList.toggle('hidden', isOrders);
+  if (!isOrders) loadRoutes();
+}
+
+function switchRouteType(type) {
+  currentRouteType = type;
+  document.getElementById('route-tab-vezem').classList.toggle('active', type === 'vezem');
+  document.getElementById('route-tab-otvezti').classList.toggle('active', type === 'otvezti');
+  loadRoutes();
+}
+
+function showRouteForm() {
+  document.getElementById('route-form-block').classList.remove('hidden');
+  document.getElementById('route-date').value = new Date().toISOString().slice(0, 10);
+}
+
+function hideRouteForm() {
+  document.getElementById('route-form-block').classList.add('hidden');
+}
+
+function createRoute() {
+  var data = {
+    type: currentRouteType,
+    from: document.getElementById('route-from').value.trim(),
+    to: document.getElementById('route-to').value.trim(),
+    date: document.getElementById('route-date').value,
+    volume: document.getElementById('route-volume').value.trim(),
+    note: document.getElementById('route-note').value.trim(),
+  };
+  if (!data.from || !data.to || !data.date) { alert('Откуда, куда и дата обязательны'); return; }
+
+  // Показываем индикатор загрузки
+  var saveBtn = document.querySelector('#route-form-block .submit-btn');
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Сохраняю...'; }
+
+  fetch('/api/routes?token=' + TOKEN, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Сохранить'; }
+    if (d.ok) {
+      hideRouteForm();
+      document.getElementById('route-from').value = '';
+      document.getElementById('route-to').value = '';
+      document.getElementById('route-volume').value = '';
+      document.getElementById('route-note').value = '';
+      loadRoutes();
+    } else {
+      alert('Ошибка: ' + (d.error || 'Неизвестная ошибка'));
+    }
+  }).catch(function(e) {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Сохранить'; }
+    alert('Ошибка соединения. Проверьте интернет.');
+    console.error(e);
+  });
+}
+
+function loadRoutes() {
+  var list = document.getElementById('routes-list');
+  if (!list) return;
+  list.innerHTML = '<div style="text-align:center;color:#888;padding:20px">Загрузка...</div>';
+  
+  fetch('/api/routes?token=' + TOKEN)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (!list) return;
+      var filtered = (d.routes || []).filter(function(r) { return r.type === currentRouteType; });
+      if (!filtered.length) {
+        list.innerHTML = '<div style="text-align:center;color:#777;padding:30px;font-size:14px">Маршрутов пока нет</div>';
+        return;
+      }
+      list.innerHTML = filtered.map(function(r) {
+        var isMine = r.partner_id === (USER.id || '');
+        var typeLabel = r.type === 'vezem' ? '🚛 Везу' : '📦 Отвезти';
+        return '<div class="partner-card" style="margin-bottom:10px">' +
+          '<div class="partner-info">' +
+            '<div style="font-weight:600;color:#fff;font-size:15px">' + typeLabel + ': ' + r.from + ' → ' + r.to + '</div>' +
+            '<div style="color:#aaa;font-size:13px">📅 ' + r.date + (r.volume ? ' | 📦 ' + r.volume : '') + '</div>' +
+            (r.note ? '<div style="color:#888;font-size:12px">' + r.note + '</div>' : '') +
+            '<div style="color:#888;font-size:12px">🏢 ' + (r.partner_name || '') + ' | 📞 <a href="tel:' + (r.partner_phone || '') + '" style="color:#4da3ff;text-decoration:none">' + (r.partner_phone || '') + '</a></div>' +
+          '</div>' +
+          (isMine ? '<button onclick="deleteRoute(' + r.id + ')" style="background:#c44;border:none;color:#fff;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px">Удалить</button>' : '') +
+        '</div>';
+      }).join('');
+    });
+}
+
+function deleteRoute(id) {
+  if (!confirm('Удалить маршрут?')) return;
+  fetch('/api/routes/' + id + '?token=' + TOKEN, { method: 'DELETE' })
+    .then(function(r) { return r.json(); })
+    .then(function(d) { if (d.ok) loadRoutes(); else alert('Ошибка: ' + (d.error || '')); });
 }
