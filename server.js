@@ -17,19 +17,26 @@ app.use(function(req, res, next) {
   next();
 });
 
-// Явные маршруты для статических файлов (на случай проблем с express.static)
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-app.get('/debug', (req, res) => {
-  const pub = path.join(__dirname, 'public');
+// Ручная раздача статических файлов (надёжнее чем express.static)
+var staticDir = path.join(__dirname, 'public');
+app.get('*', function(req, res, next) {
+  // Пропускаем API-запросы
+  if (req.path.startsWith('/api/')) return next();
+  
+  var filePath = path.join(staticDir, req.path === '/' ? 'index.html' : req.path);
   try {
-    const files = require('fs').readdirSync(pub);
-    res.json({ publicDir: pub, files, __dirname });
-  } catch(e) {
-    res.json({ error: e.message, publicDir: pub, __dirname });
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      return res.sendFile(filePath);
+    }
+  } catch(e) {}
+  
+  // Если файл не найден — отдаём index.html (SPA-style)
+  var indexPath = path.join(staticDir, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    return res.sendFile(indexPath);
   }
+  next();
 });
-
-app.use(express.static(path.join(__dirname, 'public')));
 
 // ====== JSON-хранилище ======
 function loadDB() {
