@@ -88,7 +88,7 @@ document.getElementById('order-form').addEventListener('submit', function(e) {
   document.getElementById('form-status').classList.add('hidden');
   fetch('/api/order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
     name: self.name.value.trim(), phone: self.phone.value.trim(), link: self.link.value.trim(),
-    city: document.getElementById('form-city').value, zone: document.getElementById('form-zone').value,
+    city: document.getElementById('form-city').value, zone: document.getElementById('form-zone').value, method: document.getElementById('form-method').value,
   })}).then(function(r) { return r.json(); }).then(function(d) {
     if (d.ok) { step('success'); self.reset(); }
     else { document.getElementById('form-status').className = 'form-status error'; document.getElementById('form-status').textContent = d.error || 'Ошибка'; document.getElementById('form-status').classList.remove('hidden'); btn.disabled = false; btn.textContent = 'Отправить заявку'; }
@@ -100,16 +100,36 @@ document.getElementById('order-form').addEventListener('submit', function(e) {
   });
 });
 
+
+function setMethod(m) {
+  document.getElementById('form-method').value = m;
+  document.querySelectorAll('.method-tab').forEach(function(t) {
+    t.classList.toggle('active', t.id === 'method-' + m.toLowerCase());
+  });
+}
+
 function resetToStart() { selectedCity = null; selectedCountry = null; step('country'); }
 
-// ====== Вход ======
+// ====== Вход и Регистрация (внутри Mini App) ======
 document.getElementById('show-login-btn').addEventListener('click', function() {
   document.getElementById('login-overlay').classList.remove('hidden');
+  switchAuthTab('login');
 });
+
 document.getElementById('close-login').addEventListener('click', function() {
   document.getElementById('login-overlay').classList.add('hidden');
 });
 
+function switchAuthTab(tab) {
+  var isLogin = tab === 'login';
+  document.getElementById('tab-login').classList.toggle('active', isLogin);
+  document.getElementById('tab-reg').classList.toggle('active', !isLogin);
+  document.getElementById('auth-login-form').classList.toggle('hidden', !isLogin);
+  document.getElementById('auth-reg-form').classList.toggle('hidden', isLogin);
+  if (!isLogin) loadRegCities();
+}
+
+// === ВХОД ===
 document.getElementById('login-btn').addEventListener('click', function() {
   var email = document.getElementById('login-email').value.trim();
   var pass = document.getElementById('login-pass').value;
@@ -145,6 +165,76 @@ document.getElementById('login-pass').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') document.getElementById('login-btn').click();
 });
 
+// === РЕГИСТРАЦИЯ ===
+var regCities = [];
+function loadRegCities() {
+  if (regCities.length) return;
+  fetch('/api/cities').then(function(r){return r.json()}).then(function(d){
+    regCities = d.filter(function(c){return c.country==='Россия'});
+  });
+}
+
+document.getElementById('reg-city-search').addEventListener('input', function(){
+  var q = this.value.toLowerCase();
+  var dd = document.getElementById('reg-city-dd');
+  var f = regCities.filter(function(c){return c.name.toLowerCase().indexOf(q)>=0});
+  if (!f.length) { dd.innerHTML = '<div class="city-item" style="color:#888">Ничего не найдено</div>'; }
+  else { dd.innerHTML = f.map(function(c){return '<div class="city-item" data-city="'+c.name+'">'+c.name+'</div>'}).join(''); }
+  dd.classList.remove('hidden');
+  dd.querySelectorAll('.city-item').forEach(function(it){
+    it.addEventListener('click', function(){
+      var name = it.dataset.city;
+      document.getElementById('reg-city-search').value = name;
+      document.getElementById('reg-city-val').value = name;
+      dd.classList.add('hidden');
+    });
+  });
+});
+
+document.getElementById('reg-city-search').addEventListener('focus', function(){this.dispatchEvent(new Event('input'))});
+document.addEventListener('click', function(e){if(!e.target.closest('#reg-city-search')&&!e.target.closest('#reg-city-dd'))document.getElementById('reg-city-dd').classList.add('hidden')});
+
+document.getElementById('reg-btn').addEventListener('click', function(){
+  var d = {
+    email: document.getElementById('reg-email').value.trim(),
+    password: document.getElementById('reg-pass').value,
+    company: document.getElementById('reg-company').value.trim(),
+    city: document.getElementById('reg-city-val').value,
+    contact: document.getElementById('reg-contact').value.trim(),
+    phone: document.getElementById('reg-phone').value.trim(),
+  };
+  if (!d.email || !d.password || !d.company || !d.city || !d.contact || !d.phone) {
+    document.getElementById('reg-err').textContent = 'Все поля обязательны';
+    document.getElementById('reg-err').classList.remove('hidden'); return;
+  }
+  if (d.password.length < 4) {
+    document.getElementById('reg-err').textContent = 'Пароль от 4 символов';
+    document.getElementById('reg-err').classList.remove('hidden'); return;
+  }
+  var btn = document.getElementById('reg-btn');
+  btn.disabled = true; btn.textContent = 'Регистрация...';
+  document.getElementById('reg-err').classList.add('hidden');
+  document.getElementById('reg-ok').classList.add('hidden');
+
+  fetch('/api/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) })
+    .then(function(r){return r.json()})
+    .then(function(r){
+      if (r.ok) {
+        document.getElementById('auth-reg-form').classList.add('hidden');
+        document.getElementById('reg-ok').textContent = 'Заявка отправлена! После активации вы сможете войти.';
+        document.getElementById('reg-ok').classList.remove('hidden');
+      } else {
+        document.getElementById('reg-err').textContent = r.error || 'Ошибка';
+        document.getElementById('reg-err').classList.remove('hidden');
+        btn.disabled = false; btn.textContent = 'Зарегистрироваться';
+      }
+    }).catch(function(){
+      document.getElementById('reg-err').textContent = 'Ошибка соединения';
+      document.getElementById('reg-err').classList.remove('hidden');
+      btn.disabled = false; btn.textContent = 'Зарегистрироваться';
+    });
+});
+
 function doLogout() {
   localStorage.removeItem('ff_token'); localStorage.removeItem('ff_role'); localStorage.removeItem('ff_user');
   location.reload();
@@ -171,7 +261,7 @@ function loadPartnerOrders() {
       var c = document.getElementById('partner-orders-table');
       if (!d.orders || !d.orders.length) { c.innerHTML = '<div style="text-align:center;color:#777;padding:40px;font-size:15px">Заявок пока нет</div>'; return; }
       var lb = { new: 'Новая', accepted: 'Принято', in_progress: 'В работе', done: 'Готово' };
-      c.innerHTML = '<table style="width:100%;font-size:13px"><thead><tr><th>ID</th><th>Клиент</th><th>Телефон</th><th>Ссылка</th><th>Статус</th><th>Дата</th></tr></thead><tbody>' +
+      c.innerHTML = '<table style="width:100%;font-size:13px"><thead><tr><th>ID</th><th>Клиент</th><th>Телефон</th><th>Ссылка</th><th>Способ</th><th>Статус</th><th>Дата</th></tr></thead><tbody>' +
         d.orders.map(function(o) {
           var opts = '';
           for (var k in lb) opts += '<option value="' + k + '"' + (o.status === k ? ' selected' : '') + '>' + lb[k] + '</option>';

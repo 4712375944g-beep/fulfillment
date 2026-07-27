@@ -336,8 +336,8 @@ tr:hover { background: #181818; }
 /* Responsive */
 @media (max-width: 640px) {
   .app { flex-direction: column; }
-  #map { height: 50vh; }
-  .panel { width: 100%; height: 50vh; }
+  #map { height: 100vh; }
+  .panel { width: 100%; height: 100vh; }
   .admin, .partner { padding: 12px; }
   table { font-size: 12px; }
   td, th { padding: 6px 4px; }

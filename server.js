@@ -247,7 +247,7 @@ app.get('/api/cities', (req, res) => {
 
 // ====== API: приём заявки от клиента ======
 app.post('/api/order', async (req, res) => {
-  const { name, phone, link, city, zone } = req.body;
+  const { name, phone, link, city, zone, method } = req.body;
   if (!name || !phone || !link || !city) {
     return res.status(400).json({ ok: false, error: 'Все поля обязательны' });
   }
@@ -260,6 +260,7 @@ app.post('/api/order', async (req, res) => {
     name, phone, link,
     city: cityInfo.name,
     zone: zone || '',
+    method: method || 'FBO',
     status: 'new',
     created_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
   };
@@ -274,7 +275,7 @@ app.post('/api/order', async (req, res) => {
     `👤 <b>Имя:</b> ${esc(order.name)}`,
     `📞 <b>Телефон:</b> ${esc(order.phone)}`,
     `🔗 <b>Ссылка:</b> ${esc(order.link)}`,
-    `📍 <b>Город/зона:</b> ${order.city}${zoneStr}`,
+    `📍 <b>Город/зона:</b> ${order.city}${zoneStr}\n📦 <b>Способ:</b> ${order.method || 'FBO'}`,
     '',
     `<a href="${req.protocol}://${req.get('host')}/admin">Открыть админку</a>`,
   ].join('\n');
@@ -408,3 +409,32 @@ app.listen(PORT, () => {
 function esc(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
+
+// ====== Telegram Webhook ======
+app.post('/telegram-webhook', (req, res) => {
+  const msg = req.body.message || req.body.edited_message;
+  if (!msg || !msg.text) return res.sendStatus(200);
+  
+  const chatId = msg.chat.id;
+  const text = msg.text.trim();
+  
+  if (text === '/start' || text === '/start@Sell_full_bot') {
+    fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/sendMessage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: '🏭 *Фулфилмент — найдём склад для вашего товара*\n\nВыберите страну и город, оставьте заявку — мы подберём ближайший фулфилмент.\n\nНажмите кнопку ниже чтобы начать:',
+        parse_mode: 'Markdown',
+        reply_markup: JSON.stringify({
+          inline_keyboard: [[{
+            text: '🏭 Подобрать склад',
+            web_app: { url: (req.protocol + '://' + req.get('host')) }
+          }]]
+        })
+      }),
+    }).catch(() => {});
+  }
+  
+  res.sendStatus(200);
+});

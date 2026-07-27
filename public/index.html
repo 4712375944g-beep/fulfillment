@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Фулфилмент</title>
   
-  <link rel="stylesheet" href="style.css" />
+  
   <style>
     .login-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.9); z-index:1000; display:flex; align-items:center; justify-content:center; }
     .login-box { background:#111; border:1px solid #2a2a2a; border-radius:16px; padding:28px; width:100%; max-width:340px; }
@@ -21,6 +21,78 @@
     .top-btn { background:rgba(0,0,0,0.7); border:1px solid rgba(255,255,255,0.2); color:#fff; border-radius:8px; padding:6px 12px; font-size:13px; cursor:pointer; }
     .hidden { display:none !important; }
   </style>
+
+<style>
+  body, html { height: 100vh !important; overflow: auto !important; }
+  .app { display: block !important; height: 100vh !important; padding: 0 !important; }
+  .panel { width: 100% !important; max-width: 100% !important; height: 100vh !important; border-left: none !important; margin: 0 !important; }
+  #map { display: none !important; width: 0 !important; height: 0 !important; flex: none !important; }
+  @media (max-width: 640px) { .panel { height: 100vh !important; } }
+</style>
+
+
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body,html{height:100vh;overflow:auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#000;color:#fff}
+.app{display:block!important;min-height:100vh!important;padding:0!important}
+.panel{width:100%!important;max-width:100%!important;height:auto!important;min-height:100vh!important;border-left:none!important;margin:0!important;background:#111;overflow-y:auto}
+.panel-section{padding:20px}
+.panel-section h2{font-size:18px;margin-bottom:4px;font-weight:600;color:#fff}
+.subtitle{color:#aaa;font-size:13px;margin-bottom:16px}
+.country-list,.zone-list,.city-list{display:flex;flex-direction:column;gap:10px}
+.country-card,.city-card,.zone-card{background:#1c1c1c;border:1px solid #333;border-radius:12px;padding:14px;cursor:pointer;transition:border-color .2s,background .2s}
+.country-card:hover,.city-card:hover,.zone-card:hover{border-color:#4da3ff;background:#222}
+.country-card.active,.city-card.active{border-color:#4da3ff;background:#1a2a3a}
+.zone-card{border-left:4px solid #4da3ff}
+.country-flag{font-size:32px}
+.country-name{font-size:17px;font-weight:600;color:#fff;flex:1}
+.country-cities{font-size:12px;color:#888}
+.city-card h3,.zone-card h3{font-size:16px;color:#fff;margin-bottom:2px}
+.details{font-size:12px;color:#999}
+.back-btn{background:none;border:none;color:#4da3ff;font-size:14px;cursor:pointer;padding:0;margin-bottom:12px}
+.search-input{width:100%;background:#1c1c1c;border:1px solid #444;border-radius:10px;padding:11px 14px;color:#fff;font-size:15px;margin-bottom:14px}
+.search-input:focus{outline:none;border-color:#4da3ff}
+#order-form{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+#order-form label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:#ccc}
+#order-form input,select{background:#1c1c1c;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#fff;font-size:15px}
+#order-form input:focus,select:focus{outline:none;border-color:#4da3ff}
+.submit-btn{background:#4da3ff;color:#fff;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px}
+.submit-btn:disabled{background:#444;cursor:not-allowed}
+.form-status{margin-top:14px;padding:12px;border-radius:8px;font-size:13px}
+.form-status.success{background:#0d2a0d;border:1px solid #2d6a2d;color:#66bb6a}
+.form-status.error{background:#2a0d0d;border:1px solid #6a2d2d;color:#ef5350}
+.success-block{text-align:center;padding:30px 10px}
+.success-check{width:80px;height:80px;margin:0 auto 20px}
+.check-svg{width:80px;height:80px}
+.check-circle{stroke:#4caf50;stroke-width:2;stroke-dasharray:166;stroke-dashoffset:166;animation:circle-draw .6s ease-out forwards}
+.check-mark{stroke:#4caf50;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:48;stroke-dashoffset:48;animation:check-draw .4s .4s ease-out forwards}
+@keyframes circle-draw{to{stroke-dashoffset:0}}
+@keyframes check-draw{to{stroke-dashoffset:0}}
+.success-title{font-size:22px;color:#4caf50;margin-bottom:8px}
+.success-text{color:#aaa;font-size:14px;margin-bottom:24px;line-height:1.5}
+.success-btn{display:inline-block;width:auto;padding:10px 32px}
+.hidden{display:none!important}
+.login-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.9);z-index:1000;display:flex;align-items:center;justify-content:center}
+.login-box{background:#111;border:1px solid #2a2a2a;border-radius:16px;padding:28px;width:100%;max-width:340px}
+.login-box h2{font-size:20px;margin-bottom:4px;text-align:center}
+.login-box .sub{color:#888;font-size:13px;margin-bottom:18px;text-align:center}
+.login-box label{display:block;font-size:13px;color:#ccc;margin-bottom:10px}
+.login-box input{width:100%;background:#1c1c1c;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#fff;font-size:15px;margin-top:4px}
+.login-box .btn{width:100%;background:#4da3ff;color:#fff;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px}
+.login-box .err{color:#ef5350;font-size:13px;margin-top:10px;text-align:center}
+.top-bar{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:6px}
+.top-btn{background:rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer}
+.method-tabs{display:flex;gap:0;margin:0 0 20px 0;border-radius:10px;overflow:hidden;border:1px solid #333}
+.method-tab{flex:1;padding:10px 0;text-align:center;font-size:14px;font-weight:600;cursor:pointer;background:#1c1c1c;color:#888;transition:all .2s;border:none}
+.method-tab.active{background:#4da3ff;color:#fff}
+.method-tab:hover:not(.active){background:#2a2a2a;color:#ccc}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 12px;border-bottom:2px solid #444;color:#aaa;font-weight:600}
+td{padding:10px 12px;border-bottom:1px solid #222;color:#eee;vertical-align:middle}
+.action-select{background:#000;border:1px solid #444;border-radius:6px;padding:4px 8px;color:#fff;font-size:12px;cursor:pointer}
+#map,#main-app>div:first-child:not(.panel){display:none!important}
+</style>
+
 </head>
 <body>
   <!-- Кнопки входа (видны всегда) -->
@@ -31,17 +103,39 @@
 
   <!-- Оверлей входа -->
   <div class="login-overlay hidden" id="login-overlay">
-    <div class="login-box">
-      <h2>🔐 Вход для партнёров</h2>
-      <p class="sub">Войдите чтобы управлять заявками</p>
-      <label>Email <input type="text" id="login-email" placeholder="partner@company.ru" /></label>
-      <label>Пароль <input type="password" id="login-pass" placeholder="••••••" /></label>
-      <div class="err hidden" id="login-err"></div>
-      <button class="btn" id="login-btn">Войти</button>
-      <div style="text-align:center;margin-top:12px;font-size:13px">
-        <a href="/register" target="_blank" style="color:#4da3ff;text-decoration:none">Регистрация партнёра</a>
+    <div class="login-box" style="max-height:85vh;overflow-y:auto">
+      <!-- Табы -->
+      <div class="method-tabs" style="margin-bottom:20px">
+        <button class="method-tab active" id="tab-login" onclick="switchAuthTab('login')">Вход</button>
+        <button class="method-tab" id="tab-reg" onclick="switchAuthTab('reg')">Регистрация</button>
       </div>
-      <button class="btn" style="background:transparent;border:1px solid #444;margin-top:4px" id="close-login">Отмена</button>
+
+      <!-- Форма входа -->
+      <div id="auth-login-form">
+        <p class="sub">Войдите чтобы управлять заявками</p>
+        <label>Email <input type="text" id="login-email" placeholder="partner@company.ru" /></label>
+        <label>Пароль <input type="password" id="login-pass" placeholder="••••••" /></label>
+        <div class="err hidden" id="login-err"></div>
+        <button class="btn" id="login-btn">Войти</button>
+      </div>
+
+      <!-- Форма регистрации -->
+      <div id="auth-reg-form" class="hidden">
+        <p class="sub">Заполните данные. После активации сможете войти.</p>
+        <label>Email <input type="text" id="reg-email" placeholder="partner@company.ru" /></label>
+        <label>Пароль <input type="password" id="reg-pass" placeholder="••••••" /></label>
+        <label>Компания <input type="text" id="reg-company" placeholder="ООО «Фулфилмент»" /></label>
+        <label>Город <input type="text" id="reg-city-search" placeholder="Введите город..." autocomplete="off" /></label>
+        <div class="city-dropdown hidden" id="reg-city-dd" style="position:static;max-height:150px"></div>
+        <input type="hidden" id="reg-city-val" />
+        <label>Контакт <input type="text" id="reg-contact" placeholder="Иван Иванов" /></label>
+        <label>Телефон <input type="tel" id="reg-phone" placeholder="+7 999 123-45-67" /></label>
+        <div class="err hidden" id="reg-err"></div>
+        <div class="ok hidden" id="reg-ok"></div>
+        <button class="btn" id="reg-btn">Зарегистрироваться</button>
+      </div>
+
+      <button class="btn" style="background:transparent;border:1px solid #444;margin-top:8px" id="close-login">Отмена</button>
     </div>
   </div>
 
@@ -73,6 +167,11 @@
           <button class="back-btn" id="form-back">← Назад</button>
           <h2 id="form-title">Заявка на фулфилмент</h2>
           <p class="subtitle" id="form-subtitle"></p>
+          <div class="method-tabs">
+            <button type="button" class="method-tab active" id="method-fbo" onclick="setMethod('FBO')">📦 FBO</button>
+            <button type="button" class="method-tab" id="method-fbs" onclick="setMethod('FBS')">🚚 FBS</button>
+          </div>
+          <input type="hidden" name="method" id="form-method" value="FBO" />
           <form id="order-form">
             <label>Имя <input type="text" name="name" placeholder="Иван Иванов" required /></label>
             <label>Телефон <input type="tel" name="phone" placeholder="+7 999 123-45-67" required /></label>

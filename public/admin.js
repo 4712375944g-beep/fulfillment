@@ -47,7 +47,7 @@ function loadOrders() {
       document.getElementById('order-count').textContent = 'Найдено: ' + d.orders.length;
       var tb = document.getElementById('orders-table');
       if (!d.orders.length) {
-        tb.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#777;padding:40px">Заявок нет</td></tr>';
+        tb.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#777;padding:40px">Заявок нет</td></tr>';
         return;
       }
       var lb = { new: 'Новая', accepted: 'Принято', in_progress: 'В работе', done: 'Готово', cancelled: 'Отказ' };
@@ -60,7 +60,7 @@ function loadOrders() {
           '<td>' + e(o.phone) + '</td>' +
           '<td><a href="' + e(o.link) + '" target="_blank" style="color:#4da3ff">ссылка</a></td>' +
           '<td>' + e(o.city) + '</td>' +
-          '<td>' + (e(o.zone) || '-') + '</td>' +
+          '<td>' + (e(o.zone) || '-') + '</td><td>' + (o.method || 'FBO') + '</td>' +
           '<td><select class="action-select" onchange="updateStatus(' + o.id + ',this.value)">' + opts + '</select></td>' +
           '<td>' + (o.created_at || '').slice(0, 16) + '</td>' +
         '</tr>';
