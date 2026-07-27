@@ -17,6 +17,10 @@ app.use(function(req, res, next) {
   next();
 });
 
+
+// Health check для Railway
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
 // Ручная раздача статических файлов (надёжнее чем express.static)
 var staticDir = path.join(__dirname, 'public');
 app.get('*', function(req, res, next) {
