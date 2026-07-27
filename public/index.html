@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Фулфилмент</title>
+  
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .login-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.9); z-index:1000; display:flex; align-items:center; justify-content:center; }
+    .login-box { background:#111; border:1px solid #2a2a2a; border-radius:16px; padding:28px; width:100%; max-width:340px; }
+    .login-box h2 { font-size:20px; margin-bottom:4px; color:#fff; text-align:center; }
+    .login-box .sub { color:#888; font-size:13px; margin-bottom:18px; text-align:center; }
+    .login-box label { display:block; font-size:13px; color:#ccc; margin-bottom:10px; }
+    .login-box input { width:100%; background:#1c1c1c; border:1px solid #444; border-radius:8px; padding:10px 12px; color:#fff; font-size:15px; margin-top:4px; }
+    .login-box input:focus { outline:none; border-color:#4da3ff; }
+    .login-box .btn { width:100%; background:#4da3ff; color:#fff; border:none; border-radius:10px; padding:12px; font-size:15px; font-weight:600; cursor:pointer; margin-top:8px; }
+    .login-box .btn:disabled { background:#444; cursor:not-allowed; }
+    .login-box .err { color:#ef5350; font-size:13px; margin-top:10px; text-align:center; }
+    .top-bar { position:fixed; top:8px; right:8px; z-index:999; display:flex; gap:6px; }
+    .top-btn { background:rgba(0,0,0,0.7); border:1px solid rgba(255,255,255,0.2); color:#fff; border-radius:8px; padding:6px 12px; font-size:13px; cursor:pointer; }
+    .hidden { display:none !important; }
+  </style>
+</head>
+<body>
+  <!-- Кнопки входа (видны всегда) -->
+  <div class="top-bar" id="top-bar">
+    <button class="top-btn" id="show-login-btn">Вход для партнёров</button>
+    <button class="top-btn hidden" id="logout-btn" onclick="doLogout()">🚪 Выйти</button>
+  </div>
+
+  <!-- Оверлей входа -->
+  <div class="login-overlay hidden" id="login-overlay">
+    <div class="login-box">
+      <h2>🔐 Вход для партнёров</h2>
+      <p class="sub">Войдите чтобы управлять заявками</p>
+      <label>Email <input type="text" id="login-email" placeholder="partner@company.ru" /></label>
+      <label>Пароль <input type="password" id="login-pass" placeholder="••••••" /></label>
+      <div class="err hidden" id="login-err"></div>
+      <button class="btn" id="login-btn">Войти</button>
+      <div style="text-align:center;margin-top:12px;font-size:13px">
+        <a href="/register" target="_blank" style="color:#4da3ff;text-decoration:none">Регистрация партнёра</a>
+      </div>
+      <button class="btn" style="background:transparent;border:1px solid #444;margin-top:4px" id="close-login">Отмена</button>
+    </div>
+  </div>
+
+  <!-- Основной интерфейс -->
+  <div class="app" id="main-app">
+    
+    <div class="panel" id="panel">
+      <!-- Клиентская панель -->
+      <div id="client-panel">
+        <div class="panel-section" id="step-country">
+          <h2>🌍 Выберите страну</h2>
+          <p class="subtitle">Подберём склад фулфилмента</p>
+          <div class="country-list" id="country-list"></div>
+        </div>
+        <div class="panel-section hidden" id="step-city">
+          <button class="back-btn" id="city-back">← Назад</button>
+          <h2 id="city-title">📍 Выберите город</h2>
+          <p class="subtitle">Начните вводить или выберите из списка</p>
+          <input type="text" class="search-input" id="search-city" placeholder="🔍 Введите город..." autocomplete="off" />
+          <div class="city-list" id="city-list"></div>
+        </div>
+        <div class="panel-section hidden" id="step-zone">
+          <button class="back-btn" id="zone-back">← Назад</button>
+          <h2 id="zone-title"></h2>
+          <p class="subtitle">Уточните район</p>
+          <div class="zone-list" id="zone-list"></div>
+        </div>
+        <div class="panel-section hidden" id="step-form">
+          <button class="back-btn" id="form-back">← Назад</button>
+          <h2 id="form-title">Заявка на фулфилмент</h2>
+          <p class="subtitle" id="form-subtitle"></p>
+          <form id="order-form">
+            <label>Имя <input type="text" name="name" placeholder="Иван Иванов" required /></label>
+            <label>Телефон <input type="tel" name="phone" placeholder="+7 999 123-45-67" required /></label>
+            <label>Ссылка на товар <input type="url" name="link" placeholder="https://wildberries.ru/catalog/..." required /></label>
+            <input type="hidden" name="city" id="form-city" />
+            <input type="hidden" name="zone" id="form-zone" />
+            <button type="submit" class="submit-btn">Отправить заявку</button>
+          </form>
+          <div class="form-status hidden" id="form-status"></div>
+        </div>
+        <div class="panel-section hidden" id="step-success">
+          <div class="success-block">
+            <div class="success-check"><svg viewBox="0 0 52 52" class="check-svg"><circle class="check-circle" cx="26" cy="26" r="25" fill="none"/><path class="check-mark" fill="none" d="M14 27l7 7 16-16"/></svg></div>
+            <h2 class="success-title">Заявка отправлена!</h2>
+            <p class="success-text">Скоро с вами свяжется менеджер</p>
+            <button class="submit-btn success-btn" onclick="resetToStart()">Оставить ещё заявку</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Партнёрская панель -->
+      <div id="partner-panel" class="hidden">
+        <div class="panel-section">
+          <h2 style="margin:0">📦 Мои заявки</h2>
+          <p class="subtitle" id="partner-info"></p>
+          <div id="partner-orders-table" style="margin-top:16px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Вход — Фулфилмент</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:#000; color:#fff; display:flex; justify-content:center; align-items:center; min-height:100vh; }
+    .box { background:#111; border:1px solid #2a2a2a; border-radius:16px; padding:40px; width:100%; max-width:380px; }
+    .box h2 { font-size:22px; margin-bottom:6px; }
+    .box .sub { color:#888; font-size:13px; margin-bottom:24px; }
+    .box label { display:block; font-size:13px; color:#ccc; margin-bottom:14px; }
+    .box input { width:100%; background:#1c1c1c; border:1px solid #444; border-radius:8px; padding:10px 12px; color:#fff; font-size:15px; margin-top:4px; }
+    .box input:focus { outline:none; border-color:#4da3ff; }
+    .pass-row { position:relative; }
+    .pass-row input { padding-right:42px; }
+    .pass-row button { position:absolute; right:2px; top:50%; transform:translateY(-50%); background:none; border:none; color:#888; font-size:18px; cursor:pointer; padding:6px 10px; }
+    .btn { width:100%; background:#4da3ff; color:#fff; border:none; border-radius:10px; padding:12px; font-size:15px; font-weight:600; cursor:pointer; margin-top:4px; }
+    .btn:hover { background:#3b8fd9; }
+    .btn:disabled { background:#444; cursor:not-allowed; }
+    .err { color:#ef5350; font-size:13px; margin-top:12px; text-align:center; }
+    .lnk { text-align:center; margin-top:16px; font-size:13px; color:#888; }
+    .lnk a { color:#4da3ff; text-decoration:none; }
+    .hidden { display:none; }
+  </style>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+</head>
+<body>
+  <div class="box">
+    <h2>🔐 Вход</h2>
+    <p class="sub">Админ-панель и панель партнёров</p>
+
+    <div style="margin-bottom:14px">
+      <label>Email / Логин</label>
+      <input type="text" id="login-input" placeholder="partner@company.ru" autocomplete="username" />
+    </div>
+
+    <div style="margin-bottom:14px">
+      <label>Пароль</label>
+      <div class="pass-row">
+        <input type="password" id="pass-input" placeholder="••••••" autocomplete="current-password" />
+        <button type="button" id="pass-toggle">👁</button>
+      </div>
+    </div>
+
+    <button class="btn" id="login-btn">Войти</button>
+    <div class="err hidden" id="err-msg"></div>
+    <div class="lnk">Нет аккаунта? <a href="/register">Зарегистрироваться</a></div>
+  </div>
+
+  <script>
+    (function() {
+      var loginInput = document.getElementById('login-input');
+      var passInput = document.getElementById('pass-input');
+      var toggleBtn = document.getElementById('pass-toggle');
+      var loginBtn = document.getElementById('login-btn');
+      var errMsg = document.getElementById('err-msg');
+
+      // Показать/скрыть пароль
+      toggleBtn.addEventListener('click', function() {
+        if (passInput.type === 'password') {
+          passInput.type = 'text';
+          toggleBtn.textContent = '🙈';
+        } else {
+          passInput.type = 'password';
+          toggleBtn.textContent = '👁';
+        }
+      });
+
+      // Вход
+      function doLogin() {
+        var login = loginInput.value.trim();
+        var pass = passInput.value;
+        if (!login || !pass) { errMsg.textContent = 'Заполните все поля'; errMsg.classList.remove('hidden'); return; }
+
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Вход...';
+        errMsg.classList.add('hidden');
+
+        fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ login: login, password: pass })
+        }).then(function(r) { return r.json(); }).then(function(data) {
+          if (data.ok) {
+            localStorage.setItem('ff_token', data.token);
+            localStorage.setItem('ff_role', data.role);
+            window.location.href = data.redirect; // was: 1785150552';
+          } else {
+            errMsg.textContent = data.error || 'Неверный email или пароль';
+            errMsg.classList.remove('hidden');
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Войти';
+          }
+        }).catch(function() {
+          errMsg.textContent = 'Ошибка соединения';
+          errMsg.classList.remove('hidden');
+          loginBtn.disabled = false;
+          loginBtn.textContent = 'Войти';
+        });
+      }
+
+      loginBtn.addEventListener('click', doLogin);
+      passInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') doLogin();
+      });
+      loginInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') passInput.focus();
+      });
+    })();
+  </script>
+</body>
+</html>

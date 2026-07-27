@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Админка — Фулфилмент</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="admin-body">
+  <div class="admin">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h1 style="margin:0">🏭 Фулфилмент — Админ</h1>
+      <button onclick="logout()" style="background:#c44;border:none;color:#fff;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px">🚪 Выйти</button>
+    </div>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="filters" style="margin-top:12px">
+      <button class="partners-btn" onclick="showTab('orders')">📦 Заявки</button>
+      <button class="partners-btn" style="background:#444" onclick="showTab('partners')">👥 Партнёры</button>
+      <button class="export-btn" onclick="exportCsv()">📥 CSV</button>
+    </div>
+
+    <div id="tab-orders">
+      <div class="filters" style="margin-top:20px">
+        <select id="filter-city" onchange="loadOrders()"><option value="">📍 Все города</option></select>
+        <select id="filter-status" onchange="loadOrders()">
+          <option value="">📊 Все статусы</option>
+          <option value="new">🟡 Новые</option>
+          <option value="accepted">🟢 Принято</option>
+          <option value="in_progress">🔵 В работе</option>
+          <option value="done">✅ Готово</option>
+          <option value="cancelled">🔴 Отказ</option>
+        </select>
+        <span style="color:#888;font-size:13px" id="order-count"></span>
+      </div>
+      <table>
+        <thead><tr><th>ID</th><th>Имя</th><th>Телефон</th><th>Ссылка</th><th>Город</th><th>Зона</th><th>Статус</th><th>Дата</th></tr></thead>
+        <tbody id="orders-table"></tbody>
+      </table>
+    </div>
+
+    <div id="tab-partners" class="hidden">
+      <div class="filters" style="margin-top:20px"><h3>➕ Новый партнёр</h3></div>
+      <div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+        <select id="new-partner-city" style="background:#252525;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#eee;font-size:15px;min-width:180px">
+          <option value="">Выберите город</option>
+        </select>
+        <select id="new-partner-zone" style="background:#252525;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#eee;font-size:15px;min-width:120px" disabled>
+          <option value="">Без зоны</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+        <input type="text" id="new-partner-login" placeholder="Логин (необязательно)" style="background:#252525;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#eee;font-size:15px;min-width:180px" />
+        <input type="text" id="new-partner-password" placeholder="Пароль (необязательно)" style="background:#252525;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#eee;font-size:15px;min-width:180px" />
+        <button class="submit-btn" style="margin-top:0" onclick="createPartner()">Создать</button>
+      </div>
+      <p style="color:#888;font-size:12px;margin-bottom:20px">Если не указать логин и пароль — сгенерируются автоматически</p>
+
+      <h3 style="margin-bottom:12px">🔑 Существующие партнёры</h3>
+      <div class="partner-list" id="partner-list"></div>
+    </div>
+  </div>
+  <script src="admin.js"></script>
+</body>
+</html>

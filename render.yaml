@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: fulfillment
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: BOT_TOKEN
+        sync: false
+      - key: CHAT_ID
+        value: ***}

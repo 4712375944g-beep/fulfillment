@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Панель фулфилмента</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="partner-body">
+  <div class="partner">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div><h1 id="partner-title" style="margin:0">📦 Загрузка...</h1>
+      <p style="color:#999;margin:4px 0 0" id="partner-subtitle"></p></div>
+      <button onclick="logout()" style="background:#c44;border:none;color:#fff;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px">🚪 Выйти</button>
+    </div>
+
+    <div style="margin-bottom:16px"><span style="color:#999;font-size:13px" id="order-count"></span></div>
+
+    <table>
+      <thead><tr><th>ID</th><th>Имя</th><th>Телефон</th><th>Ссылка</th><th>Статус</th><th>Дата</th></tr></thead>
+      <tbody id="orders-table"></tbody>
+    </table>
+  </div>
+  <script src="partner.js"></script>
+</body>
+</html>

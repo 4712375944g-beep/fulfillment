@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Регистрация — Фулфилмент</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .reg-page { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #000; }
+    .reg-box { background: #111; border: 1px solid #2a2a2a; border-radius: 16px; padding: 32px; width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; }
+    .reg-box h2 { font-size: 22px; margin-bottom: 4px; color: #fff; }
+    .reg-box .sub { color: #888; font-size: 13px; margin-bottom: 20px; }
+    .reg-box label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #ccc; margin-bottom: 12px; }
+    .reg-box input, .reg-box textarea { background: #1c1c1c; border: 1px solid #444; border-radius: 8px; padding: 10px 12px; color: #fff; font-size: 15px; }
+    .reg-box input:focus, .reg-box textarea:focus { outline: none; border-color: #4da3ff; }
+    .reg-box textarea { resize: vertical; min-height: 60px; }
+    .reg-box .btn { width: 100%; background: #4da3ff; color: #fff; border: none; border-radius: 10px; padding: 12px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 6px; }
+    .reg-box .btn:disabled { background: #444; cursor: not-allowed; }
+    .reg-box .err { color: #ef5350; font-size: 13px; margin-top: 12px; text-align: center; }
+    .reg-box .ok { color: #4caf50; font-size: 13px; margin-top: 12px; text-align: center; }
+    .reg-box .login-link { text-align: center; margin-top: 16px; font-size: 13px; color: #888; }
+    .reg-box .login-link a { color: #4da3ff; text-decoration: none; }
+    .hidden { display: none !important; }
+
+    /* Searchable city list */
+    .city-search-box { position: relative; }
+    .city-search-box input { width: 100%; }
+    .city-dropdown {
+      position: absolute; top: 100%; left: 0; right: 0; z-index: 10;
+      background: #1c1c1c; border: 1px solid #444; border-radius: 8px;
+      max-height: 200px; overflow-y: auto; margin-top: 2px;
+    }
+    .city-dropdown .city-item {
+      padding: 9px 14px; cursor: pointer; font-size: 14px; color: #eee;
+      border-bottom: 1px solid #2a2a2a;
+    }
+    .city-dropdown .city-item:hover { background: #2a2a2a; }
+    .city-dropdown .city-item.selected { background: #1a2a3a; color: #4da3ff; }
+    .city-dropdown .city-item:last-child { border-bottom: none; }
+    .city-selected { color: #4da3ff; font-size: 13px; margin-top: 4px; min-height: 18px; }
+  </style>
+</head>
+<body class="reg-page">
+  <div class="reg-box">
+    <h2>🏭 Регистрация партнёра</h2>
+    <p class="sub">Заполните данные. После активации сможете войти.</p>
+
+    <form id="reg-form">
+      <label>Email (будет логином) <input type="email" name="email" placeholder="partner@company.ru" required autocomplete="email" /></label>
+      <label>Пароль <input type="password" name="password" placeholder="Придумайте пароль" required minlength="4" /></label>
+      <label>Название компании <input type="text" name="company" placeholder="ООО «Фулфилмент-Север»" required /></label>
+
+      <label>Город</label>
+      <div class="city-search-box">
+        <input type="text" id="city-search" placeholder="🔍 Введите город..." autocomplete="off" />
+        <div class="city-dropdown hidden" id="city-dropdown"></div>
+      </div>
+      <div class="city-selected" id="city-selected"></div>
+      <input type="hidden" name="city" id="reg-city" required />
+
+      <label id="reg-zone-label" class="hidden">Зона (для Москвы)
+        <select name="zone" id="reg-zone"><option value="">Без зоны</option>
+          <option value="Север">Север</option><option value="Юг">Юг</option>
+          <option value="Запад">Запад</option><option value="Восток">Восток</option>
+        </select>
+      </label>
+
+      <label>Контактное лицо <input type="text" name="contact" placeholder="Иван Иванов" required /></label>
+      <label>Телефон <input type="tel" name="phone" placeholder="+7 999 123-45-67" required /></label>
+      <label>Описание <textarea name="description" placeholder="Кратко о вашем складе: мощность, адрес, условия..."></textarea></label>
+      <button type="submit" class="btn">Зарегистрироваться</button>
+    </form>
+
+    <div class="err hidden" id="reg-err"></div>
+    <div class="ok hidden" id="reg-ok"></div>
+    <div class="login-link">Уже есть аккаунт? <a href="/login">Войти</a></div>
+  </div>
+
+  <script>
+    let allCities = [];
+    let selectedCityName = '';
+
+    // Загрузка городов
+    fetch('/api/cities').then(r => r.json()).then(cities => {
+      allCities = cities.filter(c => c.country === 'Россия');
+    });
+
+    const searchInput = document.getElementById('city-search');
+    const dropdown = document.getElementById('city-dropdown');
+    const selectedEl = document.getElementById('city-selected');
+    const hiddenCity = document.getElementById('reg-city');
+    const zoneLabel = document.getElementById('reg-zone-label');
+    const zoneSelect = document.getElementById('reg-zone');
+
+    // Поиск города
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.toLowerCase();
+      const filtered = allCities.filter(c => c.name.toLowerCase().includes(q));
+
+      if (filtered.length === 0) {
+        dropdown.innerHTML = '<div class="city-item" style="color:#888">Ничего не найдено</div>';
+      } else {
+        dropdown.innerHTML = filtered.map(c =>
+          `<div class="city-item${c.name === selectedCityName ? ' selected' : ''}" data-city="${c.name}">${c.name}</div>`
+        ).join('');
+      }
+      dropdown.classList.remove('hidden');
+    });
+
+    searchInput.addEventListener('focus', () => {
+      if (allCities.length > 0 && !searchInput.value) {
+        searchInput.dispatchEvent(new Event('input'));
+      }
+    });
+
+    // Выбор города из списка
+    dropdown.addEventListener('click', (e) => {
+      const item = e.target.closest('.city-item');
+      if (!item || item.dataset.city === undefined) return;
+
+      selectedCityName = item.dataset.city;
+      hiddenCity.value = selectedCityName;
+      searchInput.value = selectedCityName;
+      selectedEl.textContent = '✅ ' + selectedCityName;
+      dropdown.classList.add('hidden');
+
+      // Показать зоны для Москвы
+      if (selectedCityName === 'Москва') {
+        zoneLabel.classList.remove('hidden');
+      } else {
+        zoneLabel.classList.add('hidden');
+        zoneSelect.value = '';
+      }
+    });
+
+    // Закрыть список при клике вне
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.city-search-box')) dropdown.classList.add('hidden');
+    });
+
+    // Отправка формы
+    const form = document.getElementById('reg-form');
+    const errEl = document.getElementById('reg-err');
+    const okEl = document.getElementById('reg-ok');
+    const btn = form.querySelector('.btn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!hiddenCity.value) {
+        errEl.textContent = 'Выберите город из списка';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      btn.disabled = true; btn.textContent = 'Отправка...';
+      errEl.classList.add('hidden'); okEl.classList.add('hidden');
+
+      const data = {
+        email: form.email.value.trim(),
+        password: form.password.value,
+        company: form.company.value.trim(),
+        city: hiddenCity.value,
+        zone: zoneSelect.value,
+        contact: form.contact.value.trim(),
+        phone: form.phone.value.trim(),
+        description: form.description.value.trim(),
+      };
+
+      try {
+        const resp = await fetch('/api/register', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        const result = await resp.json();
+
+        if (result.ok) {
+          form.classList.add('hidden');
+          document.querySelector('.sub').classList.add('hidden');
+          okEl.innerHTML = '✅ <b>Заявка отправлена!</b><br><br>После активации аккаунта вы сможете войти с email <b>' + data.email + '</b> и вашим паролем.<br><br><a href="/login" style="color:#4da3ff">Страница входа</a>';
+          okEl.classList.remove('hidden');
+        } else {
+          errEl.textContent = result.error || 'Ошибка';
+          errEl.classList.remove('hidden');
+        }
+      } catch {
+        errEl.textContent = 'Ошибка соединения';
+        errEl.classList.remove('hidden');
+      }
+      btn.disabled = false; btn.textContent = 'Зарегистрироваться';
+    });
+  </script>
+</body>
+</html>
