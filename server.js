@@ -5,7 +5,7 @@ const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const BOT_TOKEN = '***';
+const BOT_TOKEN = '8910902974:AAGXpQxvrAGf194qFRPIrjF0Rd50dqxixdo';
 const CHAT_ID = process.env.CHAT_ID || '336948942';
 const DB_FILE = path.join(__dirname, 'data.json');
 
