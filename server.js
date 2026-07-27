@@ -16,6 +16,19 @@ app.use(function(req, res, next) {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
   next();
 });
+
+// Явные маршруты для статических файлов (на случай проблем с express.static)
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('/debug', (req, res) => {
+  const pub = path.join(__dirname, 'public');
+  try {
+    const files = require('fs').readdirSync(pub);
+    res.json({ publicDir: pub, files, __dirname });
+  } catch(e) {
+    res.json({ error: e.message, publicDir: pub, __dirname });
+  }
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ====== JSON-хранилище ======
