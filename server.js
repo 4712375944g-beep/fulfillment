@@ -5,44 +5,28 @@ const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const BOT_TOKEN = '8910902974:AAGXpQxvrAGf194qFRPIrjF0Rd50dqxixdo';
+const BOT_TOKEN = process.env.BOT_TOKEN || '8910902974:AAGXpQxvrAGf194qFRPIrjF0Rd50dqxixdo';
 const CHAT_ID = process.env.CHAT_ID || '336948942';
 const DB_FILE = path.join(__dirname, 'data.json');
 
+// === Middleware ===
 app.use(express.json());
 
-// Cache-Control для всех статических файлов — никакого кеширования
-app.use(function(req, res, next) {
+// CORS
+app.use((_, res, next) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type,Authorization');
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
   next();
 });
+app.options('*', (_, res) => res.sendStatus(204));
 
+// === Helpers ===
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
-// Health check для Railway
-app.get('/health', (req, res) => res.json({ status: 'ok' }));
-
-// Ручная раздача статических файлов (надёжнее чем express.static)
-var staticDir = path.join(__dirname, 'public');
-app.get('*', function(req, res, next) {
-  // Пропускаем API-запросы
-  if (req.path.startsWith('/api/')) return next();
-  
-  var filePath = path.join(staticDir, req.path === '/' ? 'index.html' : req.path);
-  try {
-    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-      return res.sendFile(filePath);
-    }
-  } catch(e) {}
-  
-  // Если файл не найден — отдаём index.html (SPA-style)
-  var indexPath = path.join(staticDir, 'index.html');
-  if (fs.existsSync(indexPath)) {
-    return res.sendFile(indexPath);
-  }
-  next();
-});
-
-// ====== JSON-хранилище ======
 function loadDB() {
   try { return JSON.parse(fs.readFileSync(DB_FILE, 'utf8')); }
   catch { return { orders: [], partners: [], nextId: 1, nextUserId: 1, users: [], tokens: {} }; }
@@ -52,38 +36,29 @@ function saveDB(db) {
   fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
 }
 
-// Инициализация: создаём админа по умолчанию
 function initDB() {
   const db = loadDB();
   if (!db.users) db.users = [];
   if (!db.tokens) db.tokens = {};
-
-  const adminExists = db.users.find(u => u.role === 'admin');
-  if (!adminExists) {
+  if (!db.users.find(u => u.role === 'admin')) {
     db.users.push({
-      id: 'admin',
-      login: 'admin',
-      password: 'admin-secret-2026',
-      role: 'admin',
-      created_at: new Date().toISOString(),
+      id: 'admin', login: 'admin', password: 'admin-secret-2026',
+      role: 'admin', created_at: new Date().toISOString(),
     });
     saveDB(db);
   }
 }
 initDB();
 
-// ====== Аутентификация ======
+// === Auth ===
 function auth(req, res, next) {
   const token = (req.headers.authorization || '').replace('Bearer ', '') || req.query.token || '';
   if (!token) return res.status(401).json({ error: 'Требуется авторизация' });
-
   const db = loadDB();
   const userId = db.tokens[token];
   if (!userId) return res.status(401).json({ error: 'Неверный токен' });
-
   const user = db.users.find(u => u.id === userId);
   if (!user) return res.status(401).json({ error: 'Пользователь не найден' });
-
   req.user = user;
   next();
 }
@@ -93,23 +68,31 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-// ====== Страницы ======
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
-app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public', 'partner.html')));
-app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
-app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public', 'register.html')));
+// === Telegram helpers ===
+function tg(method, body) {
+  return fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${method}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }).catch(() => {});
+}
 
-// ====== API: регистрация партнёра (email, статус pending) ======
+// === Health ===
+app.get('/health', (_, res) => res.json({ status: 'ok', uptime: process.uptime() }));
+
+// ====== API: регистрация партнёра ======
 app.post('/api/register', (req, res) => {
   const { email, password, company, city, zone, contact, phone, description } = req.body;
   if (!email || !password || !company || !city || !contact || !phone) {
     return res.status(400).json({ ok: false, error: 'Все поля обязательны' });
   }
   if (password.length < 4) return res.status(400).json({ ok: false, error: 'Пароль от 4 символов' });
+
   const db = loadDB();
   if (db.users.find(u => u.login === email)) {
     return res.status(400).json({ ok: false, error: 'Этот email уже зарегистрирован' });
   }
+
   const user = {
     id: String(db.nextUserId++), login: email, password, role: 'partner',
     city, zone: zone || '', company, contact, phone,
@@ -118,69 +101,38 @@ app.post('/api/register', (req, res) => {
   };
   db.users.push(user);
   saveDB(db);
-  fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: CHAT_ID, parse_mode: 'HTML',
-      text: `🏭 <b>Новый партнёр (ожидает подтверждения)</b>\n\n📋 ${esc(company)}\n📍 ${city}${zone ? ' — ' + zone : ''}\n👤 ${esc(contact)}\n📞 ${esc(phone)}\n📧 ${esc(email)}`,
-      reply_markup: JSON.stringify({
-        inline_keyboard: [[
-          { text: '✅ Дать доступ', callback_data: 'approve:' + user.id },
-          { text: '❌ Отказать', callback_data: 'reject:' + user.id },
-        ]]
-      }),
-    }),
-  }).catch(() => {});
+
+  tg('sendMessage', {
+    chat_id: CHAT_ID, parse_mode: 'HTML',
+    text: `🏭 <b>Новый партнёр (ожидает подтверждения)</b>\n\n📋 ${esc(company)}\n📍 ${city}${zone ? ' — ' + zone : ''}\n👤 ${esc(contact)}\n📞 ${esc(phone)}\n📧 ${esc(email)}`,
+    reply_markup: {
+      inline_keyboard: [[
+        { text: '✅ Дать доступ', callback_data: `apr:${user.id}` },
+        { text: '❌ Отказать', callback_data: `rej:${user.id}` },
+      ]],
+    },
+  });
+
   res.json({ ok: true });
 });
 
-// ====== API: регистрация клиента (авто-подтверждён) ======
+// ====== API: регистрация клиента ======
 app.post('/api/register-client', (req, res) => {
   const { email, password, name } = req.body;
   if (!email || !password || !name) return res.status(400).json({ ok: false, error: 'Все поля обязательны' });
   if (password.length < 4) return res.status(400).json({ ok: false, error: 'Пароль от 4 символов' });
+
   const db = loadDB();
   if (db.users.find(u => u.login === email)) return res.status(400).json({ ok: false, error: 'Email занят' });
+
   const user = { id: String(db.nextUserId++), login: email, password, role: 'client', company: name, status: 'approved', created_at: new Date().toISOString() };
   db.users.push(user);
+
   const token = crypto.randomBytes(24).toString('hex');
   db.tokens[token] = user.id;
   saveDB(db);
+
   res.json({ ok: true, token, role: 'client', redirect: '/', user: { name, email } });
-});
-
-// ====== API: админ — активировать партнёра ======
-app.post('/api/admin/partners/:id/approve', auth, requireAdmin, (req, res) => {
-  const db = loadDB();
-  const user = db.users.find(u => u.id === req.params.id && u.role === 'partner');
-  if (!user) return res.status(404).json({ error: 'Партнёр не найден' });
-  user.status = 'approved';
-  // Автоматически +1 месяц если не указан срок
-  if (!user.expires_at) {
-    const d = new Date(); d.setMonth(d.getMonth() + 1);
-    user.expires_at = d.toISOString().slice(0, 10);
-  }
-  saveDB(db);
-  res.json({ ok: true, login: user.login, expires_at: user.expires_at });
-});
-
-// ====== API: админ — продлить партнёра ======
-app.patch('/api/admin/partners/:id', auth, requireAdmin, (req, res) => {
-  const db = loadDB();
-  const user = db.users.find(u => u.id === req.params.id && u.role === 'partner');
-  if (!user) return res.status(404).json({ error: 'Партнёр не найден' });
-  const { months, expires_at } = req.body;
-  if (expires_at) {
-    user.expires_at = expires_at;
-  } else if (months && months >= 1) {
-    const base = user.expires_at && user.expires_at > new Date().toISOString().slice(0,10)
-      ? new Date(user.expires_at) : new Date();
-    base.setMonth(base.getMonth() + months);
-    user.expires_at = base.toISOString().slice(0, 10);
-  } else {
-    return res.status(400).json({ error: 'Укажите дату или количество месяцев' });
-  }
-  saveDB(db);
-  res.json({ ok: true, expires_at: user.expires_at });
 });
 
 // ====== API: вход ======
@@ -194,7 +146,7 @@ app.post('/api/login', (req, res) => {
   if (user.role === 'partner' && user.status === 'pending') {
     return res.status(403).json({ ok: false, error: 'Аккаунт ожидает активации. Напишите администратору.' });
   }
-  if (user.role === 'partner' && user.expires_at && user.expires_at < new Date().toISOString().slice(0,10)) {
+  if (user.role === 'partner' && user.expires_at && user.expires_at < new Date().toISOString().slice(0, 10)) {
     return res.status(403).json({ ok: false, error: 'Срок доступа истёк. Свяжитесь с администратором для продления.' });
   }
 
@@ -203,9 +155,7 @@ app.post('/api/login', (req, res) => {
   saveDB(db);
 
   res.json({
-    ok: true,
-    token,
-    role: user.role,
+    ok: true, token, role: user.role,
     redirect: user.role === 'admin' ? '/admin' : '/partner',
     user: { login: user.login, city: user.city, zone: user.zone },
   });
@@ -227,33 +177,28 @@ app.post('/api/logout', (req, res) => {
   res.json({ ok: true });
 });
 
-// ====== Данные городов ======
+// ====== Города ======
 const CITIES = require('./cities.js');
 
-// ====== API: список городов ======
 app.get('/api/cities', (req, res) => {
   const search = (req.query.q || '').toLowerCase();
   const country = req.query.country || '';
-
   let entries = Object.entries(CITIES).map(([key, c]) => ({
     key, name: c.name, coords: c.coords,
     zones: c.zones || null, country: c.country,
   }));
-
   if (country) entries = entries.filter(c => c.country === country);
   if (search) entries = entries.filter(c => c.name.toLowerCase().includes(search));
-
   entries.sort((a, b) => {
     if (a.country === 'Россия' && b.country !== 'Россия') return -1;
     if (a.country !== 'Россия' && b.country === 'Россия') return 1;
     return a.name.localeCompare(b.name, 'ru');
   });
-
   res.json(entries);
 });
 
-// ====== API: приём заявки от клиента ======
-app.post('/api/order', async (req, res) => {
+// ====== API: заявка клиента ======
+app.post('/api/order', (req, res) => {
   const { name, phone, link, city, zone, method } = req.body;
   if (!name || !phone || !link || !city) {
     return res.status(400).json({ ok: false, error: 'Все поля обязательны' });
@@ -263,40 +208,37 @@ app.post('/api/order', async (req, res) => {
 
   const db = loadDB();
   const order = {
-    id: db.nextId++,
-    name, phone, link,
-    city: cityInfo.name,
-    zone: zone || '',
-    method: method || 'FBO',
+    id: db.nextId++, name, phone, link,
+    city: cityInfo.name, zone: zone || '', method: method || 'FBO',
     status: 'new',
     created_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
   };
   db.orders.push(order);
   saveDB(db);
 
-  // Уведомление в Telegram
   const zoneStr = order.zone ? ' — ' + order.zone : '';
-  const text = [
-    '📦 <b>Новая заявка на фулфилмент</b>',
-    '',
-    `👤 <b>Имя:</b> ${esc(order.name)}`,
-    `📞 <b>Телефон:</b> ${esc(order.phone)}`,
-    `🔗 <b>Ссылка:</b> ${esc(order.link)}`,
-    `📍 <b>Город/зона:</b> ${order.city}${zoneStr}\n📦 <b>Способ:</b> ${order.method || 'FBO'}`,
-    '',
-    `<a href="${req.protocol}://${req.get('host')}/admin">Открыть админку</a>`,
-  ].join('\n');
+  const host = req.get('host');
+  const proto = req.protocol || 'https';
 
-  fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: CHAT_ID, text, parse_mode: 'HTML' }),
-  }).catch(() => {});
+  tg('sendMessage', {
+    chat_id: CHAT_ID, parse_mode: 'HTML',
+    text: [
+      '📦 <b>Новая заявка на фулфилмент</b>',
+      '',
+      `👤 <b>Имя:</b> ${esc(order.name)}`,
+      `📞 <b>Телефон:</b> ${esc(order.phone)}`,
+      `🔗 <b>Ссылка:</b> ${esc(order.link)}`,
+      `📍 <b>Город/зона:</b> ${order.city}${zoneStr}`,
+      `📦 <b>Способ:</b> ${order.method || 'FBO'}`,
+      '',
+      `<a href="${proto}://${host}/admin">Открыть админку</a>`,
+    ].join('\n'),
+  });
 
   res.json({ ok: true, id: order.id });
 });
 
-// ====== API: админ — заявки ======
+// ====== Admin: заявки ======
 app.get('/api/admin/orders', auth, requireAdmin, (req, res) => {
   const db = loadDB();
   let orders = [...db.orders];
@@ -328,51 +270,43 @@ app.get('/api/admin/stats', auth, requireAdmin, (req, res) => {
 app.get('/api/admin/export', auth, requireAdmin, (req, res) => {
   const db = loadDB();
   const csv = ['id,имя,телефон,ссылка,город,зона,статус,дата'];
-  db.orders.forEach(o => csv.push(`${o.id},"${o.name}","${o.phone}","${o.link}","${o.city}","${o.zone||''}","${o.status}","${o.created_at}"`));
-  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', 'attachment; filename=orders.csv');
+  db.orders.forEach(o => csv.push(`${o.id},"${o.name}","${o.phone}","${o.link}","${o.city}","${o.zone || ''}","${o.status}","${o.created_at}"`));
+  res.set('Content-Type', 'text/csv; charset=utf-8');
+  res.set('Content-Disposition', 'attachment; filename=orders.csv');
   res.send('\uFEFF' + csv.join('\n'));
 });
 
-// ====== API: админ — партнёры ======
+// ====== Admin: партнёры ======
 app.get('/api/admin/partners', auth, requireAdmin, (req, res) => {
   const db = loadDB();
   const partners = db.users.filter(u => u.role === 'partner').map(p => ({
     id: p.id, login: p.login, password: p.password, city: p.city, zone: p.zone,
     status: p.status || 'approved', company: p.company, contact: p.contact, phone: p.phone,
-    created_at: p.created_at,
+    created_at: p.created_at, expires_at: p.expires_at,
   }));
   res.json({ partners, cities: CITIES });
 });
 
 app.post('/api/admin/partners', auth, requireAdmin, (req, res) => {
-  const { city, login, password } = req.body;
-  if (!city) return res.status(400).json({ error: 'Город обязателен' });
-
+  if (!req.body.city) return res.status(400).json({ error: 'Город обязателен' });
   const db = loadDB();
-  const partnerLogin = login || `partner-${db.nextUserId}`;
-  const partnerPassword = password || crypto.randomBytes(4).toString('hex');
-
   const user = {
     id: String(db.nextUserId++),
-    login: partnerLogin,
-    password: partnerPassword,
-    role: 'partner',
-    city,
-    zone: req.body.zone || '',
+    login: req.body.login || `partner-${db.nextUserId}`,
+    password: req.body.password || crypto.randomBytes(4).toString('hex'),
+    role: 'partner', city: req.body.city,
+    zone: req.body.zone || '', status: 'approved',
     created_at: new Date().toISOString(),
   };
   db.users.push(user);
   saveDB(db);
 
-  const baseUrl = `${req.protocol}://${req.get('host')}`;
+  const host = req.get('host');
+  const proto = req.protocol || 'https';
   res.json({
-    ok: true,
-    login: user.login,
-    password: user.password,
-    link: `${baseUrl}/login`,
-    city: user.city,
-    zone: user.zone,
+    ok: true, login: user.login, password: user.password,
+    link: `${proto}://${host}/login`,
+    city: user.city, zone: user.zone,
   });
 });
 
@@ -383,7 +317,40 @@ app.delete('/api/admin/partners/:id', auth, requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-// ====== API: партнёр — заявки ======
+app.post('/api/admin/partners/:id/approve', auth, requireAdmin, (req, res) => {
+  const db = loadDB();
+  const user = db.users.find(u => u.id === req.params.id && u.role === 'partner');
+  if (!user) return res.status(404).json({ error: 'Партнёр не найден' });
+  user.status = 'approved';
+  if (!user.expires_at) {
+    const d = new Date(); d.setMonth(d.getMonth() + 1);
+    user.expires_at = d.toISOString().slice(0, 10);
+  }
+  saveDB(db);
+  res.json({ ok: true, login: user.login, expires_at: user.expires_at });
+});
+
+app.patch('/api/admin/partners/:id', auth, requireAdmin, (req, res) => {
+  const db = loadDB();
+  const user = db.users.find(u => u.id === req.params.id && u.role === 'partner');
+  if (!user) return res.status(404).json({ error: 'Партнёр не найден' });
+
+  const { months, expires_at } = req.body;
+  if (expires_at) {
+    user.expires_at = expires_at;
+  } else if (months && months >= 1) {
+    const base = user.expires_at && user.expires_at > new Date().toISOString().slice(0, 10)
+      ? new Date(user.expires_at) : new Date();
+    base.setMonth(base.getMonth() + months);
+    user.expires_at = base.toISOString().slice(0, 10);
+  } else {
+    return res.status(400).json({ error: 'Укажите дату или количество месяцев' });
+  }
+  saveDB(db);
+  res.json({ ok: true, expires_at: user.expires_at });
+});
+
+// ====== Partner: заявки ======
 app.get('/api/partner/orders', auth, (req, res) => {
   if (req.user.role !== 'partner') return res.status(403).json({ error: 'Только для партнёров' });
   const db = loadDB();
@@ -396,9 +363,9 @@ app.get('/api/partner/orders', auth, (req, res) => {
 
 app.patch('/api/partner/orders/:id', auth, (req, res) => {
   if (req.user.role !== 'partner') return res.status(403).json({ error: 'Только для партнёров' });
-  const valid = ['accepted', 'in_progress', 'done'];
-  if (!valid.includes(req.body.status)) return res.status(400).json({ error: 'Неверный статус' });
-
+  if (!['accepted', 'in_progress', 'done'].includes(req.body.status)) {
+    return res.status(400).json({ error: 'Неверный статус' });
+  }
   const db = loadDB();
   const order = db.orders.find(o => o.id === +req.params.id && o.city === req.user.city && o.zone === req.user.zone);
   if (!order) return res.status(404).json({ error: 'Заявка не найдена' });
@@ -407,219 +374,27 @@ app.patch('/api/partner/orders/:id', auth, (req, res) => {
   res.json({ ok: true });
 });
 
-app.listen(PORT, () => {
-  console.log(`Сервер: http://localhost:${PORT}`);
-  console.log(`Логин: http://localhost:${PORT}/login`);
-  console.log(`Админ: admin / admin-secret-2026`);
-});
-
-function esc(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-// ====== Telegram Webhook ======
-const pendingCustomDate = {}; // chatId -> userId (ждём дату от админа)
-
-app.post('/telegram-webhook', (req, res) => {
-  // --- Callback Query (нажатие на inline-кнопку) ---
-  const cb = req.body.callback_query;
-  if (cb) {
-    const chatId = cb.message.chat.id;
-    const msgId = cb.message.message_id;
-    const data = cb.data;
-
-    // Ответ на callback — убираем "часики"
-    fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/answerCallbackQuery', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ callback_query_id: cb.id }),
-    }).catch(() => {});
-
-    // --- ✅ Дать доступ ---
-    if (data.startsWith('approve:')) {
-      const userId = data.split(':')[1];
-      // Показываем выбор срока
-      fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/editMessageText', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId, message_id: msgId,
-          text: cb.message.text + '\n\n📅 <b>На какой срок дать доступ?</b>',
-          parse_mode: 'HTML',
-          reply_markup: JSON.stringify({
-            inline_keyboard: [
-              [
-                { text: '1 месяц', callback_data: 'date:' + userId + ':1' },
-                { text: '2 месяца', callback_data: 'date:' + userId + ':2' },
-              ],
-              [
-                { text: '3 месяца', callback_data: 'date:' + userId + ':3' },
-                { text: '6 месяцев', callback_data: 'date:' + userId + ':6' },
-              ],
-              [
-                { text: '📆 Своя дата', callback_data: 'date:' + userId + ':custom' },
-              ],
-            ]
-          }),
-        }),
-      }).catch(() => {});
-    }
-
-    // --- ❌ Отказать ---
-    else if (data.startsWith('reject:')) {
-      const userId = data.split(':')[1];
-      const db = loadDB();
-      const user = db.users.find(u => u.id === userId && u.role === 'partner');
-      if (user) {
-        user.status = 'rejected';
-        saveDB(db);
-        fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/editMessageText', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: chatId, message_id: msgId,
-            text: cb.message.text + '\n\n❌ <b>Отказано</b>',
-            parse_mode: 'HTML',
-          }),
-        }).catch(() => {});
-      }
-    }
-
-    // --- Выбор даты (предустановленная) ---
-    else if (data.startsWith('date:') && !data.endsWith(':custom')) {
-      const parts = data.split(':');
-      const userId = parts[1];
-      const months = parseInt(parts[2]);
-
-      const db = loadDB();
-      const user = db.users.find(u => u.id === userId && u.role === 'partner');
-      if (user) {
-        const expiresAt = new Date();
-        expiresAt.setMonth(expiresAt.getMonth() + months);
-        const expiresStr = expiresAt.toISOString().slice(0, 10);
-
-        user.status = 'approved';
-        user.expires_at = expiresStr;
-        saveDB(db);
-
-        fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/editMessageText', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: chatId, message_id: msgId,
-            text: cb.message.text + '\n\n✅ <b>Доступ выдан!</b>\n📅 До: ' + expiresStr,
-            parse_mode: 'HTML',
-          }),
-        }).catch(() => {});
-      }
-      delete pendingCustomDate[chatId];
-    }
-
-    // --- Своя дата ---
-    else if (data.endsWith(':custom')) {
-      const userId = data.split(':')[1];
-      pendingCustomDate[chatId] = userId;
-
-      fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/editMessageText', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId, message_id: msgId,
-          text: cb.message.text + '\n\n📆 <b>Введите дату в чат в формате ГГГГ-ММ-ДД</b>\n<i>Например: 2026-10-29</i>',
-          parse_mode: 'HTML',
-        }),
-      }).catch(() => {});
-    }
-
-    return res.sendStatus(200);
-  }
-
-  // --- Обычные сообщения ---
-  const msg = req.body.message || req.body.edited_message;
-  if (!msg || !msg.text) return res.sendStatus(200);
-  
-  const chatId = msg.chat.id;
-  const text = msg.text.trim();
-
-  // Обработка своей даты (админ ввёл дату после нажатия 📆)
-  if (pendingCustomDate[chatId]) {
-    const userId = pendingCustomDate[chatId];
-    const dateMatch = text.match(/^\d{4}-\d{2}-\d{2}$/);
-    if (dateMatch) {
-      const db = loadDB();
-      const user = db.users.find(u => u.id === userId && u.role === 'partner');
-      if (user) {
-        user.status = 'approved';
-        user.expires_at = dateMatch[0];
-        saveDB(db);
-        fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/sendMessage', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: chatId,
-            text: '✅ <b>Доступ выдан!</b>\n📅 До: ' + dateMatch[0],
-            parse_mode: 'HTML',
-          }),
-        }).catch(() => {});
-      }
-    } else {
-      fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/sendMessage', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: '⚠️ Неверный формат. Введите дату как ГГГГ-ММ-ДД (например: 2026-10-29)',
-        }),
-      }).catch(() => {});
-    }
-    delete pendingCustomDate[chatId];
-    return res.sendStatus(200);
-  }
-  
-  if (text === '/start' || text === '/start@Sell_full_bot') {
-    fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/sendMessage', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: '🏭 *Фулфилмент — найдём склад для вашего товара*\n\nВыберите страну и город, оставьте заявку — мы подберём ближайший фулфилмент.\n\nНажмите кнопку ниже чтобы начать:',
-        parse_mode: 'Markdown',
-        reply_markup: JSON.stringify({
-          inline_keyboard: [[{
-            text: '🏭 Подобрать склад',
-            web_app: { url: (req.protocol + '://' + req.get('host')) }
-          }]]
-        })
-      }),
-    }).catch(() => {});
-  }
-  
-  res.sendStatus(200);
-});
-
-// ====== API: Маршруты фулфилментов ======
-
-// Список всех маршрутов (видят все авторизованные)
+// ====== Маршруты ======
 app.get('/api/routes', auth, (req, res) => {
   const db = loadDB();
   if (!db.routes) db.routes = [];
-  // Сортируем по дате — ближайшие сверху
   const routes = [...db.routes].sort((a, b) => a.date.localeCompare(b.date));
   res.json({ routes });
 });
 
-// Создать маршрут (только партнёр)
 app.post('/api/routes', auth, (req, res) => {
   if (req.user.role !== 'partner') return res.status(403).json({ error: 'Только для партнёров' });
-
   const { type, from, to, date, volume, note } = req.body;
   if (!type || !from || !to || !date) {
     return res.status(400).json({ error: 'Тип, откуда, куда и дата обязательны' });
   }
-
   const db = loadDB();
   if (!db.routes) db.routes = [];
   if (!db.nextRouteId) db.nextRouteId = 1;
 
   const route = {
-    id: db.nextRouteId++,
-    type, // 'vezem' или 'otvezti'
-    from, to, date,
-    volume: volume || '',
-    note: note || '',
+    id: db.nextRouteId++, type, from, to, date,
+    volume: volume || '', note: note || '',
     partner_id: req.user.id,
     partner_name: req.user.company || req.user.login,
     partner_contact: req.user.contact || '',
@@ -631,21 +406,179 @@ app.post('/api/routes', auth, (req, res) => {
   res.json({ ok: true, route });
 });
 
-// Удалить свой маршрут
 app.delete('/api/routes/:id', auth, (req, res) => {
   const db = loadDB();
   if (!db.routes) db.routes = [];
-
   const idx = db.routes.findIndex(r => r.id === +req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Маршрут не найден' });
-
   const route = db.routes[idx];
-  // Только создатель или админ может удалить
   if (route.partner_id !== req.user.id && req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Нет прав на удаление' });
   }
-
   db.routes.splice(idx, 1);
   saveDB(db);
   res.json({ ok: true });
+});
+
+// ====== Telegram Webhook ======
+const pendingCustomDate = {};
+
+app.post('/telegram-webhook', (req, res) => {
+  // Callback Query
+  const cb = req.body.callback_query;
+  if (cb) {
+    const msg = cb.message;
+    if (!msg) return res.sendStatus(200); // безопасно: нет сообщения = нечего редактировать
+
+    const chatId = msg.chat.id;
+    const msgId = msg.message_id;
+
+    // Убираем часики
+    tg('answerCallbackQuery', { callback_query_id: cb.id });
+
+    // ✅ Дать доступ → выбор срока
+    if (cb.data.startsWith('apr:')) {
+      const userId = cb.data.slice(4);
+      tg('editMessageText', {
+        chat_id: chatId, message_id: msgId, parse_mode: 'HTML',
+        text: msg.text + '\n\n📅 <b>На какой срок дать доступ?</b>',
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '1 месяц', callback_data: `dt:${userId}:1` }, { text: '2 месяца', callback_data: `dt:${userId}:2` }],
+            [{ text: '3 месяца', callback_data: `dt:${userId}:3` }, { text: '6 месяцев', callback_data: `dt:${userId}:6` }],
+            [{ text: '📆 Своя дата', callback_data: `dt:${userId}:custom` }],
+          ],
+        },
+      });
+    }
+
+    // ❌ Отказать
+    else if (cb.data.startsWith('rej:')) {
+      const userId = cb.data.slice(4);
+      const db = loadDB();
+      const user = db.users.find(u => u.id === userId && u.role === 'partner');
+      if (user) {
+        user.status = 'rejected';
+        saveDB(db);
+      }
+      tg('editMessageText', {
+        chat_id: chatId, message_id: msgId, parse_mode: 'HTML',
+        text: msg.text + '\n\n❌ <b>Отказано</b>',
+      });
+    }
+
+    // Дата: предустановленная
+    else if (cb.data.startsWith('dt:') && !cb.data.endsWith(':custom')) {
+      const parts = cb.data.slice(3).split(':');
+      const userId = parts[0];
+      const months = parseInt(parts[1]);
+      const db = loadDB();
+      const user = db.users.find(u => u.id === userId && u.role === 'partner');
+      if (user) {
+        const d = new Date(); d.setMonth(d.getMonth() + months);
+        user.status = 'approved';
+        user.expires_at = d.toISOString().slice(0, 10);
+        saveDB(db);
+        tg('editMessageText', {
+          chat_id: chatId, message_id: msgId, parse_mode: 'HTML',
+          text: msg.text + `\n\n✅ <b>Доступ выдан!</b>\n📅 До: ${user.expires_at}`,
+        });
+      }
+      delete pendingCustomDate[chatId];
+    }
+
+    // Дата: своя
+    else if (cb.data.endsWith(':custom')) {
+      const userId = cb.data.slice(3).split(':')[0];
+      pendingCustomDate[chatId] = userId;
+      tg('editMessageText', {
+        chat_id: chatId, message_id: msgId, parse_mode: 'HTML',
+        text: msg.text + '\n\n📆 <b>Введите дату в формате ГГГГ-ММ-ДД</b>\n<i>Например: 2026-10-29</i>',
+      });
+    }
+
+    return res.sendStatus(200);
+  }
+
+  // Обычное сообщение
+  const m = req.body.message || req.body.edited_message;
+  if (!m || !m.text) return res.sendStatus(200);
+
+  const chatId = m.chat.id;
+  const text = m.text.trim();
+
+  // Ждём дату от админа
+  if (pendingCustomDate[chatId]) {
+    const userId = pendingCustomDate[chatId];
+    const match = text.match(/^\d{4}-\d{2}-\d{2}$/);
+    if (match) {
+      const db = loadDB();
+      const user = db.users.find(u => u.id === userId && u.role === 'partner');
+      if (user) {
+        user.status = 'approved';
+        user.expires_at = match[0];
+        saveDB(db);
+        tg('sendMessage', { chat_id: chatId, parse_mode: 'HTML', text: `✅ <b>Доступ выдан!</b>\n📅 До: ${match[0]}` });
+      }
+    } else {
+      tg('sendMessage', { chat_id: chatId, text: '⚠️ Неверный формат. Введите дату как ГГГГ-ММ-ДД (например: 2026-10-29)' });
+    }
+    delete pendingCustomDate[chatId];
+    return res.sendStatus(200);
+  }
+
+  // /start
+  if (text === '/start' || text === '/start@Sell_full_bot') {
+    const host = req.get('host');
+    const proto = req.protocol || 'https';
+    tg('sendMessage', {
+      chat_id: chatId, parse_mode: 'Markdown',
+      text: '🏭 *Фулфилмент — найдём склад для вашего товара*\n\nВыберите страну и город, оставьте заявку — мы подберём ближайший фулфилмент.\n\nНажмите кнопку ниже чтобы начать:',
+      reply_markup: {
+        inline_keyboard: [[{ text: '🏭 Подобрать склад', web_app: { url: `${proto}://${host}` } }]],
+      },
+    });
+  }
+
+  res.sendStatus(200);
+});
+
+// ====== Статические страницы ======
+app.get('/admin', (_, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+app.get('/partner', (_, res) => res.sendFile(path.join(__dirname, 'public', 'partner.html')));
+app.get('/login', (_, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
+app.get('/register', (_, res) => res.sendFile(path.join(__dirname, 'public', 'register.html')));
+
+// ====== Static files + SPA fallback (ПОСЛЕ всех API роутов) ======
+const staticDir = path.join(__dirname, 'public');
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/')) return next();
+  const filePath = path.join(staticDir, req.path === '/' ? 'index.html' : req.path);
+  try {
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      return res.sendFile(filePath);
+    }
+  } catch (_) {}
+  const indexPath = path.join(staticDir, 'index.html');
+  if (fs.existsSync(indexPath)) return res.sendFile(indexPath);
+  next();
+});
+
+// ====== Error handler ======
+app.use((err, _req, res, _next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT:', err);
+});
+
+process.on('unhandledRejection', (err) => {
+  console.error('UNHANDLED REJECTION:', err);
+});
+
+app.listen(PORT, () => {
+  console.log(`Сервер: http://localhost:${PORT}`);
+  console.log(`Админ: admin / admin-secret-2026`);
 });
