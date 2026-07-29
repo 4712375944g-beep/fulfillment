@@ -59,7 +59,11 @@ td{padding:6px 8px;border-bottom:1px solid #1a1a1a;color:#ccc}
   <div id="countries">
     <h2>🌍 Выберите страну</h2>
     <p class="sub">Подберём склад фулфилмента</p>
-    <div id="country-list">Загрузка...</div>
+    <div id="country-list"><div class=card onclick="pickCountry('Россия')"><div class=flag style="background:#222;border-radius:6px;padding:6px 8px;font-weight:700;color:#fff">RU</div><div><div class=name>Россия</div><div class=info>87 городов</div></div></div>
+<div class=card onclick="pickCountry('Китай')"><div class=flag style="background:#222;border-radius:6px;padding:6px 8px;font-weight:700;color:#ff4444">CN</div><div><div class=name>Китай</div><div class=info>7 городов</div></div></div>
+<div class=card onclick="pickCountry('Казахстан')"><div class=flag style="background:#222;border-radius:6px;padding:6px 8px;font-weight:700;color:#00bcd4">KZ</div><div><div class=name>Казахстан</div><div class=info>2 городов</div></div></div>
+<div class=card onclick="pickCountry('Киргизия')"><div class=flag style="background:#222;border-radius:6px;padding:6px 8px;font-weight:700;color:#ff4444">KG</div><div><div class=name>Киргизия</div><div class=info>1 городов</div></div></div>
+<div class=card onclick="pickCountry('Армения')"><div class=flag style="background:#222;border-radius:6px;padding:6px 8px;font-weight:700;color:#ff9800">AM</div><div><div class=name>Армения</div><div class=info>1 городов</div></div></div></div>
   </div>
   <div id="cities" class="hidden">
     <button class="back" onclick="showStep('countries')">← Назад</button>
