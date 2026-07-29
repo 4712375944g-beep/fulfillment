@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SellFull</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: sans-serif; background:#1c1c1c; color:#fff; padding:20px; text-align:center; }
+    h2 { color:#4da3ff; margin-bottom:10px; }
+    p { color:#aaa; font-size:14px; }
+  </style>
+</head>
+<body>
+  <h2>🏭 SellFull</h2>
+  <p>Фулфилмент загружается...</p>
+  <script>
+    if (window.Telegram && window.Telegram.WebApp) {
+      window.Telegram.WebApp.ready();
+      document.querySelector('p').textContent = '✅ Mini App работает! Версия: ' + window.Telegram.WebApp.version;
+    } else {
+      document.querySelector('p').textContent = '⚠️ Telegram WebApp API не найден';
+    }
+  </script>
+</body>
+</html>
