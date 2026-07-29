@@ -12,7 +12,7 @@ h2{color:#4da3ff;margin-bottom:8px}
 .sub{color:#999;font-size:13px;margin-bottom:12px}
 .card{background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:14px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:12px}
 .card:active{background:#2a2a2a}
-.flag{font-size:28px}
+.flag{font-size:24px;width:40px;text-align:center}
 .name{font-size:16px;font-weight:600}
 .info{font-size:12px;color:#777}
 .back{color:#4da3ff;font-size:14px;background:none;border:none;padding:0;margin-bottom:8px;cursor:pointer}
@@ -102,114 +102,23 @@ td{padding:6px 8px;border-bottom:1px solid #1a1a1a;color:#ccc}
 
 <script>
 try{var t=window.Telegram&&window.Telegram.WebApp;if(t){t.ready();t.expand()}}catch(e){}
+
 // ==== ГОРОДА ====
-var citiesData=[
-["msk","Москва",["Север","Юг","Запад","Восток"],"Россия"],
-["spb","Санкт-Петербург",null,"Россия"],
-["nsk","Новосибирск",null,"Россия"],
-["ekb","Екатеринбург",null,"Россия"],
-["kazan","Казань",null,"Россия"],
-["nn","Нижний Новгород",null,"Россия"],
-["chelyabinsk","Челябинск",null,"Россия"],
-["krasnoyarsk","Красноярск",null,"Россия"],
-["samara","Самара",null,"Россия"],
-["ufa","Уфа",null,"Россия"],
-["rostov","Ростов-на-Дону",null,"Россия"],
-["omsk","Омск",null,"Россия"],
-["krasnodar","Краснодар",null,"Россия"],
-["voronezh","Воронеж",null,"Россия"],
-["volgograd","Волгоград",null,"Россия"],
-["perm","Пермь",null,"Россия"],
-["saratov","Саратов",null,"Россия"],
-["tyumen","Тюмень",null,"Россия"],
-["tolyatti","Тольятти",null,"Россия"],
-["izhevsk","Ижевск",null,"Россия"],
-["barnaul","Барнаул",null,"Россия"],
-["ulyanovsk","Ульяновск",null,"Россия"],
-["irkutsk","Иркутск",null,"Россия"],
-["khabarovsk","Хабаровск",null,"Россия"],
-["yaroslavl","Ярославль",null,"Россия"],
-["vladivostok","Владивосток",null,"Россия"],
-["makhachkala","Махачкала",null,"Россия"],
-["tomsk","Томск",null,"Россия"],
-["orenburg","Оренбург",null,"Россия"],
-["kemerovo","Кемерово",null,"Россия"],
-["novokuznetsk","Новокузнецк",null,"Россия"],
-["ryazan","Рязань",null,"Россия"],
-["astrahan","Астрахань",null,"Россия"],
-["nabchelny","Набережные Челны",null,"Россия"],
-["penza","Пенза",null,"Россия"],
-["kirov","Киров",null,"Россия"],
-["lipetsk","Липецк",null,"Россия"],
-["cheboksary","Чебоксары",null,"Россия"],
-["kaliningrad","Калининград",null,"Россия"],
-["tula","Тула",null,"Россия"],
-["stavropol","Ставрополь",null,"Россия"],
-["kursk","Курск",null,"Россия"],
-["ulanude","Улан-Удэ",null,"Россия"],
-["sochi","Сочи",null,"Россия"],
-["tver","Тверь",null,"Россия"],
-["magnitogorsk","Магнитогорск",null,"Россия"],
-["ivanovo","Иваново",null,"Россия"],
-["bryansk","Брянск",null,"Россия"],
-["belgorod","Белгород",null,"Россия"],
-["surgut","Сургут",null,"Россия"],
-["vladimir","Владимир",null,"Россия"],
-["chita","Чита",null,"Россия"],
-["arhangelsk","Архангельск",null,"Россия"],
-["simferopol","Симферополь",null,"Россия"],
-["smolensk","Смоленск",null,"Россия"],
-["kurgan","Курган",null,"Россия"],
-["kaluga","Калуга",null,"Россия"],
-["orel","Орёл",null,"Россия"],
-["vologda","Вологда",null,"Россия"],
-["syktyvkar","Сыктывкар",null,"Россия"],
-["surgut","Сургут",null,"Россия"],
-["saransk","Саранск",null,"Россия"],
-["tambov","Тамбов",null,"Россия"],
-["petrozavodsk","Петрозаводск",null,"Россия"],
-["kostroma","Кострома",null,"Россия"],
-["nizhnevartovsk","Нижневартовск",null,"Россия"],
-["novorossiysk","Новороссийск",null,"Россия"],
-["yakutsk","Якутск",null,"Россия"],
-["balashiha","Балашиха",null,"Россия"],
-["komsomolsk","Комсомольск-на-Амуре",null,"Россия"],
-["sevastopol","Севастополь",null,"Россия"],
-["nalchik","Нальчик",null,"Россия"],
-["pskov","Псков",null,"Россия"],
-["maykop","Майкоп",null,"Россия"],
-["cherkessk","Черкесск",null,"Россия"],
-["petropavlovsk","Петропавловск-Камчатский",null,"Россия"],
-["abakan","Абакан",null,"Россия"],
-["norilsk","Норильск",null,"Россия"],
-["elista","Элиста",null,"Россия"],
-["yuzhnosah","Южно-Сахалинск",null,"Россия"],
-["anadyr","Анадырь",null,"Россия"],
-["birobidzhan","Биробиджан",null,"Россия"],
-["blagoveshchensk","Благовещенск",null,"Россия"],
-["vladikavkaz","Владикавказ",null,"Россия"],
-["gornoaltaysk","Горно-Алтайск",null,"Россия"],
-["grozny","Грозный",null,"Россия"],
-["yoshkarola","Йошкар-Ола",null,"Россия"],
-["kyzyl","Кызыл",null,"Россия"],
-["magadan","Магадан",null,"Россия"],
-["murmansk","Мурманск",null,"Россия"],
-["nalchik2","Назрань",null,"Россия"],
-["novgorod","Великий Новгород",null,"Россия"]
-].map(function(x){return{key:x[0],name:x[1],zones:x[2],country:x[3]}});
+var citiesData=[["msk","Москва",["Север","Юг","Запад","Восток"],"Россия"],["spb","Санкт-Петербург",null,"Россия"],["nsk","Новосибирск",null,"Россия"],["ekb","Екатеринбург",null,"Россия"],["kazan","Казань",null,"Россия"],["nn","Нижний Новгород",null,"Россия"],["chelyabinsk","Челябинск",null,"Россия"],["krasnoyarsk","Красноярск",null,"Россия"],["samara","Самара",null,"Россия"],["ufa","Уфа",null,"Россия"],["rostov","Ростов-на-Дону",null,"Россия"],["omsk","Омск",null,"Россия"],["krasnodar","Краснодар",null,"Россия"],["voronezh","Воронеж",null,"Россия"],["volgograd","Волгоград",null,"Россия"],["perm","Пермь",null,"Россия"],["saratov","Саратов",null,"Россия"],["tyumen","Тюмень",null,"Россия"],["tolyatti","Тольятти",null,"Россия"],["izhevsk","Ижевск",null,"Россия"],["barnaul","Барнаул",null,"Россия"],["ulyanovsk","Ульяновск",null,"Россия"],["irkutsk","Иркутск",null,"Россия"],["khabarovsk","Хабаровск",null,"Россия"],["yaroslavl","Ярославль",null,"Россия"],["vladivostok","Владивосток",null,"Россия"],["makhachkala","Махачкала",null,"Россия"],["tomsk","Томск",null,"Россия"],["orenburg","Оренбург",null,"Россия"],["kemerovo","Кемерово",null,"Россия"],["novokuznetsk","Новокузнецк",null,"Россия"],["ryazan","Рязань",null,"Россия"],["astrahan","Астрахань",null,"Россия"],["nabchelny","Набережные Челны",null,"Россия"],["penza","Пенза",null,"Россия"],["kirov","Киров",null,"Россия"],["lipetsk","Липецк",null,"Россия"],["cheboksary","Чебоксары",null,"Россия"],["kaliningrad","Калининград",null,"Россия"],["tula","Тула",null,"Россия"],["stavropol","Ставрополь",null,"Россия"],["kursk","Курск",null,"Россия"],["ulanude","Улан-Удэ",null,"Россия"],["sochi","Сочи",null,"Россия"],["tver","Тверь",null,"Россия"],["magnitogorsk","Магнитогорск",null,"Россия"],["ivanovo","Иваново",null,"Россия"],["bryansk","Брянск",null,"Россия"],["belgorod","Белгород",null,"Россия"],["surgut","Сургут",null,"Россия"],["vladimir","Владимир",null,"Россия"],["chita","Чита",null,"Россия"],["arhangelsk","Архангельск",null,"Россия"],["simferopol","Симферополь",null,"Россия"],["smolensk","Смоленск",null,"Россия"],["kurgan","Курган",null,"Россия"],["kaluga","Калуга",null,"Россия"],["orel","Орёл",null,"Россия"],["vologda","Вологда",null,"Россия"],["syktyvkar","Сыктывкар",null,"Россия"],["saransk","Саранск",null,"Россия"],["tambov","Тамбов",null,"Россия"],["petrozavodsk","Петрозаводск",null,"Россия"],["kostroma","Кострома",null,"Россия"],["nizhnevartovsk","Нижневартовск",null,"Россия"],["novorossiysk","Новороссийск",null,"Россия"],["yakutsk","Якутск",null,"Россия"],["balashiha","Балашиха",null,"Россия"],["komsomolsk","Комсомольск-на-Амуре",null,"Россия"],["sevastopol","Севастополь",null,"Россия"],["nalchik","Нальчик",null,"Россия"],["pskov","Псков",null,"Россия"],["maykop","Майкоп",null,"Россия"],["cherkessk","Черкесск",null,"Россия"],["petropavlovsk","Петропавловск-Камчатский",null,"Россия"],["abakan","Абакан",null,"Россия"],["norilsk","Норильск",null,"Россия"],["elista","Элиста",null,"Россия"],["yuzhnosah","Южно-Сахалинск",null,"Россия"],["anadyr","Анадырь",null,"Россия"],["birobidzhan","Биробиджан",null,"Россия"],["blagoveshchensk","Благовещенск",null,"Россия"],["vladikavkaz","Владикавказ",null,"Россия"],["gornoaltaysk","Горно-Алтайск",null,"Россия"],["grozny","Грозный",null,"Россия"],["yoshkarola","Йошкар-Ола",null,"Россия"],["kyzyl","Кызыл",null,"Россия"],["magadan","Магадан",null,"Россия"],["murmansk","Мурманск",null,"Россия"],["nalchik2","Назрань",null,"Россия"],["novgorod","Великий Новгород",null,"Россия"]].map(function(x){return{key:x[0],name:x[1],zones:x[2],country:x[3]}});
 
 var country=null,city=null,zone=null,method="FBO";
-var COUNTRIES=[{name:"Россия",flag:"🇷🇺"},{name:"Китай",flag:"🇨🇳"},{name:"Казахстан",flag:"🇰🇿"},{name:"Киргизия",flag:"🇰🇬"},{name:"Армения",flag:"🇦🇲"}];
+var COUNTRIES=[{name:"Россия",flag:"RU"},{name:"Китай",flag:"CN"},{name:"Казахстан",flag:"KZ"},{name:"Киргизия",flag:"KG"},{name:"Армения",flag:"AM"}];
 
 (function(){
   var h="";
   COUNTRIES.forEach(function(c){
     var n=citiesData.filter(function(x){return x.country===c.name}).length;
-    h+='<div class=card onclick="pickCountry(\''+c.name+'\')"><span class=flag>'+c.flag+'</span><div><div class=name>'+c.name+'</div><div class=info>'+n+' городов</div></div></div>';
+    h+='<div class=card onclick="pickCountry(\''+c.name+'\')"><div class=flag style="background:#222;border-radius:6px;padding:6px 8px;font-weight:700;color:'+getFlagColor(c.flag)+'">'+c.flag+'</div><div><div class=name>'+c.name+'</div><div class=info>'+n+' городов</div></div></div>';
   });
   document.getElementById("country-list").innerHTML=h;
 })();
 
+function getFlagColor(f){var m={RU:"#fff",CN:"#ff4444",KZ:"#00bcd4",KG:"#ff4444",AM:"#ff9800"};return m[f]||"#888"}
 function pickCountry(name){country=name;filterCities("");showStep("cities")}
 function filterCities(q){
   q=(q||"").toLowerCase();
