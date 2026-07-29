@@ -581,4 +581,133 @@ process.on('unhandledRejection', (err) => {
 app.listen(PORT, () => {
   console.log(`Сервер: http://localhost:${PORT}`);
   console.log(`Админ: admin / admin-secret-2026`);
+  console.log(`Режим бота: polling (POST заблокирован Railway)`);
+  startPolling();
 });
+
+// ====== Polling mode (вместо вебхука — Railway блокирует POST) ======
+let lastUpdateId = 0;
+
+async function startPolling() {
+  console.log('Polling started...');
+  while (true) {
+    try {
+      const r = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${lastUpdateId + 1}&timeout=30`);
+      const d = await r.json();
+      if (d.ok && d.result.length) {
+        for (const u of d.result) {
+          lastUpdateId = u.update_id;
+          handleUpdate(u);
+        }
+      }
+    } catch (e) { console.error('Poll error:', e.message); }
+    await new Promise(r => setTimeout(r, 500));
+  }
+}
+
+function handleUpdate(u) {
+  // Callback query (inline buttons)
+  if (u.callback_query) return handleCallbackQuery(u.callback_query);
+  // Message
+  const m = u.message || u.edited_message;
+  if (!m || !m.text) return;
+  handleMessage(m);
+}
+
+function handleCallbackQuery(cb) {
+  const msg = cb.message;
+  if (!msg) return;
+
+  const chatId = msg.chat.id;
+  const msgId = msg.message_id;
+
+  tg('answerCallbackQuery', { callback_query_id: cb.id });
+
+  if (cb.data.startsWith('apr:')) {
+    const userId = cb.data.slice(4);
+    tg('editMessageText', {
+      chat_id: chatId, message_id: msgId, parse_mode: 'HTML',
+      text: (msg.text || '') + '\n\n📅 <b>На какой срок дать доступ?</b>',
+      reply_markup: JSON.stringify({
+        inline_keyboard: [
+          [{ text: '1 месяц', callback_data: 'dt:' + userId + ':1' }, { text: '2 месяца', callback_data: 'dt:' + userId + ':2' }],
+          [{ text: '3 месяца', callback_data: 'dt:' + userId + ':3' }, { text: '6 месяцев', callback_data: 'dt:' + userId + ':6' }],
+          [{ text: '📆 Своя дата', callback_data: 'dt:' + userId + ':custom' }],
+        ],
+      }),
+    });
+  }
+  else if (cb.data.startsWith('rej:')) {
+    const userId = cb.data.slice(4);
+    const db = loadDB();
+    const user = db.users.find(u => u.id === userId && u.role === 'partner');
+    if (user) { user.status = 'rejected'; saveDB(db); }
+    tg('editMessageText', {
+      chat_id: chatId, message_id: msgId, parse_mode: 'HTML',
+      text: (msg.text || '') + '\n\n❌ <b>Отказано</b>',
+    });
+  }
+  else if (cb.data.startsWith('dt:') && !cb.data.endsWith(':custom')) {
+    const parts = cb.data.slice(3).split(':');
+    const userId = parts[0];
+    const months = parseInt(parts[1]);
+    const db = loadDB();
+    const user = db.users.find(u => u.id === userId && u.role === 'partner');
+    if (user) {
+      const d = new Date(); d.setMonth(d.getMonth() + months);
+      user.status = 'approved';
+      user.expires_at = d.toISOString().slice(0, 10);
+      saveDB(db);
+      tg('editMessageText', {
+        chat_id: chatId, message_id: msgId, parse_mode: 'HTML',
+        text: (msg.text || '') + '\n\n✅ <b>Доступ выдан!</b>\n📅 До: ' + user.expires_at,
+      });
+    }
+    delete pendingCustomDate[chatId];
+  }
+  else if (cb.data.endsWith(':custom')) {
+    const userId = cb.data.slice(3).split(':')[0];
+    pendingCustomDate[chatId] = userId;
+    tg('editMessageText', {
+      chat_id: chatId, message_id: msgId, parse_mode: 'HTML',
+      text: (msg.text || '') + '\n\n📆 <b>Введите дату в формате ГГГГ-ММ-ДД</b>\n<i>Например: 2026-10-29</i>',
+    });
+  }
+}
+
+function handleMessage(m) {
+  const chatId = m.chat.id;
+  const text = m.text.trim();
+
+  // Ждём дату от админа
+  if (pendingCustomDate[chatId]) {
+    const userId = pendingCustomDate[chatId];
+    const match = text.match(/^\d{4}-\d{2}-\d{2}$/);
+    if (match) {
+      const db = loadDB();
+      const user = db.users.find(u => u.id === userId && u.role === 'partner');
+      if (user) {
+        user.status = 'approved';
+        user.expires_at = match[0];
+        saveDB(db);
+        tg('sendMessage', { chat_id: chatId, parse_mode: 'HTML', text: '✅ <b>Доступ выдан!</b>\n📅 До: ' + match[0] });
+      }
+    } else {
+      tg('sendMessage', { chat_id: chatId, text: '⚠️ Неверный формат. Введите дату как ГГГГ-ММ-ДД (например: 2026-10-29)' });
+    }
+    delete pendingCustomDate[chatId];
+    return;
+  }
+
+  // /start
+  if (text === '/start' || text === '/start@Sell_full_bot') {
+    const host = process.env.RAILWAY_PUBLIC_DOMAIN || 'fulfillment-production-26aa.up.railway.app';
+    tg('sendMessage', {
+      chat_id: chatId, parse_mode: 'Markdown',
+      text: '🏭 *Фулфилмент — найдём склад для вашего товара*\n\nВыберите страну и город, оставьте заявку — мы подберём ближайший фулфилмент.\n\nНажмите кнопку ниже чтобы начать:',
+      reply_markup: JSON.stringify({
+        inline_keyboard: [[{ text: '🏭 Подобрать склад', web_app: { url: 'https://' + host } }]],
+      }),
+    });
+  }
+}
