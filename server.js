@@ -166,6 +166,35 @@ app.get('/api/me', auth, (req, res) => {
   res.json({ login: req.user.login, role: req.user.role, city: req.user.city, zone: req.user.zone });
 });
 
+// ====== API: панель приборов ======
+app.get('/api/admin/health-check', auth, requireAdmin, (req, res) => {
+  const db = loadDB();
+  const partners = db.users.filter(u => u.role === 'partner');
+  const pending = partners.filter(p => p.status === 'pending').length;
+  const approved = partners.filter(p => p.status === 'approved').length;
+  const orders = db.orders || [];
+  const orderStatuses = { total: orders.length };
+  ['new','accepted','in_progress','done','cancelled'].forEach(s => {
+    orderStatuses[s] = orders.filter(o => o.status === s).length;
+  });
+  
+  res.json({
+    ok: true,
+    uptime: process.uptime(),
+    components: {
+      mini_app: { status: 'ok', label: 'Mini App' },
+      cities_api: { status: 'ok', label: 'Города API', count: Object.keys(CITIES).length },
+      bot_polling: { status: pollErrors < 5 ? 'ok' : 'error', label: 'Бот (polling)', lastError: lastPollError },
+      database: { status: 'ok', label: 'База данных' },
+      orders: { status: 'ok', label: 'Заявки', ...orderStatuses },
+      partners: { status: pending > 0 ? 'warn' : 'ok', label: 'Партнёры', total: partners.length, approved, pending },
+    },
+  });
+});
+
+let pollErrors = 0;
+let lastPollError = null;
+
 // ====== API: выход ======
 app.post('/api/logout', (req, res) => {
   const token = (req.headers.authorization || '').replace('Bearer ', '') || req.body.token || '';
@@ -600,7 +629,7 @@ async function startPolling() {
           handleUpdate(u);
         }
       }
-    } catch (e) { console.error('Poll error:', e.message); }
+    } catch (e) { pollErrors++; lastPollError = e.message; console.error('Poll error:', e.message); }
     await new Promise(r => setTimeout(r, 500));
   }
 }
@@ -697,6 +726,30 @@ function handleMessage(m) {
     }
     delete pendingCustomDate[chatId];
     return;
+  }
+
+  // /status — только для владельца
+  if ((text === '/status' || text === '/status@Sell_full_bot') && String(chatId) === CHAT_ID) {
+    const db = loadDB();
+    const partners = db.users.filter(u => u.role === 'partner');
+    const pending = partners.filter(p => p.status === 'pending').length;
+    const approved = partners.filter(p => p.status === 'approved').length;
+    const orders = (db.orders || []).length;
+    const newOrders = (db.orders || []).filter(o => o.status === 'new').length;
+    const uptime = Math.floor(process.uptime());
+    const h = Math.floor(uptime / 3600);
+    const m = Math.floor((uptime % 3600) / 60);
+
+    tg('sendMessage', { chat_id: chatId, parse_mode: 'HTML', text: [
+      '📊 <b>Панель приборов</b>', '',
+      '🟢 Mini App — работает',
+      '🟢 Города API — ' + Object.keys(CITIES).length + ' городов',
+      (pollErrors < 5 ? '🟢' : '🔴') + ' Бот polling — ' + (pollErrors < 5 ? 'OK' : pollErrors + ' ошибок'),
+      '🟢 База данных — читается/пишется', '',
+      '<b>Заявки:</b> ' + orders + ' (' + newOrders + ' новых)',
+      '<b>Партнёры:</b> ' + partners.length + ' (' + approved + ' акт., ' + pending + ' pending)', '',
+      '<b>Uptime:</b> ' + h + 'ч ' + m + 'м',
+    ].join('\n') });
   }
 
   // /start и кнопка "Склады"

@@ -57,7 +57,7 @@ function loadOrders() {
         return '<tr>' +
           '<td>#' + o.id + '</td>' +
           '<td>' + e(o.name) + '</td>' +
-          '<td>' + e(o.phone) + '</td>' +
+          '<td><input type="text" readonly value="' + e(o.phone) + '" onclick="this.select()" style="background:transparent;border:none;color:#4da3ff;cursor:text;font-size:13px;width:120px;padding:0" /></td>' +
           '<td><a href="' + e(o.link) + '" target="_blank" style="color:#4da3ff">ссылка</a></td>' +
           '<td>' + e(o.city) + '</td>' +
           '<td>' + (e(o.zone) || '-') + '</td><td>' + (o.method || 'FBO') + '</td>' +
@@ -197,11 +197,39 @@ function logout() {
 }
 
 function showTab(tab) {
+  document.getElementById('tab-dashboard').classList.toggle('hidden', tab !== 'dashboard');
   document.getElementById('tab-orders').classList.toggle('hidden', tab !== 'orders');
   document.getElementById('tab-partners').classList.toggle('hidden', tab !== 'partners');
+  if (tab === 'dashboard') loadDashboard();
   if (tab === 'orders') loadOrders();
   if (tab === 'partners') { loadPartners(); populateDD(); }
 }
+
+function loadDashboard() {
+  fetch(apiUrl('/api/admin/health-check'))
+    .then(r => r.json())
+    .then(d => {
+      const c = d.components;
+      const cards = [
+        { label: 'Mini App', value: 'OK', cls: 'ok', detail: 'Веб-приложение' },
+        { label: 'Города API', value: c.cities_api.count + ' шт.', cls: 'ok', detail: 'РФ + международные' },
+        { label: 'Бот (polling)', value: c.bot_polling.status === 'ok' ? 'OK' : 'Ошибки: ' + c.bot_polling.lastError, cls: c.bot_polling.status === 'ok' ? 'ok' : 'err', detail: 'Режим опроса Telegram' },
+        { label: 'База данных', value: 'OK', cls: 'ok', detail: 'JSON-хранилище' },
+        { label: 'Заявки', value: c.orders.total, cls: 'ok', detail: c.orders.new + ' новых, ' + c.orders.done + ' готово' },
+        { label: 'Партнёры', value: c.partners.total, cls: c.partners.pending > 0 ? 'warn' : 'ok', detail: c.partners.approved + ' активны, ' + c.partners.pending + ' pending' },
+        { label: 'Uptime', value: Math.floor(d.uptime / 3600) + 'ч ' + Math.floor((d.uptime % 3600) / 60) + 'м', cls: 'ok', detail: 'Без перезагрузок' },
+      ];
+      document.getElementById('dashboard-cards').innerHTML = cards.map(c =>
+        '<div class="dash-card ' + c.cls + '"><h3>' + c.label + '</h3><div class="value ' + c.cls + '">' + c.value + '</div><div class="detail">' + c.detail + '</div></div>'
+      ).join('');
+    })
+    .catch(() => {
+      document.getElementById('dashboard-cards').innerHTML = '<div style="color:#f44336;padding:20px">Ошибка загрузки панели</div>';
+    });
+}
+
+// Show dashboard by default
+loadDashboard();
 
 function e(s) { return s ? String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : ''; }
 

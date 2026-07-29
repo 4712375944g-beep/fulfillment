@@ -5,6 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Админка — Фулфилмент</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    .dashboard { display:grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap:12px; margin:16px 0; }
+    .dash-card { background:#1c1c1c; border:1px solid #333; border-radius:12px; padding:16px; }
+    .dash-card h3 { font-size:14px; color:#888; margin-bottom:8px; }
+    .dash-card .value { font-size:28px; font-weight:700; }
+    .dash-card.ok { border-left:4px solid #4caf50; }
+    .dash-card.warn { border-left:4px solid #ff9800; }
+    .dash-card.err { border-left:4px solid #f44336; }
+    .dash-card .value.ok { color:#4caf50; }
+    .dash-card .value.warn { color:#ff9800; }
+    .dash-card .value.err { color:#f44336; }
+    .dash-card .detail { font-size:12px; color:#888; margin-top:4px; }
+    .hidden { display:none!important; }
+  </style>
 </head>
 <body class="admin-body">
   <div class="admin">
@@ -16,12 +30,18 @@
     <div class="stats" id="stats"></div>
 
     <div class="filters" style="margin-top:12px">
+      <button class="partners-btn" onclick="showTab('dashboard')">📊 Панель</button>
       <button class="partners-btn" onclick="showTab('orders')">📦 Заявки</button>
       <button class="partners-btn" style="background:#444" onclick="showTab('partners')">👥 Партнёры</button>
       <button class="export-btn" onclick="exportCsv()">📥 CSV</button>
     </div>
 
-    <div id="tab-orders">
+    <!-- Панель приборов -->
+    <div id="tab-dashboard">
+      <div class="dashboard" id="dashboard-cards"></div>
+    </div>
+
+    <div id="tab-orders" class="hidden">
       <div class="filters" style="margin-top:20px">
         <select id="filter-city" onchange="loadOrders()"><option value="">📍 Все города</option></select>
         <select id="filter-status" onchange="loadOrders()">
@@ -35,7 +55,7 @@
         <span style="color:#888;font-size:13px" id="order-count"></span>
       </div>
       <table>
-        <thead><tr><th>ID</th><th>Имя</th><th>Телефон</th><th>Ссылка</th><th>Город</th><th>Зона</th><th>Статус</th><th>Дата</th></tr></thead>
+        <thead><tr><th>ID</th><th>Имя</th><th>Телефон</th><th>Ссылка</th><th>Город</th><th>Зона</th><th>Способ</th><th>Статус</th><th>Дата</th></tr></thead>
         <tbody id="orders-table"></tbody>
       </table>
     </div>
