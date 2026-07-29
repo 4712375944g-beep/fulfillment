@@ -121,7 +121,14 @@ app.post('/api/register', (req, res) => {
   fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chat_id: CHAT_ID, parse_mode: 'HTML',
-      text: `🏭 <b>Новый партнёр (ожидает подтверждения)</b>\n\n📋 ${esc(company)}\n📍 ${city}${zone ? ' — ' + zone : ''}\n👤 ${esc(contact)}\n📞 ${esc(phone)}\n📧 ${esc(email)}` }),
+      text: `🏭 <b>Новый партнёр (ожидает подтверждения)</b>\n\n📋 ${esc(company)}\n📍 ${city}${zone ? ' — ' + zone : ''}\n👤 ${esc(contact)}\n📞 ${esc(phone)}\n📧 ${esc(email)}`,
+      reply_markup: JSON.stringify({
+        inline_keyboard: [[
+          { text: '✅ Дать доступ', callback_data: 'approve:' + user.id },
+          { text: '❌ Отказать', callback_data: 'reject:' + user.id },
+        ]]
+      }),
+    }),
   }).catch(() => {});
   res.json({ ok: true });
 });
@@ -411,12 +418,156 @@ function esc(s) {
 }
 
 // ====== Telegram Webhook ======
+const pendingCustomDate = {}; // chatId -> userId (ждём дату от админа)
+
 app.post('/telegram-webhook', (req, res) => {
+  // --- Callback Query (нажатие на inline-кнопку) ---
+  const cb = req.body.callback_query;
+  if (cb) {
+    const chatId = cb.message.chat.id;
+    const msgId = cb.message.message_id;
+    const data = cb.data;
+
+    // Ответ на callback — убираем "часики"
+    fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/answerCallbackQuery', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ callback_query_id: cb.id }),
+    }).catch(() => {});
+
+    // --- ✅ Дать доступ ---
+    if (data.startsWith('approve:')) {
+      const userId = data.split(':')[1];
+      // Показываем выбор срока
+      fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/editMessageText', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId, message_id: msgId,
+          text: cb.message.text + '\n\n📅 <b>На какой срок дать доступ?</b>',
+          parse_mode: 'HTML',
+          reply_markup: JSON.stringify({
+            inline_keyboard: [
+              [
+                { text: '1 месяц', callback_data: 'date:' + userId + ':1' },
+                { text: '2 месяца', callback_data: 'date:' + userId + ':2' },
+              ],
+              [
+                { text: '3 месяца', callback_data: 'date:' + userId + ':3' },
+                { text: '6 месяцев', callback_data: 'date:' + userId + ':6' },
+              ],
+              [
+                { text: '📆 Своя дата', callback_data: 'date:' + userId + ':custom' },
+              ],
+            ]
+          }),
+        }),
+      }).catch(() => {});
+    }
+
+    // --- ❌ Отказать ---
+    else if (data.startsWith('reject:')) {
+      const userId = data.split(':')[1];
+      const db = loadDB();
+      const user = db.users.find(u => u.id === userId && u.role === 'partner');
+      if (user) {
+        user.status = 'rejected';
+        saveDB(db);
+        fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/editMessageText', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId, message_id: msgId,
+            text: cb.message.text + '\n\n❌ <b>Отказано</b>',
+            parse_mode: 'HTML',
+          }),
+        }).catch(() => {});
+      }
+    }
+
+    // --- Выбор даты (предустановленная) ---
+    else if (data.startsWith('date:') && !data.endsWith(':custom')) {
+      const parts = data.split(':');
+      const userId = parts[1];
+      const months = parseInt(parts[2]);
+
+      const db = loadDB();
+      const user = db.users.find(u => u.id === userId && u.role === 'partner');
+      if (user) {
+        const expiresAt = new Date();
+        expiresAt.setMonth(expiresAt.getMonth() + months);
+        const expiresStr = expiresAt.toISOString().slice(0, 10);
+
+        user.status = 'approved';
+        user.expires_at = expiresStr;
+        saveDB(db);
+
+        fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/editMessageText', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId, message_id: msgId,
+            text: cb.message.text + '\n\n✅ <b>Доступ выдан!</b>\n📅 До: ' + expiresStr,
+            parse_mode: 'HTML',
+          }),
+        }).catch(() => {});
+      }
+      delete pendingCustomDate[chatId];
+    }
+
+    // --- Своя дата ---
+    else if (data.endsWith(':custom')) {
+      const userId = data.split(':')[1];
+      pendingCustomDate[chatId] = userId;
+
+      fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/editMessageText', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId, message_id: msgId,
+          text: cb.message.text + '\n\n📆 <b>Введите дату в чат в формате ГГГГ-ММ-ДД</b>\n<i>Например: 2026-10-29</i>',
+          parse_mode: 'HTML',
+        }),
+      }).catch(() => {});
+    }
+
+    return res.sendStatus(200);
+  }
+
+  // --- Обычные сообщения ---
   const msg = req.body.message || req.body.edited_message;
   if (!msg || !msg.text) return res.sendStatus(200);
   
   const chatId = msg.chat.id;
   const text = msg.text.trim();
+
+  // Обработка своей даты (админ ввёл дату после нажатия 📆)
+  if (pendingCustomDate[chatId]) {
+    const userId = pendingCustomDate[chatId];
+    const dateMatch = text.match(/^\d{4}-\d{2}-\d{2}$/);
+    if (dateMatch) {
+      const db = loadDB();
+      const user = db.users.find(u => u.id === userId && u.role === 'partner');
+      if (user) {
+        user.status = 'approved';
+        user.expires_at = dateMatch[0];
+        saveDB(db);
+        fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/sendMessage', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: '✅ <b>Доступ выдан!</b>\n📅 До: ' + dateMatch[0],
+            parse_mode: 'HTML',
+          }),
+        }).catch(() => {});
+      }
+    } else {
+      fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/sendMessage', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: '⚠️ Неверный формат. Введите дату как ГГГГ-ММ-ДД (например: 2026-10-29)',
+        }),
+      }).catch(() => {});
+    }
+    delete pendingCustomDate[chatId];
+    return res.sendStatus(200);
+  }
   
   if (text === '/start' || text === '/start@Sell_full_bot') {
     fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/sendMessage', {
