@@ -699,8 +699,8 @@ function handleMessage(m) {
     return;
   }
 
-  // /start
-  if (text === '/start' || text === '/start@Sell_full_bot') {
+  // /start и кнопка "Склады"
+  if (text === '/start' || text === '/start@Sell_full_bot' || text === 'Склады') {
     const host = process.env.RAILWAY_PUBLIC_DOMAIN || 'fulfillment-production-26aa.up.railway.app';
     tg('sendMessage', {
       chat_id: chatId, parse_mode: 'Markdown',
