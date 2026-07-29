@@ -3,201 +3,175 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Фулфилмент</title>
+  <title>SellFull</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#000;color:#fff}
-    .app{min-height:100vh}
-    .panel{max-width:100%;min-height:100vh;background:#111}
-    .panel-section{padding:20px}
-    .panel-section h2{font-size:18px;margin-bottom:4px;font-weight:600}
-    .subtitle{color:#aaa;font-size:13px;margin-bottom:16px}
-    .country-list,.zone-list,.city-list{display:flex;flex-direction:column;gap:10px}
-    .country-card,.city-card,.zone-card{background:#1c1c1c;border:1px solid #333;border-radius:12px;padding:14px;cursor:pointer}
-    .country-card:hover,.city-card:hover,.zone-card:hover{border-color:#4da3ff;background:#222}
-    .zone-card{border-left:4px solid #4da3ff}
-    .country-flag{font-size:32px}
-    .country-name{font-size:17px;font-weight:600}
-    .country-cities{font-size:12px;color:#888}
-    .city-card h3,.zone-card h3{font-size:16px;margin-bottom:2px}
-    .details{font-size:12px;color:#999}
-    .back-btn{background:none;border:none;color:#4da3ff;font-size:14px;cursor:pointer;padding:0;margin-bottom:12px}
-    .search-input{width:100%;background:#1c1c1c;border:1px solid #444;border-radius:10px;padding:11px 14px;color:#fff;font-size:15px;margin-bottom:14px}
-    .search-input:focus{outline:none;border-color:#4da3ff}
-    #order-form{display:flex;flex-direction:column;gap:12px;margin-top:14px}
-    #order-form label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:#ccc}
-    #order-form input,select{background:#1c1c1c;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#fff;font-size:15px}
-    #order-form input:focus,select:focus{outline:none;border-color:#4da3ff}
-    .submit-btn{background:#4da3ff;color:#fff;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px}
-    .submit-btn:disabled{background:#444;cursor:not-allowed}
-    .form-status{margin-top:14px;padding:12px;border-radius:8px;font-size:13px}
-    .form-status.success{background:#0d2a0d;border:1px solid #2d6a2d;color:#66bb6a}
-    .form-status.error{background:#2a0d0d;border:1px solid #6a2d2d;color:#ef5350}
-    .success-block{text-align:center;padding:30px 10px}
-    .success-title{font-size:22px;color:#4caf50;margin-bottom:8px}
-    .success-text{color:#aaa;font-size:14px;margin-bottom:24px;line-height:1.5}
-    .success-btn{display:inline-block;width:auto;padding:10px 32px}
-    .hidden{display:none!important}
-    .login-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.9);z-index:1000;display:flex;align-items:center;justify-content:center}
-    .login-box{background:#111;border:1px solid #2a2a2a;border-radius:16px;padding:28px;width:100%;max-width:340px}
-    .login-box h2{font-size:20px;margin-bottom:4px;text-align:center}
-    .login-box .sub{color:#888;font-size:13px;margin-bottom:18px;text-align:center}
-    .login-box label{display:block;font-size:13px;color:#ccc;margin-bottom:10px}
-    .login-box input{width:100%;background:#1c1c1c;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#fff;font-size:15px;margin-top:4px}
-    .login-box .btn{width:100%;background:#4da3ff;color:#fff;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px}
-    .login-box .err{color:#ef5350;font-size:13px;margin-top:10px;text-align:center}
-    .top-bar{position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:6px}
-    .top-btn{background:rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer}
-    .method-tabs{display:flex;gap:0;margin:0 0 20px;border-radius:10px;overflow:hidden;border:1px solid #333}
-    .method-tab{flex:1;padding:10px 0;text-align:center;font-size:14px;font-weight:600;cursor:pointer;background:#1c1c1c;color:#888;border:none}
-    .method-tab.active{background:#4da3ff;color:#fff}
-    table{width:100%;border-collapse:collapse;font-size:13px}
-    th{text-align:left;padding:10px 12px;border-bottom:2px solid #444;color:#aaa;font-weight:600}
-    td{padding:10px 12px;border-bottom:1px solid #222;color:#eee;vertical-align:middle}
-    .action-select{background:#000;border:1px solid #444;border-radius:6px;padding:4px 8px;color:#fff;font-size:12px;cursor:pointer}
-    .partner-card{background:#1c1c1c;border:1px solid #333;border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center}
-    .city-item{padding:10px 14px;color:#ccc;font-size:14px;cursor:pointer;border-radius:6px}
-    .city-item:hover{background:#333}
-    .ok{background:#0d2a0d;border:1px solid #2d6a2d;color:#66bb6a;padding:12px;border-radius:8px;font-size:13px;margin-top:12px}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0d0d0d;color:#e0e0e0;padding:16px}
+    h2{color:#4da3ff;margin-bottom:8px}
+    p.sub{color:#999;font-size:13px;margin-bottom:12px}
+    .card{background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:14px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:12px}
+    .card:active{background:#2a2a2a}
+    .flag{font-size:28px}
+    .name{font-size:16px;font-weight:600}
+    .info{font-size:12px;color:#777}
+    .back{color:#4da3ff;font-size:14px;background:none;border:none;padding:0;margin-bottom:8px;cursor:pointer}
+    input,select{width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:10px;color:#e0e0e0;font-size:15px;margin-bottom:8px}
+    .btn{width:100%;background:#4da3ff;color:#fff;border:none;border-radius:8px;padding:12px;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px}
+    .btn:active{opacity:0.8}
+    .hidden{display:none}
+    #status{padding:12px;border-radius:8px;margin-top:12px;font-size:13px}
+    #status.ok{background:#0a2a0a;color:#4caf50}
+    #status.err{background:#2a0a0a;color:#f44336}
+    .method-row{display:flex;gap:8px;margin-bottom:12px}
+    .method-row button{flex:1;padding:8px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#999;font-size:14px;cursor:pointer}
+    .method-row button.on{background:#4da3ff;color:#fff;border-color:#4da3ff}
   </style>
 </head>
 <body>
-  <div class="top-bar" id="top-bar">
-    <button class="top-btn" id="show-login-btn">Вход для партнёров</button>
-    <button class="top-btn hidden" id="logout-btn" onclick="doLogout()">🚪 Выйти</button>
+
+<div id="countries">
+  <h2>🌍 Выберите страну</h2>
+  <p class="sub">Подберём склад фулфилмента</p>
+  <div id="country-list">Загрузка...</div>
+</div>
+
+<div id="cities" class="hidden">
+  <button class="back" onclick="showStep('countries')">← Назад</button>
+  <h2>📍 Выберите город</h2>
+  <p class="sub">Введите название или выберите из списка</p>
+  <input type="text" placeholder="🔍 Поиск города..." oninput="filterCities(this.value)">
+  <div id="city-list"></div>
+</div>
+
+<div id="zones" class="hidden">
+  <button class="back" onclick="showStep('cities')">← Назад</button>
+  <h2>📍 Уточните район</h2>
+  <div id="zone-list"></div>
+</div>
+
+<div id="form" class="hidden">
+  <button class="back" onclick="showStep('zones')">← Назад</button>
+  <h2>📦 Заявка на фулфилмент</h2>
+  <p class="sub" id="form-addr"></p>
+  <div class="method-row">
+    <button class="on" data-m="FBO" onclick="setMethod('FBO',this)">📦 FBO</button>
+    <button data-m="FBS" onclick="setMethod('FBS',this)">🚚 FBS</button>
   </div>
+  <input type="text" id="order-name" placeholder="Ваше имя" required>
+  <input type="tel" id="order-phone" placeholder="Телефон" required>
+  <input type="text" id="order-link" placeholder="Ссылка на товар (WB)" required>
+  <button class="btn" onclick="submitOrder()">Отправить заявку</button>
+  <div id="status" class="hidden"></div>
+</div>
 
-  <div class="login-overlay hidden" id="login-overlay">
-    <div class="login-box" style="max-height:85vh;overflow-y:auto">
-      <div class="method-tabs" style="margin-bottom:20px">
-        <button class="method-tab active" id="tab-login" onclick="switchAuthTab('login')">Вход</button>
-        <button class="method-tab" id="tab-reg" onclick="switchAuthTab('reg')">Регистрация</button>
-      </div>
+<div id="success" class="hidden" style="text-align:center;padding-top:40px">
+  <h2 style="font-size:24px;color:#4caf50">✅ Заявка отправлена!</h2>
+  <p class="sub">Скоро с вами свяжется менеджер</p>
+  <button class="btn" onclick="resetForm()" style="width:200px;margin:20px auto">Новая заявка</button>
+</div>
 
-      <div id="auth-login-form">
-        <p class="sub">Войдите чтобы управлять заявками</p>
-        <label>Email <input type="text" id="login-email" placeholder="partner@company.ru"></label>
-        <label>Пароль <input type="password" id="login-pass" placeholder="••••••"></label>
-        <div class="err hidden" id="login-err"></div>
-        <button class="btn" id="login-btn">Войти</button>
-      </div>
+<script>
+// Init Telegram
+if (window.Telegram && window.Telegram.WebApp) {
+  window.Telegram.WebApp.ready();
+  window.Telegram.WebApp.expand();
+}
 
-      <div id="auth-reg-form" class="hidden">
-        <p class="sub">Заполните данные. После активации сможете войти.</p>
-        <label>Email <input type="text" id="reg-email" placeholder="partner@company.ru"></label>
-        <label>Пароль <input type="password" id="reg-pass" placeholder="••••••"></label>
-        <label>Компания <input type="text" id="reg-company" placeholder="ООО «Фулфилмент»"></label>
-        <label>Город <input type="text" id="reg-city-search" placeholder="Введите город..." autocomplete="off"></label>
-        <div class="city-list hidden" id="reg-city-dd" style="max-height:150px"></div>
-        <input type="hidden" id="reg-city-val">
-        <label>Контакт <input type="text" id="reg-contact" placeholder="Иван Иванов"></label>
-        <label>Телефон <input type="tel" id="reg-phone" placeholder="+7 999 123-45-67"></label>
-        <div class="err hidden" id="reg-err"></div>
-        <div class="ok hidden" id="reg-ok"></div>
-        <button class="btn" id="reg-btn">Зарегистрироваться</button>
-      </div>
+var citiesData = [], country = null, city = null, zone = null, method = "FBO";
+var COUNTRIES = [
+  {name:"Россия",flag:"🇷🇺"},{name:"Китай",flag:"🇨🇳"},{name:"Казахстан",flag:"🇰🇿"},
+  {name:"Киргизия",flag:"🇰🇬"},{name:"Армения",flag:"🇦🇲"}
+];
 
-      <button class="btn" style="background:transparent;border:1px solid #444;margin-top:8px" id="close-login">Отмена</button>
-    </div>
-  </div>
+fetch("/api/cities").then(function(r){return r.json()}).then(function(d){
+  citiesData = d;
+  var html = "";
+  COUNTRIES.forEach(function(c){
+    var n = citiesData.filter(function(x){return x.country===c.name}).length;
+    html += "<div class=card onclick='pickCountry(\""+c.name+"\")'><span class=flag>"+c.flag+"</span><div><div class=name>"+c.name+"</div><div class=info>"+n+" городов</div></div></div>";
+  });
+  document.getElementById("country-list").innerHTML = html || "Нет данных";
+});
 
-  <div class="app" id="main-app">
-    <div class="panel" id="panel">
-      <div id="client-panel">
-        <div class="panel-section" id="step-country">
-          <h2>🌍 Выберите страну</h2>
-          <p class="subtitle">Подберём склад фулфилмента</p>
-          <div class="country-list" id="country-list"></div>
-        </div>
-        <div class="panel-section hidden" id="step-city">
-          <button class="back-btn" id="city-back">← Назад</button>
-          <h2 id="city-title">📍 Выберите город</h2>
-          <p class="subtitle">Начните вводить или выберите из списка</p>
-          <input type="text" class="search-input" id="search-city" placeholder="🔍 Введите город..." autocomplete="off">
-          <div class="city-list" id="city-list"></div>
-        </div>
-        <div class="panel-section hidden" id="step-zone">
-          <button class="back-btn" id="zone-back">← Назад</button>
-          <h2 id="zone-title"></h2>
-          <p class="subtitle">Уточните район</p>
-          <div class="zone-list" id="zone-list"></div>
-        </div>
-        <div class="panel-section hidden" id="step-form">
-          <button class="back-btn" id="form-back">← Назад</button>
-          <h2 id="form-title">Заявка на фулфилмент</h2>
-          <p class="subtitle" id="form-subtitle"></p>
-          <div class="method-tabs">
-            <button class="method-tab active" id="method-fbo" onclick="setMethod('FBO')">📦 FBO</button>
-            <button class="method-tab" id="method-fbs" onclick="setMethod('FBS')">🚚 FBS</button>
-          </div>
-          <input type="hidden" name="method" id="form-method" value="FBO">
-          <form id="order-form">
-            <label>Имя <input type="text" name="name" placeholder="Иван Иванов" required></label>
-            <label>Телефон <input type="tel" name="phone" placeholder="+7 999 123-45-67" required></label>
-            <label>Ссылка на товар <input type="url" name="link" placeholder="https://wildberries.ru/catalog/..." required></label>
-            <input type="hidden" name="city" id="form-city">
-            <input type="hidden" name="zone" id="form-zone">
-            <button type="submit" class="submit-btn">Отправить заявку</button>
-          </form>
-          <div class="form-status hidden" id="form-status"></div>
-        </div>
-        <div class="panel-section hidden" id="step-success">
-          <div class="success-block">
-            <h2 class="success-title">Заявка отправлена!</h2>
-            <p class="success-text">Скоро с вами свяжется менеджер</p>
-            <button class="submit-btn success-btn" onclick="resetToStart()">Оставить ещё заявку</button>
-          </div>
-        </div>
-      </div>
+function pickCountry(name){
+  country = name;
+  document.getElementById("city-list").innerHTML = "";
+  filterCities("");
+  showStep("cities");
+}
 
-      <div id="partner-panel" class="hidden">
-        <div class="panel-section" style="padding-top:40px">
-          <div class="method-tabs" style="margin-bottom:16px">
-            <button class="method-tab active" id="partner-tab-orders" onclick="switchPartnerTab('orders')">📦 Заявки</button>
-            <button class="method-tab" id="partner-tab-routes" onclick="switchPartnerTab('routes')">🚛 Маршруты</button>
-          </div>
-          <p class="subtitle" id="partner-info"></p>
-          <div id="partner-orders-view">
-            <div id="partner-orders-table" style="margin-top:16px"></div>
-          </div>
-          <div id="partner-routes-view" class="hidden">
-            <div class="method-tabs" style="margin-bottom:16px">
-              <button class="method-tab active" id="route-tab-vezem" onclick="switchRouteType('vezem')">🚛 Везу</button>
-              <button class="method-tab" id="route-tab-otvezti" onclick="switchRouteType('otvezti')">📦 Отвезти</button>
-            </div>
-            <div id="routes-list" style="margin-bottom:16px"></div>
-            <button class="submit-btn" onclick="showRouteForm()" style="width:100%">+ Создать маршрут</button>
-            <div id="route-form-block" class="hidden" style="margin-top:16px;display:flex;flex-direction:column;gap:10px">
-              <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:#ccc">Откуда<input type="text" id="route-from" placeholder="Москва-Север" style="background:#1c1c1c;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#fff;font-size:15px;margin-top:4px"></label>
-              <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:#ccc">Куда<input type="text" id="route-to" placeholder="Казань" style="background:#1c1c1c;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#fff;font-size:15px;margin-top:4px"></label>
-              <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:#ccc">Дата<input type="date" id="route-date" style="background:#1c1c1c;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#fff;font-size:15px;margin-top:4px"></label>
-              <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:#ccc">Объём<input type="text" id="route-volume" placeholder="2 паллета / 3 короба" style="background:#1c1c1c;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#fff;font-size:15px;margin-top:4px"></label>
-              <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:#ccc">Примечание<input type="text" id="route-note" placeholder="Забрать до 14:00" style="background:#1c1c1c;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#fff;font-size:15px;margin-top:4px"></label>
-              <div style="display:flex;gap:10px;margin-top:4px">
-                <button class="submit-btn" onclick="createRoute()" style="flex:1">Сохранить</button>
-                <button class="submit-btn" onclick="hideRouteForm()" style="flex:1;background:#444">Отмена</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+function filterCities(q){
+  q = (q||"").toLowerCase();
+  var f = citiesData.filter(function(c){return c.country===country && c.name.toLowerCase().indexOf(q)>=0});
+  if(!f.length){ document.getElementById("city-list").innerHTML="<div class=info style='text-align:center;padding:20px'>Ничего не найдено</div>"; return; }
+  document.getElementById("city-list").innerHTML = f.map(function(c){
+    return "<div class=card onclick='pickCity("+JSON.stringify(c.key)+",\""+c.name+"\","+JSON.stringify(c.zones||null)+")'><div><div class=name>"+c.name+"</div><div class=info>"+(c.zones?c.zones.length+" зоны":"")+"</div></div></div>";
+  }).join("");
+}
 
-  <script>
-  (function(){
-    var t=window.Telegram&&window.Telegram.WebApp;
-    if(t){t.ready();t.expand()}
-    var role=localStorage.getItem('ff_role');
-    if(role==='partner'){
-      var cp=document.getElementById('client-panel');
-      var pp=document.getElementById('partner-panel');
-      if(cp)cp.classList.add('hidden');
-      if(pp)pp.classList.remove('hidden');
-    }
-  })();
-  </script>
-  <script src="app.js"></script>
+function pickCity(key,name,zones){
+  city = {key:key,name:name,zones:zones};
+  if(zones && zones.length){
+    zone = null;
+    document.getElementById("zone-list").innerHTML = zones.map(function(z){
+      return "<div class=card onclick='pickZone(\""+z+"\")'><div class=name>"+z+"</div><div class=info>"+name+"</div></div>";
+    }).join("");
+    showStep("zones");
+  } else {
+    zone = "";
+    showForm();
+  }
+}
+
+function pickZone(z){ zone=z; showForm(); }
+
+function showForm(){
+  document.getElementById("form-addr").textContent = city.name + (zone?(" — "+zone):"");
+  showStep("form");
+}
+
+function setMethod(m,el){
+  method=m;
+  document.querySelectorAll(".method-row button").forEach(function(b){b.classList.toggle("on",b===el)});
+}
+
+function submitOrder(){
+  var name = document.getElementById("order-name").value.trim();
+  var phone = document.getElementById("order-phone").value.trim();
+  var link = document.getElementById("order-link").value.trim();
+  if(!name||!phone||!link){ showStatus("Заполните все поля","err"); return; }
+  
+  var btn = document.querySelector("#form .btn");
+  btn.disabled = true; btn.textContent = "Отправка...";
+  
+  fetch("/api/order",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:name,phone:phone,link:link,city:city.key,zone:zone,method:method})})
+    .then(function(r){return r.json()})
+    .then(function(d){
+      if(d.ok){ showStep("success"); }
+      else { showStatus(d.error||"Ошибка","err"); btn.disabled=false; btn.textContent="Отправить заявку"; }
+    })
+    .catch(function(){ showStatus("Ошибка соединения","err"); btn.disabled=false; btn.textContent="Отправить заявку"; });
+}
+
+function showStatus(msg,cls){
+  var s=document.getElementById("status");
+  s.textContent=msg; s.className=cls; s.classList.remove("hidden");
+}
+
+function showStep(s){
+  ["countries","cities","zones","form","success"].forEach(function(id){document.getElementById(id).classList.add("hidden")});
+  document.getElementById(s).classList.remove("hidden");
+}
+
+function resetForm(){
+  document.getElementById("order-name").value="";
+  document.getElementById("order-phone").value="";
+  document.getElementById("order-link").value="";
+  document.getElementById("status").classList.add("hidden");
+  city=null;zone=null;country=null;
+  showStep("countries");
+}
+</script>
 </body>
 </html>
