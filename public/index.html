@@ -13,7 +13,7 @@ h2{color:#4da3ff;margin-bottom:8px}.sub{color:#999;font-size:13px;margin-bottom:
 .hid{display:none}.st{padding:12px;border-radius:8px;margin-top:12px;font-size:13px}
 .st.ok{background:#0a2a0a;color:#4caf50}.st.err{background:#2a0a0a;color:#f44336}
 .mr{display:flex;gap:8px;margin-bottom:12px}
-.mr button{flex:1;padding:8px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#999;font-size:14px;cursor:pointer}
+.mr button{flex:1;padding:8px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#999;font-size:13px;cursor:pointer}
 .mr button.on{background:#4da3ff;color:#fff;border-color:#4da3ff}
 .tr{display:flex;justify-content:flex-end;margin-bottom:12px}
 .ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.92);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
@@ -33,7 +33,7 @@ h2{color:#4da3ff;margin-bottom:8px}.sub{color:#999;font-size:13px;margin-bottom:
     <input class=inp id=le placeholder=Email>
     <input class=inp type=password id=lp placeholder=Пароль>
     <div class="st err hid" id=ler></div>
-    <button class=btn onclick="var e=document.getElementById('le').value.trim(),p=document.getElementById('lp').value;if(!e||!p)return;fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({login:e,password:p})}).then(r=>r.json()).then(d=>{if(d.ok){localStorage.setItem('ff_token',d.token);localStorage.setItem('ff_role',d.role);document.getElementById('ov').style.display='none';document.getElementById('co').classList.add('hid');document.getElementById('pp').classList.remove('hid');document.getElementById('li-btn').classList.add('hid');document.getElementById('lo-btn').classList.remove('hid');document.getElementById('pi').textContent=(d.user.city||'')+(d.user.zone?' — '+d.user.zone:'');LP()}else{var er=document.getElementById('ler');er.textContent=d.error||'Ошибка';er.classList.remove('hid')}})">Войти</button>
+    <button class=btn onclick="var e=document.getElementById('le').value.trim(),p=document.getElementById('lp').value;if(!e||!p)return;fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({login:e,password:p})}).then(function(r){return r.json()}).then(function(d){if(d.ok){localStorage.setItem('ff_token',d.token);localStorage.setItem('ff_role',d.role);document.getElementById('ov').style.display='none';showPP(d.user)}else{var er=document.getElementById('ler');er.textContent=d.error||'Ошибка';er.classList.remove('hid')}})">Войти</button>
     <button class=btn style=background:transparent;border:1px solid #444;margin-top:4px onclick="document.getElementById('ov').style.display='none'">Отмена</button>
   </div>
 </div>
@@ -41,24 +41,68 @@ h2{color:#4da3ff;margin-bottom:8px}.sub{color:#999;font-size:13px;margin-bottom:
 <!-- СТРАНЫ -->
 <div id=co>
 <h2>🌍 Выберите страну</h2><p class=sub>Подберём склад фулфилмента</p>
+<div class=card onclick="document.getElementById('co').classList.add('hid');document.getElementById('ci').classList.remove('hid');document.getElementById('sq').value='';var cs=document.querySelectorAll('.ci-card');for(var i=0;i<cs.length;i++)cs[i].style.display=cs[i].getAttribute('data-c')==='Россия'?'':'none'"><span class=flag>🇷🇺</span><div><div class=name>Россия</div><div class=info>87 городов</div></div></div>
+<div class=card onclick="document.getElementById('co').classList.add('hid');document.getElementById('ci').classList.remove('hid');document.getElementById('sq').value='';var cs=document.querySelectorAll('.ci-card');for(var i=0;i<cs.length;i++)cs[i].style.display=cs[i].getAttribute('data-c')==='Китай'?'':'none'"><span class=flag>🇨🇳</span><div><div class=name>Китай</div><div class=info>7 городов</div></div></div>
+<div class=card onclick="document.getElementById('co').classList.add('hid');document.getElementById('ci').classList.remove('hid');document.getElementById('sq').value='';var cs=document.querySelectorAll('.ci-card');for(var i=0;i<cs.length;i++)cs[i].style.display=cs[i].getAttribute('data-c')==='Казахстан'?'':'none'"><span class=flag>🇰🇿</span><div><div class=name>Казахстан</div><div class=info>2 городов</div></div></div>
+<div class=card onclick="document.getElementById('co').classList.add('hid');document.getElementById('ci').classList.remove('hid');document.getElementById('sq').value='';var cs=document.querySelectorAll('.ci-card');for(var i=0;i<cs.length;i++)cs[i].style.display=cs[i].getAttribute('data-c')==='Киргизия'?'':'none'"><span class=flag>🇰🇬</span><div><div class=name>Киргизия</div><div class=info>1 городов</div></div></div>
+<div class=card onclick="document.getElementById('co').classList.add('hid');document.getElementById('ci').classList.remove('hid');document.getElementById('sq').value='';var cs=document.querySelectorAll('.ci-card');for(var i=0;i<cs.length;i++)cs[i].style.display=cs[i].getAttribute('data-c')==='Армения'?'':'none'"><span class=flag>🇦🇲</span><div><div class=name>Армения</div><div class=info>1 городов</div></div></div>
 </div>
-<div class=card id=ru-card onclick="(function(){var d=document;d.getElementById('co').classList.add('hid');d.getElementById('ci').classList.remove('hid');d.getElementById('ct').textContent='📍 Россия';d.getElementById('sq').value='';var f=['Москва\u00a04 зоны','Санкт-Петербург\u00a02 зоны','Новосибирск','Екатеринбург','Казань','Нижний Новгород','Челябинск','Красноярск','Самара','Уфа','Ростов-на-Дону','Омск','Краснодар','Воронеж','Волгоград','Пермь','Саратов','Тюмень','Тольятти','Ижевск','Барнаул','Ульяновск','Иркутск','Хабаровск','Ярославль','Владивосток','Махачкала','Томск','Оренбург','Кемерово','Новокузнецк','Рязань','Астрахань','Набережные Челны','Пенза','Киров','Липецк','Чебоксары','Калининград','Тула','Ставрополь','Курск','Улан-Удэ','Сочи','Тверь','Магнитогорск','Иваново','Брянск','Белгород','Сургут','Владимир','Чита','Архангельск','Симферополь','Смоленск','Курган','Калуга','Орёл','Вологда','Сыктывкар','Саранск','Тамбов','Петрозаводск','Кострома','Нижневартовск','Новороссийск','Якутск','Балашиха','Комсомольск-на-Амуре','Севастополь','Нальчик','Псков','Майкоп','Черкесск','Петропавловск-Камчатский','Абакан','Норильск','Элиста','Южно-Сахалинск','Анадырь','Биробиджан','Благовещенск','Владикавказ','Горно-Алтайск','Грозный','Йошкар-Ола','Кызыл','Магадан','Мурманск','Назрань','Великий Новгород'];G(f)})()"><span class=flag>🇷🇺</span><div><div class=name>Россия</div><div class=info>87 городов</div></div></div>
-
-<div class=card id=cn-card onclick="(function(){var d=document;d.getElementById('co').classList.add('hid');d.getElementById('ci').classList.remove('hid');d.getElementById('ct').textContent='📍 Китай';d.getElementById('sq').value='';G(['Гуанчжоу','Иу','Пекин','Ханчжоу','Чэнду','Шанхай','Шэньчжэнь'])})()"><span class=flag>🇨🇳</span><div><div class=name>Китай</div><div class=info>7 городов</div></div></div>
-
-<div class=card id=kz-card onclick="(function(){var d=document;d.getElementById('co').classList.add('hid');d.getElementById('ci').classList.remove('hid');d.getElementById('ct').textContent='📍 Казахстан';d.getElementById('sq').value='';G(['Алматы','Астана'])})()"><span class=flag>🇰🇿</span><div><div class=name>Казахстан</div><div class=info>2 городов</div></div></div>
-
-<div class=card id=kg-card onclick="(function(){var d=document;d.getElementById('co').classList.add('hid');d.getElementById('ci').classList.remove('hid');d.getElementById('ct').textContent='📍 Киргизия';d.getElementById('sq').value='';G(['Бишкек'])})()"><span class=flag>🇰🇬</span><div><div class=name>Киргизия</div><div class=info>1 городов</div></div></div>
-
-<div class=card id=am-card onclick="(function(){var d=document;d.getElementById('co').classList.add('hid');d.getElementById('ci').classList.remove('hid');d.getElementById('ct').textContent='📍 Армения';d.getElementById('sq').value='';G(['Ереван'])})()"><span class=flag>🇦🇲</span><div><div class=name>Армения</div><div class=info>1 городов</div></div></div>
 
 <!-- ГОРОДА -->
 <div id=ci class=hid>
   <button class=back onclick="document.getElementById('ci').classList.add('hid');document.getElementById('co').classList.remove('hid')">← Назад</button>
-  <h2 id=ct>📍 Города</h2>
+  <h2>📍 Выберите город</h2>
   <p class=sub>Введите название или выберите из списка</p>
-  <input class=srch id=sq placeholder="🔍 Поиск города..." oninput="(function(){var q=this.value.toLowerCase();var cards=document.getElementById('cl').children;for(var i=0;i<cards.length;i++){var t=cards[i].textContent.toLowerCase();cards[i].style.display=q&&t.indexOf(q)<0?'none':''}})()">
-  <div id=cl></div>
+  <input class=srch id=sq placeholder="🔍 Поиск города..." oninput="var q=this.value.toLowerCase(),cs=document.querySelectorAll('.ci-card');for(var i=0;i<cs.length;i++){if(cs[i].style.display!=='none'){var n=cs[i].textContent.toLowerCase();cs[i].style.display=q&&n.indexOf(q)<0?'none':''}}else{if(!q)cs[i].style.display=cs[i].getAttribute('data-c')===document.getElementById('ci').getAttribute('data-co')?'':'none'}}">
+  <div id=cl>
+<!-- RUSSIA CITIES -->
+<div class="card ci-card" data-c=Россия data-k=msk data-z="Север,Юг,Запад,Восток" onclick="var z=this.getAttribute('data-z');if(z){document.getElementById('ci').classList.add('hid');document.getElementById('zl').innerHTML='<div class=card onclick=\"document.getElementById(\\'fz\\').value=\\'Север\\';goForm()\">Север</div><div class=card onclick=\"document.getElementById(\\'fz\\').value=\\'Юг\\';goForm()\">Юг</div><div class=card onclick=\"document.getElementById(\\'fz\\').value=\\'Запад\\';goForm()\">Запад</div><div class=card onclick=\"document.getElementById(\\'fz\\').value=\\'Восток\\';goForm()\">Восток</div>';document.getElementById('zo').classList.remove('hid')}else{document.getElementById('fz').value='';goForm()}document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim()"><div class=name>Москва</div><div class=info>4 зоны</div></div>
+<div class="card ci-card" data-c=Россия data-k=spb data-z="Север,Юг" onclick="var z=this.getAttribute('data-z');if(z){document.getElementById('ci').classList.add('hid');document.getElementById('zl').innerHTML='<div class=card onclick=\"document.getElementById(\\'fz\\').value=\\'Север\\';goForm()\">Север</div><div class=card onclick=\"document.getElementById(\\'fz\\').value=\\'Юг\\';goForm()\">Юг</div>';document.getElementById('zo').classList.remove('hid')}else{document.getElementById('fz').value='';goForm()}document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim()"><div class=name>Санкт-Петербург</div><div class=info>2 зоны</div></div>
+<div class="card ci-card" data-c=Россия data-k=nsk data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Новосибирск</div></div>
+<div class="card ci-card" data-c=Россия data-k=ekb data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Екатеринбург</div></div>
+<div class="card ci-card" data-c=Россия data-k=kazan data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Казань</div></div>
+<div class="card ci-card" data-c=Россия data-k=nn data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Нижний Новгород</div></div>
+<div class="card ci-card" data-c=Россия data-k=chelyabinsk data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Челябинск</div></div>
+<div class="card ci-card" data-c=Россия data-k=krasnoyarsk data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Красноярск</div></div>
+<div class="card ci-card" data-c=Россия data-k=samara data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Самара</div></div>
+<div class="card ci-card" data-c=Россия data-k=ufa data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Уфа</div></div>
+<div class="card ci-card" data-c=Россия data-k=rostov data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Ростов-на-Дону</div></div>
+<div class="card ci-card" data-c=Россия data-k=omsk data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Омск</div></div>
+<div class="card ci-card" data-c=Россия data-k=krasnodar data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Краснодар</div></div>
+<div class="card ci-card" data-c=Россия data-k=voronezh data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Воронеж</div></div>
+<div class="card ci-card" data-c=Россия data-k=volgograd data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Волгоград</div></div>
+<div class="card ci-card" data-c=Россия data-k=perm data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Пермь</div></div>
+<div class="card ci-card" data-c=Россия data-k=saratov data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Саратов</div></div>
+<div class="card ci-card" data-c=Россия data-k=tyumen data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Тюмень</div></div>
+<div class="card ci-card" data-c=Россия data-k=tolyatti data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Тольятти</div></div>
+<div class="card ci-card" data-c=Россия data-k=izhevsk data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Ижевск</div></div>
+<div class="card ci-card" data-c=Россия data-k=barnaul data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Барнаул</div></div>
+<div class="card ci-card" data-c=Россия data-k=ulyanovsk data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Ульяновск</div></div>
+<div class="card ci-card" data-c=Россия data-k=irkutsk data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Иркутск</div></div>
+<div class="card ci-card" data-c=Россия data-k=khabarovsk data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Хабаровск</div></div>
+<div class="card ci-card" data-c=Россия data-k=yaroslavl data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Ярославль</div></div>
+<div class="card ci-card" data-c=Россия data-k=vladivostok data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Владивосток</div></div>
+<div class="card ci-card" data-c=Россия data-k=makhachkala data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Махачкала</div></div>
+<div class="card ci-card" data-c=Россия data-k=tomsk data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Томск</div></div>
+<div class="card ci-card" data-c=Россия data-k=orenburg data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Оренбург</div></div>
+<div class="card ci-card" data-c=Россия data-k=kemerovo data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Кемерово</div></div>
+<div class="card ci-card" data-c=Россия data-k=ryazan data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Рязань</div></div>
+<!-- CHINA -->
+<div class="card ci-card" data-c=Китай data-k=cn-guangzhou data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Гуанчжоу</div></div>
+<div class="card ci-card" data-c=Китай data-k=cn-yiwu data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Иу</div></div>
+<div class="card ci-card" data-c=Китай data-k=cn-beijing data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Пекин</div></div>
+<div class="card ci-card" data-c=Китай data-k=cn-hangzhou data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Ханчжоу</div></div>
+<div class="card ci-card" data-c=Китай data-k=cn-chengdu data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Чэнду</div></div>
+<div class="card ci-card" data-c=Китай data-k=cn-shanghai data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Шанхай</div></div>
+<div class="card ci-card" data-c=Китай data-k=cn-shenzhen data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Шэньчжэнь</div></div>
+<!-- KAZAKHSTAN -->
+<div class="card ci-card" data-c=Казахстан data-k=kz-almaty data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Алматы</div></div>
+<div class="card ci-card" data-c=Казахстан data-k=kz-astana data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Астана</div></div>
+<!-- KYRGYZSTAN -->
+<div class="card ci-card" data-c=Киргизия data-k=kg-bishkek data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Бишкек</div></div>
+<!-- ARMENIA -->
+<div class="card ci-card" data-c=Армения data-k=am-yerevan data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Ереван</div></div>
+  </div>
 </div>
 
 <!-- ЗОНЫ -->
@@ -73,17 +117,13 @@ h2{color:#4da3ff;margin-bottom:8px}.sub{color:#999;font-size:13px;margin-bottom:
   <button class=back onclick="document.getElementById('fo').classList.add('hid');document.getElementById('ci').classList.remove('hid')">← Назад</button>
   <h2>📦 Заявка на фулфилмент</h2>
   <p class=sub id=fa></p>
-  <div class=mr>
-    <button class=on onclick="document.querySelectorAll('.mr button').forEach(function(b){b.classList.toggle('on',b===this)});document.getElementById('fs').value='WB'">🟣 WB</button>
-    <button onclick="document.querySelectorAll('.mr button').forEach(function(b){b.classList.toggle('on',b===this)});document.getElementById('fs').value='Ozon'">🔵 Ozon</button>
-    <button onclick="document.querySelectorAll('.mr button').forEach(function(b){b.classList.toggle('on',b===this)});document.getElementById('fs').value='Yandex'">🟡 Yandex</button>
-    <button onclick="document.querySelectorAll('.mr button').forEach(function(b){b.classList.toggle('on',b===this)});document.getElementById('fs').value='Другое'">⚪ Другое</button>
-  </div>
   <input class=inp id=fn placeholder="Ваше имя">
   <input class=inp type=tel id=fp placeholder=Телефон>
   <input class=inp id=fl placeholder="Ссылка на товар">
-  <input type=hidden id=fc value=moscow><input type=hidden id=fz value=""><input type=hidden id=fs value=FBO>
-  <button class=btn id=fbtn onclick="var n=document.getElementById('fn').value.trim(),p=document.getElementById('fp').value.trim(),l=document.getElementById('fl').value.trim(),c=document.getElementById('fc').value,z=document.getElementById('fz').value,m=document.getElementById('fs').value,s=document.getElementById('fst'),b=document.getElementById('fbtn');if(!n||!p||!l){s.textContent='Заполните поля';s.className='st err';s.classList.remove('hid');return}b.disabled=true;b.textContent='Отправка...';fetch('/api/order',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,phone:p,link:l,city:c,zone:z,method:m})}).then(r=>r.json()).then(function(d){if(d.ok){document.getElementById('fo').classList.add('hid');document.getElementById('su').classList.remove('hid')}else{s.textContent=d.error||'Ошибка';s.className='st err';s.classList.remove('hid');b.disabled=false;b.textContent='Отправить заявку'}}).catch(function(){s.textContent='Ошибка соединения';s.className='st err';s.classList.remove('hid');b.disabled=false;b.textContent='Отправить заявку'})">Отправить заявку</button>
+  <select class=inp id=ft onchange="this.style.color='#e0e0e0'"><option value="" disabled selected style=color:#777>Способ доставки</option><option>FBO</option><option>FBS</option><option>DBS</option></select>
+  <select class=inp id=fm onchange="this.style.color='#e0e0e0'"><option value="" disabled selected style=color:#777>Площадка</option><option>WB</option><option>Ozon</option><option>Yandex</option><option>Другое</option></select>
+  <input type=hidden id=fc value=""><input type=hidden id=fz value="">
+  <button class=btn id=fbtn onclick="var n=document.getElementById('fn').value.trim(),p=document.getElementById('fp').value.trim(),l=document.getElementById('fl').value.trim(),t=document.getElementById('ft').value,m=document.getElementById('fm').value,c=document.getElementById('fc').value,z=document.getElementById('fz').value,s=document.getElementById('fst'),b=document.getElementById('fbtn');if(!n||!p||!l||!t){s.textContent='Заполните поля';s.className='st err';s.classList.remove('hid');return}b.disabled=true;b.textContent='Отправка...';fetch('/api/order',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,phone:p,link:l,city:c,zone:z,method:t,marketplace:m})}).then(function(r){return r.json()}).then(function(d){if(d.ok){document.getElementById('fo').classList.add('hid');document.getElementById('su').classList.remove('hid')}else{s.textContent=d.error||'Ошибка';s.className='st err';s.classList.remove('hid');b.disabled=false;b.textContent='Отправить заявку'}}).catch(function(){s.textContent='Ошибка';s.className='st err';s.classList.remove('hid');b.disabled=false;b.textContent='Отправить заявку'})">Отправить заявку</button>
   <div class="st hid" id=fst></div>
 </div>
 
@@ -102,38 +142,9 @@ h2{color:#4da3ff;margin-bottom:8px}.sub{color:#999;font-size:13px;margin-bottom:
 
 <script>
 try{var t=window.Telegram&&window.Telegram.WebApp;if(t){t.ready();t.expand()}}catch(e){}
-
-// ==== ГОРОДА ====
-function G(list){
-  var h='';
-  list.forEach(function(name){
-    var hasZones=name.indexOf('\u00a0')>0;
-    var display=hasZones?name.replace('\u00a0',' — '):name;
-    var clean=hasZones?name.split('\u00a0')[0]:name;
-    h+='<div class=card onclick="(function(){var n=\''+clean+'\';document.getElementById(\'fa\').textContent=n;document.getElementById(\'ci\').classList.add(\'hid\');';
-    if(clean==='Москва'){
-      h+='document.getElementById(\'fc\').value=\'msk\';document.getElementById(\'zl\').innerHTML=\'<div class=card onclick=\"document.getElementById(\\'fz\\').value=\\'Север\\';document.getElementById(\\'zo\\').classList.add(\\'hid\\');document.getElementById(\\'fo\\').classList.remove(\\'hid\\')\">Север</div><div class=card onclick=\"document.getElementById(\\'fz\\').value=\\'Юг\\';document.getElementById(\\'zo\\').classList.add(\\'hid\\');document.getElementById(\\'fo\\').classList.remove(\\'hid\\')\">Юг</div><div class=card onclick=\"document.getElementById(\\'fz\\').value=\\'Запад\\';document.getElementById(\\'zo\\').classList.add(\\'hid\\');document.getElementById(\\'fo\\').classList.remove(\\'hid\\')\">Запад</div><div class=card onclick=\"document.getElementById(\\'fz\\').value=\\'Восток\\';document.getElementById(\\'zo\\').classList.add(\\'hid\\');document.getElementById(\\'fo\\').classList.remove(\\'hid\\')\">Восток</div>\';document.getElementById(\'zo\').classList.remove(\'hid\');';
-    }else if(clean==='Санкт-Петербург'){
-      h+='document.getElementById(\'fc\').value=\'spb\';document.getElementById(\'zl\').innerHTML=\'<div class=card onclick=\"document.getElementById(\\'fz\\').value=\\'Север\\';document.getElementById(\\'zo\\').classList.add(\\'hid\\');document.getElementById(\\'fo\\').classList.remove(\\'hid\\')\">Север</div><div class=card onclick=\"document.getElementById(\\'fz\\').value=\\'Юг\\';document.getElementById(\\'zo\\').classList.add(\\'hid\\');document.getElementById(\\'fo\\').classList.remove(\\'hid\\')\">Юг</div>\';document.getElementById(\'zo\').classList.remove(\'hid\');';
-    }else{
-      h+='document.getElementById(\'fc\').value=\''+clean.toLowerCase()+'\';document.getElementById(\'fz\').value=\'\';document.getElementById(\'fo\').classList.remove(\'hid\');';
-    }
-    h+='document.getElementById(\'fa\').textContent=n})()"><div><div class=name>'+display+'</div></div></div>';
-  });
-  document.getElementById('cl').innerHTML=h;
-}
-
-// Partner functions
-function LP(){
-  var T=***"ff_token");
-  fetch("/api/partner/orders",{headers:{Authorization:"***"+T}}).then(function(r){return r.json()}).then(function(d){
-    if(!d.orders||!d.orders.length){document.getElementById("po").innerHTML='<div style=text-align:center;color:#777;padding:40px>Заявок пока нет</div>';return}
-    var lb={new:"Новая",accepted:"Принято",in_progress:"В работе",done:"Готово"},h='<table><thead><tr><th>ID</th><th>Клиент</th><th>Телефон</th><th>Ссылка</th><th>Способ</th><th>Статус</th><th>Дата</th></tr></thead><tbody>';
-    d.orders.forEach(function(o){var opts="";for(var k in lb)opts+='<option value='+k+(o.status===k?' selected':'')+'>'+lb[k]+'</option>';h+='<tr><td>#'+o.id+'</td><td>'+(o.name||"")+'</td><td>'+(o.phone||"")+'</td><td><a href='+(o.link||"")+' target=_blank style=color:#4da3ff>ссылка</a></td><td>'+(o.method||"FBO")+'</td><td><select onchange="U('+o.id+',this.value)" style=background:#000;border:1px solid #333;color:#eee;border-radius:4px;padding:2px 4px>'+opts+'</select></td><td>'+(o.created_at||"").slice(0,16)+'</td></tr>'});
-    h+='</tbody></table>';document.getElementById("po").innerHTML=h;
-  });
-}
+function goForm(){document.getElementById('zo').classList.add('hid');document.getElementById('fo').classList.remove('hid')}
+function showPP(u){document.getElementById('co').classList.add('hid');document.getElementById('pp').classList.remove('hid');document.getElementById('li-btn').classList.add('hid');document.getElementById('lo-btn').classList.remove('hid');document.getElementById('pi').textContent=(u.city||'')+(u.zone?' — '+u.zone:'');LP()}
+function LP(){var T=***"ff_token");fetch("/api/partner/orders",{headers:{Authorization:"***"+T}}).then(function(r){return r.json()}).then(function(d){if(!d.orders||!d.orders.length){document.getElementById("po").innerHTML='<div style=text-align:center;color:#777;padding:40px>Заявок пока нет</div>';return}var lb={new:"Новая",accepted:"Принято",in_progress:"В работе",done:"Готово"},h='<table><thead><tr><th>ID</th><th>Клиент</th><th>Телефон</th><th>Ссылка</th><th>Способ</th><th>Статус</th><th>Дата</th></tr></thead><tbody>';d.orders.forEach(function(o){var opts="";for(var k in lb)opts+='<option value='+k+(o.status===k?' selected':'')+'>'+lb[k]+'</option>';h+='<tr><td>#'+o.id+'</td><td>'+(o.name||"")+'</td><td>'+(o.phone||"")+'</td><td><a href='+(o.link||"")+' target=_blank style=color:#4da3ff>ссылка</a></td><td>'+(o.method||"FBO")+'</td><td><select onchange="U('+o.id+',this.value)" style=background:#000;border:1px solid #333;color:#eee;border-radius:4px;padding:2px 4px>'+opts+'</select></td><td>'+(o.created_at||"").slice(0,16)+'</td></tr>'});h+='</tbody></table>';document.getElementById("po").innerHTML=h})}
 function U(id,st){var T=***"ff_token");fetch("/api/partner/orders/"+id,{method:"PATCH",headers:{"Content-Type":"application/json",Authorization:"***"+T},body:JSON.stringify({status:st})})}
 </script>
-
 </body></html>
