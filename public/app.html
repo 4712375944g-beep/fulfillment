@@ -1,63 +1,139 @@
-<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>SellFull</title><script src="https://telegram.org/js/telegram-web-app.js"></script><style>
+<!DOCTYPE html><html lang=ru><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>SellFull</title><script src="https://telegram.org/js/telegram-web-app.js"></script><style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#121212;color:#e0e0e0;padding:16px}
 h2{color:#4da3ff;margin-bottom:8px}.sub{color:#999;font-size:13px;margin-bottom:12px}
 .card{background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:14px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:12px}
 .card:active{background:#2a2a2a}.flag{font-size:28px}.name{font-size:16px;font-weight:600}.info{font-size:12px;color:#777}
 .back{color:#4da3ff;font-size:14px;background:none;border:none;padding:0;margin-bottom:8px;cursor:pointer}
-.search{width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:10px;color:#e0e0e0;font-size:15px;margin-bottom:12px}
-.search:focus{outline:none;border-color:#4da3ff}
-input{width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:10px;color:#e0e0e0;font-size:15px;margin-bottom:8px}
+.srch{width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:10px;color:#e0e0e0;font-size:15px;margin-bottom:12px}
+.srch:focus{outline:none;border-color:#4da3ff}
+.inp{width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:10px;color:#e0e0e0;font-size:15px;margin-bottom:8px}
 .btn{width:100%;background:#4da3ff;color:#fff;border:none;border-radius:8px;padding:12px;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px}
 .btn2{background:#2AABEE;border:none;color:#fff;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;font-weight:600}
-.hidden{display:none}.status{padding:12px;border-radius:8px;margin-top:12px;font-size:13px}
-.status.ok{background:#0a2a0a;color:#4caf50}.status.err{background:#2a0a0a;color:#f44336}
-.method-row{display:flex;gap:8px;margin-bottom:12px}
-.method-row button{flex:1;padding:8px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#999;font-size:14px;cursor:pointer}
-.method-row button.on{background:#4da3ff;color:#fff;border-color:#4da3ff}
-.top-row{display:flex;justify-content:flex-end;margin-bottom:12px}
-.overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.92);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
-.box{background:#111;border:1px solid #2a2a2a;border-radius:16px;padding:24px;width:100%;max-width:340px}
-.box h3{font-size:18px;margin-bottom:4px;text-align:center}
-.box input{width:100%;background:#1c1c1c;border:1px solid #444;border-radius:8px;padding:10px;color:#fff;font-size:15px;margin-bottom:10px}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th{text-align:left;padding:6px 8px;border-bottom:1px solid #333;color:#888}
-td{padding:6px 8px;border-bottom:1px solid #1a1a1a;color:#ccc}
+.hid{display:none}.st{padding:12px;border-radius:8px;margin-top:12px;font-size:13px}
+.st.ok{background:#0a2a0a;color:#4caf50}.st.err{background:#2a0a0a;color:#f44336}
+.mr{display:flex;gap:8px;margin-bottom:12px}
+.mr button{flex:1;padding:8px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#999;font-size:14px;cursor:pointer}
+.mr button.on{background:#4da3ff;color:#fff;border-color:#4da3ff}
+.tr{display:flex;justify-content:flex-end;margin-bottom:12px}
+.ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.92);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+.bx{background:#111;border:1px solid #2a2a2a;border-radius:16px;padding:24px;width:100%;max-width:340px}
+.bx h3{font-size:18px;margin-bottom:4px;text-align:center}
+.bx .inp{width:100%;background:#1c1c1c;border:1px solid #444;border-radius:8px;padding:10px;color:#fff;font-size:15px;margin-bottom:10px}
 </style></head><body>
-<div class=top-row><button class="btn2 hidden" id=logout-btn onclick=doLogout()>🚪 Выйти</button><button class=btn2 id=login-btn-top onclick="document.getElementById('login-overlay').style.display='flex'">🔐 Вход для партнёров</button></div>
-<div class=overlay id=login-overlay style=display:none><div class=box><h3>🔐 Вход для партнёров</h3><p class=sub>Управление заявками</p><input id=login-email placeholder=Email><input type=password id=login-pass placeholder=Пароль><div class="status err hidden" id=login-err></div><button class=btn onclick=doLogin()>Войти</button><button class=btn style=background:transparent;border:1px solid #444;margin-top:4px onclick="document.getElementById('login-overlay').style.display='none'">Отмена</button></div></div>
 
-<div id=countries><h2>🌍 Выберите страну</h2><p class=sub>Подберём склад фулфилмента</p>
-<div class=card onclick="C('Россия')"><span class=flag>🇷🇺</span><div><div class=name>Россия</div><div class=info>87 городов</div></div></div>
-<div class=card onclick="C('Китай')"><span class=flag>🇨🇳</span><div><div class=name>Китай</div><div class=info>7 городов</div></div></div>
-<div class=card onclick="C('Казахстан')"><span class=flag>🇰🇿</span><div><div class=name>Казахстан</div><div class=info>2 городов</div></div></div>
-<div class=card onclick="C('Киргизия')"><span class=flag>🇰🇬</span><div><div class=name>Киргизия</div><div class=info>1 городов</div></div></div>
-<div class=card onclick="C('Армения')"><span class=flag>🇦🇲</span><div><div class=name>Армения</div><div class=info>1 городов</div></div></div>
+<div class=tr>
+  <button class="btn2 hid" id=lo-btn onclick="localStorage.removeItem('ff_token');localStorage.removeItem('ff_role');location.reload()">🚪 Выйти</button>
+  <button class=btn2 id=li-btn onclick="document.getElementById('ov').style.display='flex'">🔐 Вход для партнёров</button>
 </div>
 
-<div id=cities class=hidden><button class=back onclick="document.getElementById('cities').classList.add('hidden');document.getElementById('countries').classList.remove('hidden')">← Назад</button><h2 id=city-title>📍 Города</h2><p class=sub>Введите название или выберите из списка</p><input class=search id=search-city placeholder="🔍 Поиск города..." oninput="F(this.value)"><div id=city-list></div></div>
+<div class=ov id=ov style=display:none>
+  <div class=bx>
+    <h3>🔐 Вход для партнёров</h3><p class=sub>Управление заявками</p>
+    <input class=inp id=le placeholder=Email>
+    <input class=inp type=password id=lp placeholder=Пароль>
+    <div class="st err hid" id=ler></div>
+    <button class=btn onclick="var e=document.getElementById('le').value.trim(),p=document.getElementById('lp').value;if(!e||!p)return;fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({login:e,password:p})}).then(r=>r.json()).then(d=>{if(d.ok){localStorage.setItem('ff_token',d.token);localStorage.setItem('ff_role',d.role);document.getElementById('ov').style.display='none';document.getElementById('co').classList.add('hid');document.getElementById('pp').classList.remove('hid');document.getElementById('li-btn').classList.add('hid');document.getElementById('lo-btn').classList.remove('hid');document.getElementById('pi').textContent=(d.user.city||'')+(d.user.zone?' — '+d.user.zone:'');LP()}else{var er=document.getElementById('ler');er.textContent=d.error||'Ошибка';er.classList.remove('hid')}})">Войти</button>
+    <button class=btn style=background:transparent;border:1px solid #444;margin-top:4px onclick="document.getElementById('ov').style.display='none'">Отмена</button>
+  </div>
+</div>
 
-<div id=zones class=hidden><button class=back onclick="document.getElementById('zones').classList.add('hidden');document.getElementById('cities').classList.remove('hidden')">← Назад</button><h2>📍 Уточните район</h2><div id=zone-list></div></div>
+<!-- СТРАНЫ -->
+<div id=co>
+<h2>🌍 Выберите страну</h2><p class=sub>Подберём склад фулфилмента</p>
+</div>
+<div class=card id=ru-card onclick="(function(){var d=document;d.getElementById('co').classList.add('hid');d.getElementById('ci').classList.remove('hid');d.getElementById('ct').textContent='📍 Россия';d.getElementById('sq').value='';var f=['Москва\u00a04 зоны','Санкт-Петербург\u00a02 зоны','Новосибирск','Екатеринбург','Казань','Нижний Новгород','Челябинск','Красноярск','Самара','Уфа','Ростов-на-Дону','Омск','Краснодар','Воронеж','Волгоград','Пермь','Саратов','Тюмень','Тольятти','Ижевск','Барнаул','Ульяновск','Иркутск','Хабаровск','Ярославль','Владивосток','Махачкала','Томск','Оренбург','Кемерово','Новокузнецк','Рязань','Астрахань','Набережные Челны','Пенза','Киров','Липецк','Чебоксары','Калининград','Тула','Ставрополь','Курск','Улан-Удэ','Сочи','Тверь','Магнитогорск','Иваново','Брянск','Белгород','Сургут','Владимир','Чита','Архангельск','Симферополь','Смоленск','Курган','Калуга','Орёл','Вологда','Сыктывкар','Саранск','Тамбов','Петрозаводск','Кострома','Нижневартовск','Новороссийск','Якутск','Балашиха','Комсомольск-на-Амуре','Севастополь','Нальчик','Псков','Майкоп','Черкесск','Петропавловск-Камчатский','Абакан','Норильск','Элиста','Южно-Сахалинск','Анадырь','Биробиджан','Благовещенск','Владикавказ','Горно-Алтайск','Грозный','Йошкар-Ола','Кызыл','Магадан','Мурманск','Назрань','Великий Новгород'];G(f)})()"><span class=flag>🇷🇺</span><div><div class=name>Россия</div><div class=info>87 городов</div></div></div>
 
-<div id=form class=hidden><button class=back onclick="document.getElementById('form').classList.add('hidden');S.zones?document.getElementById('zones').classList.remove('hidden'):document.getElementById('cities').classList.remove('hidden')">← Назад</button><h2>📦 Заявка на фулфилмент</h2><p class=sub id=form-addr></p><div class=method-row><button class=on onclick="M('FBO',this)">📦 FBO</button><button onclick="M('FBS',this)">🚚 FBS</button></div><input id=order-name placeholder="Ваше имя"><input type=tel id=order-phone placeholder=Телефон><input id=order-link placeholder="Ссылка на товар (WB)"><button class=btn onclick=O()>Отправить заявку</button><div class="status hidden" id=status></div></div>
+<div class=card id=cn-card onclick="(function(){var d=document;d.getElementById('co').classList.add('hid');d.getElementById('ci').classList.remove('hid');d.getElementById('ct').textContent='📍 Китай';d.getElementById('sq').value='';G(['Гуанчжоу','Иу','Пекин','Ханчжоу','Чэнду','Шанхай','Шэньчжэнь'])})()"><span class=flag>🇨🇳</span><div><div class=name>Китай</div><div class=info>7 городов</div></div></div>
 
-<div id=success class=hidden style=text-align:center;padding-top:40px><h2 style=font-size:24px;color:#4caf50>✅ Заявка отправлена!</h2><p class=sub>Скоро с вами свяжется менеджер</p><button class=btn onclick="document.getElementById('success').classList.add('hidden');document.getElementById('countries').classList.remove('hidden')" style=width:200px;margin:20px auto>Новая заявка</button></div>
+<div class=card id=kz-card onclick="(function(){var d=document;d.getElementById('co').classList.add('hid');d.getElementById('ci').classList.remove('hid');d.getElementById('ct').textContent='📍 Казахстан';d.getElementById('sq').value='';G(['Алматы','Астана'])})()"><span class=flag>🇰🇿</span><div><div class=name>Казахстан</div><div class=info>2 городов</div></div></div>
 
-<div id=partner-panel class=hidden><h2>📦 Мои заявки</h2><p class=sub id=partner-info></p><div id=partner-orders>Загрузка...</div></div>
+<div class=card id=kg-card onclick="(function(){var d=document;d.getElementById('co').classList.add('hid');d.getElementById('ci').classList.remove('hid');d.getElementById('ct').textContent='📍 Киргизия';d.getElementById('sq').value='';G(['Бишкек'])})()"><span class=flag>🇰🇬</span><div><div class=name>Киргизия</div><div class=info>1 городов</div></div></div>
+
+<div class=card id=am-card onclick="(function(){var d=document;d.getElementById('co').classList.add('hid');d.getElementById('ci').classList.remove('hid');d.getElementById('ct').textContent='📍 Армения';d.getElementById('sq').value='';G(['Ереван'])})()"><span class=flag>🇦🇲</span><div><div class=name>Армения</div><div class=info>1 городов</div></div></div>
+
+<!-- ГОРОДА -->
+<div id=ci class=hid>
+  <button class=back onclick="document.getElementById('ci').classList.add('hid');document.getElementById('co').classList.remove('hid')">← Назад</button>
+  <h2 id=ct>📍 Города</h2>
+  <p class=sub>Введите название или выберите из списка</p>
+  <input class=srch id=sq placeholder="🔍 Поиск города..." oninput="(function(){var q=this.value.toLowerCase();var cards=document.getElementById('cl').children;for(var i=0;i<cards.length;i++){var t=cards[i].textContent.toLowerCase();cards[i].style.display=q&&t.indexOf(q)<0?'none':''}})()">
+  <div id=cl></div>
+</div>
+
+<!-- ЗОНЫ -->
+<div id=zo class=hid>
+  <button class=back onclick="document.getElementById('zo').classList.add('hid');document.getElementById('ci').classList.remove('hid')">← Назад</button>
+  <h2>📍 Уточните район</h2>
+  <div id=zl></div>
+</div>
+
+<!-- ФОРМА -->
+<div id=fo class=hid>
+  <button class=back onclick="document.getElementById('fo').classList.add('hid');document.getElementById('ci').classList.remove('hid')">← Назад</button>
+  <h2>📦 Заявка на фулфилмент</h2>
+  <p class=sub id=fa></p>
+  <div class=mr>
+    <button class=on onclick="document.querySelectorAll('.mr button').forEach(function(b){b.classList.toggle('on',b===this)});document.getElementById('fs').value='WB'">🟣 WB</button>
+    <button onclick="document.querySelectorAll('.mr button').forEach(function(b){b.classList.toggle('on',b===this)});document.getElementById('fs').value='Ozon'">🔵 Ozon</button>
+    <button onclick="document.querySelectorAll('.mr button').forEach(function(b){b.classList.toggle('on',b===this)});document.getElementById('fs').value='Yandex'">🟡 Yandex</button>
+    <button onclick="document.querySelectorAll('.mr button').forEach(function(b){b.classList.toggle('on',b===this)});document.getElementById('fs').value='Другое'">⚪ Другое</button>
+  </div>
+  <input class=inp id=fn placeholder="Ваше имя">
+  <input class=inp type=tel id=fp placeholder=Телефон>
+  <input class=inp id=fl placeholder="Ссылка на товар">
+  <input type=hidden id=fc value=moscow><input type=hidden id=fz value=""><input type=hidden id=fs value=FBO>
+  <button class=btn id=fbtn onclick="var n=document.getElementById('fn').value.trim(),p=document.getElementById('fp').value.trim(),l=document.getElementById('fl').value.trim(),c=document.getElementById('fc').value,z=document.getElementById('fz').value,m=document.getElementById('fs').value,s=document.getElementById('fst'),b=document.getElementById('fbtn');if(!n||!p||!l){s.textContent='Заполните поля';s.className='st err';s.classList.remove('hid');return}b.disabled=true;b.textContent='Отправка...';fetch('/api/order',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,phone:p,link:l,city:c,zone:z,method:m})}).then(r=>r.json()).then(function(d){if(d.ok){document.getElementById('fo').classList.add('hid');document.getElementById('su').classList.remove('hid')}else{s.textContent=d.error||'Ошибка';s.className='st err';s.classList.remove('hid');b.disabled=false;b.textContent='Отправить заявку'}}).catch(function(){s.textContent='Ошибка соединения';s.className='st err';s.classList.remove('hid');b.disabled=false;b.textContent='Отправить заявку'})">Отправить заявку</button>
+  <div class="st hid" id=fst></div>
+</div>
+
+<!-- УСПЕХ -->
+<div id=su class=hid style=text-align:center;padding-top:40px>
+  <h2 style=font-size:24px;color:#4caf50>✅ Заявка отправлена!</h2>
+  <p class=sub>Скоро с вами свяжется менеджер</p>
+  <button class=btn onclick="document.getElementById('su').classList.add('hid');document.getElementById('co').classList.remove('hid')" style=width:200px;margin:20px auto>Новая заявка</button>
+</div>
+
+<!-- ПАРТНЁР -->
+<div id=pp class=hid>
+  <h2>📦 Мои заявки</h2><p class=sub id=pi></p>
+  <div id=po>Загрузка...</div>
+</div>
 
 <script>
 try{var t=window.Telegram&&window.Telegram.WebApp;if(t){t.ready();t.expand()}}catch(e){}
-var D=[["msk","Москва",["Север","Юг","Запад","Восток"],"Россия"],["spb","Санкт-Петербург",null,"Россия"],["nsk","Новосибирск",null,"Россия"],["ekb","Екатеринбург",null,"Россия"],["kazan","Казань",null,"Россия"],["nn","Нижний Новгород",null,"Россия"],["chelyabinsk","Челябинск",null,"Россия"],["krasnoyarsk","Красноярск",null,"Россия"],["samara","Самара",null,"Россия"],["ufa","Уфа",null,"Россия"],["rostov","Ростов-на-Дону",null,"Россия"],["omsk","Омск",null,"Россия"],["krasnodar","Краснодар",null,"Россия"],["voronezh","Воронеж",null,"Россия"],["volgograd","Волгоград",null,"Россия"],["perm","Пермь",null,"Россия"],["saratov","Саратов",null,"Россия"],["tyumen","Тюмень",null,"Россия"],["tolyatti","Тольятти",null,"Россия"],["izhevsk","Ижевск",null,"Россия"],["barnaul","Барнаул",null,"Россия"],["ulyanovsk","Ульяновск",null,"Россия"],["irkutsk","Иркутск",null,"Россия"],["khabarovsk","Хабаровск",null,"Россия"],["yaroslavl","Ярославль",null,"Россия"],["vladivostok","Владивосток",null,"Россия"],["makhachkala","Махачкала",null,"Россия"],["tomsk","Томск",null,"Россия"],["orenburg","Оренбург",null,"Россия"],["kemerovo","Кемерово",null,"Россия"],["novokuznetsk","Новокузнецк",null,"Россия"],["ryazan","Рязань",null,"Россия"],["astrahan","Астрахань",null,"Россия"],["nabchelny","Набережные Челны",null,"Россия"],["penza","Пенза",null,"Россия"],["kirov","Киров",null,"Россия"],["lipetsk","Липецк",null,"Россия"],["cheboksary","Чебоксары",null,"Россия"],["kaliningrad","Калининград",null,"Россия"],["tula","Тула",null,"Россия"],["stavropol","Ставрополь",null,"Россия"],["kursk","Курск",null,"Россия"],["ulanude","Улан-Удэ",null,"Россия"],["sochi","Сочи",null,"Россия"],["tver","Тверь",null,"Россия"],["magnitogorsk","Магнитогорск",null,"Россия"],["ivanovo","Иваново",null,"Россия"],["bryansk","Брянск",null,"Россия"],["belgorod","Белгород",null,"Россия"],["surgut","Сургут",null,"Россия"],["vladimir","Владимир",null,"Россия"],["chita","Чита",null,"Россия"],["arhangelsk","Архангельск",null,"Россия"],["simferopol","Симферополь",null,"Россия"],["smolensk","Смоленск",null,"Россия"],["kurgan","Курган",null,"Россия"],["kaluga","Калуга",null,"Россия"],["orel","Орёл",null,"Россия"],["vologda","Вологда",null,"Россия"],["syktyvkar","Сыктывкар",null,"Россия"],["saransk","Саранск",null,"Россия"],["tambov","Тамбов",null,"Россия"],["petrozavodsk","Петрозаводск",null,"Россия"],["kostroma","Кострома",null,"Россия"],["nizhnevartovsk","Нижневартовск",null,"Россия"],["novorossiysk","Новороссийск",null,"Россия"],["yakutsk","Якутск",null,"Россия"],["balashiha","Балашиха",null,"Россия"],["komsomolsk","Комсомольск-на-Амуре",null,"Россия"],["sevastopol","Севастополь",null,"Россия"],["nalchik","Нальчик",null,"Россия"],["pskov","Псков",null,"Россия"],["maykop","Майкоп",null,"Россия"],["cherkessk","Черкесск",null,"Россия"],["petropavlovsk","Петропавловск-Камчатский",null,"Россия"],["abakan","Абакан",null,"Россия"],["norilsk","Норильск",null,"Россия"],["elista","Элиста",null,"Россия"],["yuzhnosah","Южно-Сахалинск",null,"Россия"],["anadyr","Анадырь",null,"Россия"],["birobidzhan","Биробиджан",null,"Россия"],["blagoveshchensk","Благовещенск",null,"Россия"],["vladikavkaz","Владикавказ",null,"Россия"],["gornoaltaysk","Горно-Алтайск",null,"Россия"],["grozny","Грозный",null,"Россия"],["yoshkarola","Йошкар-Ола",null,"Россия"],["kyzyl","Кызыл",null,"Россия"],["magadan","Магадан",null,"Россия"],["murmansk","Мурманск",null,"Россия"],["nalchik2","Назрань",null,"Россия"],["novgorod","Великий Новгород",null,"Россия"]].map(function(x){return{key:x[0],name:x[1],zones:x[2],country:x[3]}});
-var N=null,S=null,Z=null,m="FBO";
-function C(c){N=c;document.getElementById("countries").classList.add("hidden");document.getElementById("cities").classList.remove("hidden");document.getElementById("city-title").textContent="📍 "+c;document.getElementById("search-city").value="";F("")}
-function F(q){q=(q||"").toLowerCase();var f=D.filter(function(x){return x.country===N});if(q)f=f.filter(function(x){return x.name.toLowerCase().indexOf(q)>=0});document.getElementById("city-list").innerHTML=f.length?f.map(function(x){var z=x.zones?"<div class=info>"+x.zones.length+" зоны</div>":"";return'<div class=card onclick="P(\''+x.key+'\',\''+x.name+'\','+JSON.stringify(x.zones)+')"><div><div class=name>'+x.name+'</div>'+z+'</div></div>'}).join(""):'<div class=info style=text-align:center;padding:20px>Ничего не найдено</div>'}
-function P(k,n,z){S={key:k,name:n,zones:z};document.getElementById("cities").classList.add("hidden");if(z&&z.length){Z=null;document.getElementById("zone-list").innerHTML=z.map(function(x){return'<div class=card onclick="Z=\''+x+'\';document.getElementById(\'zones\').classList.add(\'hidden\');H()">'+x+'</div>'}).join("");document.getElementById("zones").classList.remove("hidden")}else{Z="";H()}}
-function H(){document.getElementById("form-addr").textContent=S.name+(Z?" — "+Z:"");document.getElementById("form").classList.remove("hidden")}
-function M(mtd,el){m=mtd;document.querySelectorAll(".method-row button").forEach(function(b){b.classList.toggle("on",b===el)})}
-function O(){var n=document.getElementById("order-name").value.trim(),p=document.getElementById("order-phone").value.trim(),l=document.getElementById("order-link").value.trim();if(!n||!p||!l){var s=document.getElementById("status");s.textContent="Заполните поля";s.className="status err";s.classList.remove("hidden");return}var b=document.querySelector("#form .btn");b.disabled=true;b.textContent="Отправка...";fetch("/api/order",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:n,phone:p,link:l,city:S.key,zone:Z||"",method:m})}).then(function(r){return r.json()}).then(function(d){if(d.ok){document.getElementById("form").classList.add("hidden");document.getElementById("success").classList.remove("hidden")}else{var s=document.getElementById("status");s.textContent=d.error||"Ошибка";s.className="status err";s.classList.remove("hidden");b.disabled=false;b.textContent="Отправить заявку"}}).catch(function(){var s=document.getElementById("status");s.textContent="Ошибка соединения";s.className="status err";s.classList.remove("hidden");b.disabled=false;b.textContent="Отправить заявку"})}
-function doLogin(){var e=document.getElementById("login-email").value.trim(),p=document.getElementById("login-pass").value;if(!e||!p)return;fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({login:e,password:p})}).then(function(r){return r.json()}).then(function(d){if(d.ok){localStorage.setItem("ff_token",d.token);localStorage.setItem("ff_role",d.role);document.getElementById("login-overlay").style.display="none";showPP(d.user)}else{var er=document.getElementById("login-err");er.textContent=d.error||"Ошибка";er.classList.remove("hidden")}})}
-function doLogout(){localStorage.removeItem("ff_token");localStorage.removeItem("ff_role");location.reload()}
-function showPP(u){document.getElementById("countries").classList.add("hidden");document.getElementById("partner-panel").classList.remove("hidden");document.getElementById("login-btn-top").classList.add("hidden");document.getElementById("logout-btn").classList.remove("hidden");document.getElementById("partner-info").textContent=(u.city||"")+(u.zone?" — "+u.zone:"");LP()}
-function LP(){var T=***"ff_token");fetch("/api/partner/orders",{headers:{Authorization:"***"+T}}).then(function(r){return r.json()}).then(function(d){if(!d.orders||!d.orders.length){document.getElementById("partner-orders").innerHTML='<div style=text-align:center;color:#777;padding:40px>Заявок пока нет</div>';return}var lb={new:"Новая",accepted:"Принято",in_progress:"В работе",done:"Готово"},h='<table><thead><tr><th>ID</th><th>Клиент</th><th>Телефон</th><th>Ссылка</th><th>Способ</th><th>Статус</th><th>Дата</th></tr></thead><tbody>';d.orders.forEach(function(o){var opts="";for(var k in lb)opts+='<option value='+k+(o.status===k?' selected':'')+'>'+lb[k]+'</option>';h+='<tr><td>#'+o.id+'</td><td>'+(o.name||"")+'</td><td>'+(o.phone||"")+'</td><td><a href='+(o.link||"")+' target=_blank style=color:#4da3ff>ссылка</a></td><td>'+(o.method||"FBO")+'</td><td><select onchange="U('+o.id+',this.value)" style=background:#000;border:1px solid #333;color:#eee;border-radius:4px;padding:2px 4px>'+opts+'</select></td><td>'+(o.created_at||"").slice(0,16)+'</td></tr>'});h+='</tbody></table>';document.getElementById("partner-orders").innerHTML=h})}
+
+// ==== ГОРОДА ====
+function G(list){
+  var h='';
+  list.forEach(function(name){
+    var hasZones=name.indexOf('\u00a0')>0;
+    var display=hasZones?name.replace('\u00a0',' — '):name;
+    var clean=hasZones?name.split('\u00a0')[0]:name;
+    h+='<div class=card onclick="(function(){var n=\''+clean+'\';document.getElementById(\'fa\').textContent=n;document.getElementById(\'ci\').classList.add(\'hid\');';
+    if(clean==='Москва'){
+      h+='document.getElementById(\'fc\').value=\'msk\';document.getElementById(\'zl\').innerHTML=\'<div class=card onclick=\"document.getElementById(\\'fz\\').value=\\'Север\\';document.getElementById(\\'zo\\').classList.add(\\'hid\\');document.getElementById(\\'fo\\').classList.remove(\\'hid\\')\">Север</div><div class=card onclick=\"document.getElementById(\\'fz\\').value=\\'Юг\\';document.getElementById(\\'zo\\').classList.add(\\'hid\\');document.getElementById(\\'fo\\').classList.remove(\\'hid\\')\">Юг</div><div class=card onclick=\"document.getElementById(\\'fz\\').value=\\'Запад\\';document.getElementById(\\'zo\\').classList.add(\\'hid\\');document.getElementById(\\'fo\\').classList.remove(\\'hid\\')\">Запад</div><div class=card onclick=\"document.getElementById(\\'fz\\').value=\\'Восток\\';document.getElementById(\\'zo\\').classList.add(\\'hid\\');document.getElementById(\\'fo\\').classList.remove(\\'hid\\')\">Восток</div>\';document.getElementById(\'zo\').classList.remove(\'hid\');';
+    }else if(clean==='Санкт-Петербург'){
+      h+='document.getElementById(\'fc\').value=\'spb\';document.getElementById(\'zl\').innerHTML=\'<div class=card onclick=\"document.getElementById(\\'fz\\').value=\\'Север\\';document.getElementById(\\'zo\\').classList.add(\\'hid\\');document.getElementById(\\'fo\\').classList.remove(\\'hid\\')\">Север</div><div class=card onclick=\"document.getElementById(\\'fz\\').value=\\'Юг\\';document.getElementById(\\'zo\\').classList.add(\\'hid\\');document.getElementById(\\'fo\\').classList.remove(\\'hid\\')\">Юг</div>\';document.getElementById(\'zo\').classList.remove(\'hid\');';
+    }else{
+      h+='document.getElementById(\'fc\').value=\''+clean.toLowerCase()+'\';document.getElementById(\'fz\').value=\'\';document.getElementById(\'fo\').classList.remove(\'hid\');';
+    }
+    h+='document.getElementById(\'fa\').textContent=n})()"><div><div class=name>'+display+'</div></div></div>';
+  });
+  document.getElementById('cl').innerHTML=h;
+}
+
+// Partner functions
+function LP(){
+  var T=***"ff_token");
+  fetch("/api/partner/orders",{headers:{Authorization:"***"+T}}).then(function(r){return r.json()}).then(function(d){
+    if(!d.orders||!d.orders.length){document.getElementById("po").innerHTML='<div style=text-align:center;color:#777;padding:40px>Заявок пока нет</div>';return}
+    var lb={new:"Новая",accepted:"Принято",in_progress:"В работе",done:"Готово"},h='<table><thead><tr><th>ID</th><th>Клиент</th><th>Телефон</th><th>Ссылка</th><th>Способ</th><th>Статус</th><th>Дата</th></tr></thead><tbody>';
+    d.orders.forEach(function(o){var opts="";for(var k in lb)opts+='<option value='+k+(o.status===k?' selected':'')+'>'+lb[k]+'</option>';h+='<tr><td>#'+o.id+'</td><td>'+(o.name||"")+'</td><td>'+(o.phone||"")+'</td><td><a href='+(o.link||"")+' target=_blank style=color:#4da3ff>ссылка</a></td><td>'+(o.method||"FBO")+'</td><td><select onchange="U('+o.id+',this.value)" style=background:#000;border:1px solid #333;color:#eee;border-radius:4px;padding:2px 4px>'+opts+'</select></td><td>'+(o.created_at||"").slice(0,16)+'</td></tr>'});
+    h+='</tbody></table>';document.getElementById("po").innerHTML=h;
+  });
+}
 function U(id,st){var T=***"ff_token");fetch("/api/partner/orders/"+id,{method:"PATCH",headers:{"Content-Type":"application/json",Authorization:"***"+T},body:JSON.stringify({status:st})})}
-</script></body></html>
+</script>
+
+</body></html>
