@@ -210,6 +210,12 @@ fetch("/api/cities").then(function(r){return r.json()}).then(function(d){
     html+="<div class=card onclick='pickCountry(\""+c.name+"\")'><span class=flag>"+c.flag+"</span><div><div class=name>"+c.name+"</div><div class=info>"+n+" городов</div></div></div>";
   });
   document.getElementById("country-list").innerHTML=html||"Нет данных";
+}).catch(function(){
+  var h="";
+  COUNTRIES.forEach(function(c){
+    h+="<div class=card onclick='pickCountry(\""+c.name+"\")'><span class=flag>"+c.flag+"</span><div><div class=name>"+c.name+"</div></div></div>";
+  });
+  document.getElementById("country-list").innerHTML=h||"Нет данных";
 });
 
 function pickCountry(name){country=name;filterCities("");showStep("cities");}
