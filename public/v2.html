@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>SellFull</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0d0d0d;color:#e0e0e0;padding:16px}
+h2{color:#4da3ff;margin-bottom:8px}
+.sub{color:#999;font-size:13px;margin-bottom:12px}
+.card{background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:14px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:12px}
+.card:active{background:#2a2a2a}
+.flag{font-size:24px;width:40px;text-align:center}
+.name{font-size:16px;font-weight:600}
+.info{font-size:12px;color:#777}
+.back{color:#4da3ff;font-size:14px;background:none;border:none;padding:0;margin-bottom:8px;cursor:pointer}
+input{width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:10px;color:#e0e0e0;font-size:15px;margin-bottom:8px}
+.btn{width:100%;background:#4da3ff;color:#fff;border:none;border-radius:8px;padding:12px;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px}
+.btn2{background:#2AABEE;border:none;color:#fff;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;font-weight:600}
+.hidden{display:none}
+.status{padding:12px;border-radius:8px;margin-top:12px;font-size:13px}
+.status.ok{background:#0a2a0a;color:#4caf50}
+.status.err{background:#2a0a0a;color:#f44336}
+.method-row{display:flex;gap:8px;margin-bottom:12px}
+.method-row button{flex:1;padding:8px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#999;font-size:14px;cursor:pointer}
+.method-row button.on{background:#4da3ff;color:#fff;border-color:#4da3ff}
+.top-row{display:flex;justify-content:flex-end;margin-bottom:12px}
+.overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.92);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+.box{background:#111;border:1px solid #2a2a2a;border-radius:16px;padding:24px;width:100%;max-width:340px}
+.box h3{font-size:18px;margin-bottom:4px;text-align:center}
+.box input{width:100%;background:#1c1c1c;border:1px solid #444;border-radius:8px;padding:10px;color:#fff;font-size:15px;margin-bottom:10px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:6px 8px;border-bottom:1px solid #333;color:#888}
+td{padding:6px 8px;border-bottom:1px solid #1a1a1a;color:#ccc}
+</style>
+</head>
+<body>
+
+<div class="top-row">
+  <button class="btn2 hidden" id="logout-btn" onclick="doLogout()">🚪 Выйти</button>
+  <button class="btn2" id="login-btn-top" onclick="document.getElementById('login-overlay').style.display='flex'">🔐 Вход для партнёров</button>
+</div>
+
+<div class="overlay" id="login-overlay" style="display:none">
+  <div class="box">
+    <h3>🔐 Вход для партнёров</h3>
+    <p class="sub">Управление заявками</p>
+    <input type="text" id="login-email" placeholder="Email">
+    <input type="password" id="login-pass" placeholder="Пароль">
+    <div class="status err hidden" id="login-err"></div>
+    <button class="btn" onclick="doLogin()">Войти</button>
+    <button class="btn" style="background:transparent;border:1px solid #444;margin-top:4px" onclick="document.getElementById('login-overlay').style.display='none'">Отмена</button>
+  </div>
+</div>
+
+<div id="client-panel">
+  <div id="countries">
+    <h2>🌍 Выберите страну</h2>
+    <p class="sub">Подберём склад фулфилмента</p>
+    <div id="country-list"><div class=card onclick="onclick="country=this.getAttribute('data-country');document.getElementById('countries').classList.add('hidden');var ci=document.getElementById('cities');ci.classList.remove('hidden');document.getElementById('city-title').textContent='📍 '+country;filterInline(country)" data-country="Россия""><div class=flag style="background:#2AABEE;border-radius:6px;padding:6px 10px;font-weight:700;color:#fff;min-width:40px;text-align:center">RU</div><div><div class=name>Россия</div><div class=info>87 городов</div></div></div>
+<div class=card onclick="onclick="country=this.getAttribute('data-country');document.getElementById('countries').classList.add('hidden');var ci=document.getElementById('cities');ci.classList.remove('hidden');document.getElementById('city-title').textContent='📍 '+country;filterInline(country)" data-country="Китай""><div class=flag style="background:#222;border-radius:6px;padding:6px 8px;font-weight:700;color:#ff4444">CN</div><div><div class=name>Китай</div><div class=info>7 городов</div></div></div>
+<div class=card onclick="onclick="country=this.getAttribute('data-country');document.getElementById('countries').classList.add('hidden');var ci=document.getElementById('cities');ci.classList.remove('hidden');document.getElementById('city-title').textContent='📍 '+country;filterInline(country)" data-country="Казахстан""><div class=flag style="background:#222;border-radius:6px;padding:6px 8px;font-weight:700;color:#00bcd4">KZ</div><div><div class=name>Казахстан</div><div class=info>2 городов</div></div></div>
+<div class=card onclick="onclick="country=this.getAttribute('data-country');document.getElementById('countries').classList.add('hidden');var ci=document.getElementById('cities');ci.classList.remove('hidden');document.getElementById('city-title').textContent='📍 '+country;filterInline(country)" data-country="Киргизия""><div class=flag style="background:#222;border-radius:6px;padding:6px 8px;font-weight:700;color:#ff4444">KG</div><div><div class=name>Киргизия</div><div class=info>1 городов</div></div></div>
+<div class=card onclick="onclick="country=this.getAttribute('data-country');document.getElementById('countries').classList.add('hidden');var ci=document.getElementById('cities');ci.classList.remove('hidden');document.getElementById('city-title').textContent='📍 '+country;filterInline(country)" data-country="Армения""><div class=flag style="background:#222;border-radius:6px;padding:6px 8px;font-weight:700;color:#ff9800">AM</div><div><div class=name>Армения</div><div class=info>1 городов</div></div></div></div>
+  </div>
+  <div id="cities" class="hidden">
+    <button class="back" onclick="showStep('countries')">← Назад</button>
+    <h2>📍 Выберите город</h2>
+    <p class="sub">Введите название или выберите из списка</p>
+    <input type="text" placeholder="🔍 Поиск города..." oninput="filterCities(this.value)">
+    <div id="city-list"></div>
+  </div>
+  <div id="zones" class="hidden">
+    <button class="back" onclick="showStep('cities')">← Назад</button>
+    <h2>📍 Уточните район</h2>
+    <div id="zone-list"></div>
+  </div>
+  <div id="form" class="hidden">
+    <button class="back" onclick="showStep('zones')">← Назад</button>
+    <h2>📦 Заявка на фулфилмент</h2>
+    <p class="sub" id="form-addr"></p>
+    <div class="method-row">
+      <button class="on" data-m="FBO" onclick="setMethod('FBO',this)">📦 FBO</button>
+      <button data-m="FBS" onclick="setMethod('FBS',this)">🚚 FBS</button>
+    </div>
+    <input type="text" id="order-name" placeholder="Ваше имя" required>
+    <input type="tel" id="order-phone" placeholder="Телефон" required>
+    <input type="text" id="order-link" placeholder="Ссылка на товар (WB)" required>
+    <button class="btn" onclick="submitOrder()">Отправить заявку</button>
+    <div class="status hidden" id="status"></div>
+  </div>
+  <div id="success" class="hidden" style="text-align:center;padding-top:40px">
+    <h2 style="font-size:24px;color:#4caf50">✅ Заявка отправлена!</h2>
+    <p class="sub">Скоро с вами свяжется менеджер</p>
+    <button class="btn" onclick="resetForm()" style="width:200px;margin:20px auto">Новая заявка</button>
+  </div>
+</div>
+
+<div id="partner-panel" class="hidden">
+  <h2>📦 Мои заявки</h2>
+  <p class="sub" id="partner-info"></p>
+  <div id="partner-orders">Загрузка...</div>
+</div>
+
+<script>
+try{var t=window.Telegram&&window.Telegram.WebApp;if(t){t.ready();t.expand()}}catch(e){}
+
+// ==== ГОРОДА ====
+var citiesData=[["msk","Москва",["Север","Юг","Запад","Восток"],"Россия"],["spb","Санкт-Петербург",null,"Россия"],["nsk","Новосибирск",null,"Россия"],["ekb","Екатеринбург",null,"Россия"],["kazan","Казань",null,"Россия"],["nn","Нижний Новгород",null,"Россия"],["chelyabinsk","Челябинск",null,"Россия"],["krasnoyarsk","Красноярск",null,"Россия"],["samara","Самара",null,"Россия"],["ufa","Уфа",null,"Россия"],["rostov","Ростов-на-Дону",null,"Россия"],["omsk","Омск",null,"Россия"],["krasnodar","Краснодар",null,"Россия"],["voronezh","Воронеж",null,"Россия"],["volgograd","Волгоград",null,"Россия"],["perm","Пермь",null,"Россия"],["saratov","Саратов",null,"Россия"],["tyumen","Тюмень",null,"Россия"],["tolyatti","Тольятти",null,"Россия"],["izhevsk","Ижевск",null,"Россия"],["barnaul","Барнаул",null,"Россия"],["ulyanovsk","Ульяновск",null,"Россия"],["irkutsk","Иркутск",null,"Россия"],["khabarovsk","Хабаровск",null,"Россия"],["yaroslavl","Ярославль",null,"Россия"],["vladivostok","Владивосток",null,"Россия"],["makhachkala","Махачкала",null,"Россия"],["tomsk","Томск",null,"Россия"],["orenburg","Оренбург",null,"Россия"],["kemerovo","Кемерово",null,"Россия"],["novokuznetsk","Новокузнецк",null,"Россия"],["ryazan","Рязань",null,"Россия"],["astrahan","Астрахань",null,"Россия"],["nabchelny","Набережные Челны",null,"Россия"],["penza","Пенза",null,"Россия"],["kirov","Киров",null,"Россия"],["lipetsk","Липецк",null,"Россия"],["cheboksary","Чебоксары",null,"Россия"],["kaliningrad","Калининград",null,"Россия"],["tula","Тула",null,"Россия"],["stavropol","Ставрополь",null,"Россия"],["kursk","Курск",null,"Россия"],["ulanude","Улан-Удэ",null,"Россия"],["sochi","Сочи",null,"Россия"],["tver","Тверь",null,"Россия"],["magnitogorsk","Магнитогорск",null,"Россия"],["ivanovo","Иваново",null,"Россия"],["bryansk","Брянск",null,"Россия"],["belgorod","Белгород",null,"Россия"],["surgut","Сургут",null,"Россия"],["vladimir","Владимир",null,"Россия"],["chita","Чита",null,"Россия"],["arhangelsk","Архангельск",null,"Россия"],["simferopol","Симферополь",null,"Россия"],["smolensk","Смоленск",null,"Россия"],["kurgan","Курган",null,"Россия"],["kaluga","Калуга",null,"Россия"],["orel","Орёл",null,"Россия"],["vologda","Вологда",null,"Россия"],["syktyvkar","Сыктывкар",null,"Россия"],["saransk","Саранск",null,"Россия"],["tambov","Тамбов",null,"Россия"],["petrozavodsk","Петрозаводск",null,"Россия"],["kostroma","Кострома",null,"Россия"],["nizhnevartovsk","Нижневартовск",null,"Россия"],["novorossiysk","Новороссийск",null,"Россия"],["yakutsk","Якутск",null,"Россия"],["balashiha","Балашиха",null,"Россия"],["komsomolsk","Комсомольск-на-Амуре",null,"Россия"],["sevastopol","Севастополь",null,"Россия"],["nalchik","Нальчик",null,"Россия"],["pskov","Псков",null,"Россия"],["maykop","Майкоп",null,"Россия"],["cherkessk","Черкесск",null,"Россия"],["petropavlovsk","Петропавловск-Камчатский",null,"Россия"],["abakan","Абакан",null,"Россия"],["norilsk","Норильск",null,"Россия"],["elista","Элиста",null,"Россия"],["yuzhnosah","Южно-Сахалинск",null,"Россия"],["anadyr","Анадырь",null,"Россия"],["birobidzhan","Биробиджан",null,"Россия"],["blagoveshchensk","Благовещенск",null,"Россия"],["vladikavkaz","Владикавказ",null,"Россия"],["gornoaltaysk","Горно-Алтайск",null,"Россия"],["grozny","Грозный",null,"Россия"],["yoshkarola","Йошкар-Ола",null,"Россия"],["kyzyl","Кызыл",null,"Россия"],["magadan","Магадан",null,"Россия"],["murmansk","Мурманск",null,"Россия"],["nalchik2","Назрань",null,"Россия"],["novgorod","Великий Новгород",null,"Россия"]].map(function(x){return{key:x[0],name:x[1],zones:x[2],country:x[3]}});
+
+var country=null,city=null,zone=null,method="FBO";
+function filterInline(q){
+  q=arguments[0]||'';
+  var f=citiesData.filter(function(c){return c.country===country});
+  if(q)f=f.filter(function(c){return c.name.toLowerCase().indexOf(q.toLowerCase())>=0});
+  var h='';
+  f.forEach(function(c){
+    h+='<div class=card><div class=name>'+c.name+'</div><div class=info>'+(c.zones?c.zones.length+' зоны':'')+'</div></div>';
+  });
+  document.getElementById('city-list').innerHTML=h||'<div class=info>Ничего не найдено</div>';
+}
+var COUNTRIES=[{name:"Россия",flag:"RU"},{name:"Китай",flag:"CN"},{name:"Казахстан",flag:"KZ"},{name:"Киргизия",flag:"KG"},{name:"Армения",flag:"AM"}];
+
+(function(){
+  var h="";
+  COUNTRIES.forEach(function(c){
+    var n=citiesData.filter(function(x){return x.country===c.name}).length;
+    h+='<div class=card onclick="pickCountry(\''+c.name+'\')"><div class=flag style="background:#222;border-radius:6px;padding:6px 8px;font-weight:700;color:'+getFlagColor(c.flag)+'">'+c.flag+'</div><div><div class=name>'+c.name+'</div><div class=info>'+n+' городов</div></div></div>';
+  });
+  document.getElementById("country-list").innerHTML=h;
+})();
+
+function getFlagColor(f){var m={RU:"#fff",CN:"#ff4444",KZ:"#00bcd4",KG:"#ff4444",AM:"#ff9800"};return m[f]||"#888"}
+function pickCountry(name){country=name;filterCities("");showStep("cities")}
+function filterCities(q){
+  q=(q||"").toLowerCase();
+  var f=citiesData.filter(function(c){return c.country===country&&c.name.toLowerCase().indexOf(q)>=0});
+  if(!f.length){document.getElementById("city-list").innerHTML='<div class=info style="text-align:center;padding:20px">Ничего не найдено</div>';return}
+  document.getElementById("city-list").innerHTML=f.map(function(c){
+    return '<div class=card onclick="pickCity(\''+c.key+'\',\''+c.name+'\','+JSON.stringify(c.zones)+')"><div><div class=name>'+c.name+'</div><div class=info>'+(c.zones?c.zones.length+' зоны':'')+'</div></div></div>';
+  }).join("");
+}
+function pickCity(key,name,zones){
+  city={key:key,name:name,zones:zones};
+  if(zones&&zones.length){zone=null;document.getElementById("zone-list").innerHTML=zones.map(function(z){return'<div class=card onclick="pickZone(\''+z+'\')"><div class=name>'+z+'</div><div class=info>'+name+'</div></div>'});showStep("zones")}
+  else{zone="";showForm()}
+}
+function pickZone(z){zone=z;showForm()}
+function showForm(){document.getElementById("form-addr").textContent=city.name+(zone?(" — "+zone):"");showStep("form")}
+function setMethod(m,el){method=m;document.querySelectorAll(".method-row button").forEach(function(b){b.classList.toggle("on",b===el)})}
+function submitOrder(){
+  var n=document.getElementById("order-name").value.trim();
+  var ph=document.getElementById("order-phone").value.trim();
+  var l=document.getElementById("order-link").value.trim();
+  if(!n||!ph||!l){showStatus("Заполните все поля","err");return}
+  var btn=document.querySelector("#form .btn");btn.disabled=true;btn.textContent="Отправка...";
+  fetch("/api/order",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:n,phone:ph,link:l,city:city.key,zone:zone,method:method})})
+    .then(function(r){return r.json()}).then(function(d){if(d.ok)showStep("success");else{showStatus(d.error||"Ошибка","err");btn.disabled=false;btn.textContent="Отправить заявку"}})
+    .catch(function(){showStatus("Ошибка соединения","err");btn.disabled=false;btn.textContent="Отправить заявку"});
+}
+function showStatus(msg,cls){var s=document.getElementById("status");s.textContent=msg;s.className="status "+cls;s.classList.remove("hidden")}
+function showStep(s){["countries","cities","zones","form","success"].forEach(function(id){var el=document.getElementById(id);if(el)el.classList.add("hidden")});document.getElementById(s).classList.remove("hidden")}
+function resetForm(){document.getElementById("order-name").value="";document.getElementById("order-phone").value="";document.getElementById("order-link").value="";document.getElementById("status").classList.add("hidden");city=null;zone=null;country=null;showStep("countries")}
+
+// ==== ПАРТНЁР ====
+function showLogin(){document.getElementById("login-overlay").style.display="flex"}
+function hideLogin(){document.getElementById("login-overlay").style.display="none";document.getElementById("login-err").classList.add("hidden")}
+function doLogin(){
+  var e=document.getElementById("login-email").value.trim();
+  var p=document.getElementById("login-pass").value;
+  if(!e||!p)return;
+  fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({login:e,password:p})})
+    .then(function(r){return r.json()}).then(function(d){
+      if(d.ok){localStorage.setItem("ff_token",d.token);localStorage.setItem("ff_role",d.role);hideLogin();showPartnerPanel(d.user)}
+      else{var err=document.getElementById("login-err");err.textContent=d.error||"Ошибка";err.classList.remove("hidden")}
+    });
+}
+function doLogout(){localStorage.removeItem("ff_token");localStorage.removeItem("ff_role");location.reload()}
+function showPartnerPanel(u){document.getElementById("client-panel").classList.add("hidden");document.getElementById("partner-panel").classList.remove("hidden");document.getElementById("login-btn-top").classList.add("hidden");document.getElementById("logout-btn").classList.remove("hidden");document.getElementById("partner-info").textContent=(u.city||"")+(u.zone?" — "+u.zone:"");loadPartnerOrders()}
+function loadPartnerOrders(){
+  var T=***"ff_token");
+  fetch("/api/partner/orders",{headers:{Authorization:"***"+T}}).then(function(r){return r.json()}).then(function(d){
+    if(!d.orders||!d.orders.length){document.getElementById("partner-orders").innerHTML='<div style="text-align:center;color:#777;padding:40px">Заявок пока нет</div>';return}
+    var lb={new:"Новая",accepted:"Принято",in_progress:"В работе",done:"Готово"};
+    var html='<table><thead><tr><th>ID</th><th>Клиент</th><th>Телефон</th><th>Ссылка</th><th>Способ</th><th>Статус</th><th>Дата</th></tr></thead><tbody>';
+    d.orders.forEach(function(o){var opts="";for(var k in lb)opts+='<option value='+k+(o.status===k?' selected':'')+'>'+lb[k]+'</option>';html+='<tr><td>#'+o.id+'</td><td>'+(o.name||"")+'</td><td>'+(o.phone||"")+'</td><td><a href='+(o.link||"")+' target=_blank style="color:#4da3ff">ссылка</a></td><td>'+(o.method||"FBO")+'</td><td><select onchange="updOrder('+o.id+',this.value)" style="background:#000;border:1px solid #333;color:#eee;border-radius:4px;padding:2px 4px">'+opts+'</select></td><td>'+(o.created_at||"").slice(0,16)+'</td></tr>'});
+    html+='</tbody></table>';document.getElementById("partner-orders").innerHTML=html;
+  });
+}
+function updOrder(id,st){var T=***"ff_token");fetch("/api/partner/orders/"+id,{method:"PATCH",headers:{"Content-Type":"application/json",Authorization:"***"+T},body:JSON.stringify({status:st})})}
+</script>
+</body>
+</html>
