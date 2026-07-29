@@ -40,7 +40,7 @@ td{padding:6px 8px;border-bottom:1px solid #1a1a1a;color:#ccc}
 
 <div class="top-row">
   <button class="btn2 hidden" id="logout-btn" onclick="doLogout()">🚪 Выйти</button>
-  <button class="btn2" id="login-btn-top" onclick="showLogin()">🔐 Вход для партнёров</button>
+  <button class="btn2" id="login-btn-top" onclick="document.getElementById('login-overlay').style.display='flex'">🔐 Вход для партнёров</button>
 </div>
 
 <div class="overlay" id="login-overlay" style="display:none">
@@ -51,7 +51,7 @@ td{padding:6px 8px;border-bottom:1px solid #1a1a1a;color:#ccc}
     <input type="password" id="login-pass" placeholder="Пароль">
     <div class="status err hidden" id="login-err"></div>
     <button class="btn" onclick="doLogin()">Войти</button>
-    <button class="btn" style="background:transparent;border:1px solid #444;margin-top:4px" onclick="hideLogin()">Отмена</button>
+    <button class="btn" style="background:transparent;border:1px solid #444;margin-top:4px" onclick="document.getElementById('login-overlay').style.display='none'">Отмена</button>
   </div>
 </div>
 
