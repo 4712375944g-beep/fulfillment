@@ -185,13 +185,17 @@ function updOrder(id,st){
   fetch("/api/partner/orders/"+id,{method:"PATCH",headers:{"Content-Type":"application/json",Authorization:"***"+TOKEN},body:JSON.stringify({status:st})});
 }
 
-// Auto-login if saved
+// Auto-login if saved — проверяем что токен валиден
 if(TOKEN&&ROLE==="partner"){
-  document.getElementById("login-btn-top").classList.add("hidden");
-  document.getElementById("logout-btn").classList.remove("hidden");
   fetch("/api/me",{headers:{Authorization:"***"+TOKEN}})
-    .then(function(r){return r.json()})
-    .then(function(u){showPartnerPanel(u)});
+    .then(function(r){if(!r.ok)throw 1;return r.json()})
+    .then(function(u){
+      document.getElementById("login-btn-top").classList.add("hidden");
+      document.getElementById("logout-btn").classList.remove("hidden");
+      showPartnerPanel(u);
+    })
+    .catch(function(){doLogout()});
+}
 }
 
 // ==== CLIENT FLOW ====
