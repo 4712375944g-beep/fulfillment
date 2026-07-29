@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SellFull</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0d0d0d;color:#e0e0e0;padding:16px}
+    h2{color:#4da3ff;margin-bottom:8px}
+    p.sub{color:#999;font-size:13px;margin-bottom:12px}
+    .card{background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:14px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:12px}
+    .card:active{background:#2a2a2a}
+    .flag{font-size:28px}
+    .name{font-size:16px;font-weight:600}
+    .info{font-size:12px;color:#777}
+    .back{color:#4da3ff;font-size:14px;background:none;border:none;padding:0;margin-bottom:8px;cursor:pointer}
+    input,select{width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:10px;color:#e0e0e0;font-size:15px;margin-bottom:8px}
+    .btn{width:100%;background:#4da3ff;color:#fff;border:none;border-radius:8px;padding:12px;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px}
+    .btn2{background:#2AABEE;border:none;color:#fff;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;font-weight:600}
+    .hidden{display:none}
+    .status{padding:12px;border-radius:8px;margin-top:12px;font-size:13px}
+    .status.ok{background:#0a2a0a;color:#4caf50}
+    .status.err{background:#2a0a0a;color:#f44336}
+    .method-row{display:flex;gap:8px;margin-bottom:12px}
+    .method-row button{flex:1;padding:8px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#999;font-size:14px;cursor:pointer}
+    .method-row button.on{background:#4da3ff;color:#fff;border-color:#4da3ff}
+    .top-row{display:flex;justify-content:flex-end;margin-bottom:12px}
+    .overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.92);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+    .box{background:#111;border:1px solid #2a2a2a;border-radius:16px;padding:24px;width:100%;max-width:340px}
+    .box h3{font-size:18px;margin-bottom:4px;text-align:center}
+    .box .sub{text-align:center}
+    .box input{width:100%;background:#1c1c1c;border:1px solid #444;border-radius:8px;padding:10px;color:#fff;font-size:15px;margin-bottom:10px}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th{text-align:left;padding:6px 8px;border-bottom:1px solid #333;color:#888}
+    td{padding:6px 8px;border-bottom:1px solid #1a1a1a;color:#ccc}
+    .route-card{background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:12px;margin-bottom:8px}
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-row">
+  <button class="btn2 hidden" id="logout-btn" onclick="doLogout()">🚪 Выйти</button>
+  <button class="btn2" id="login-btn-top" onclick="showLogin()">🔐 Вход для партнёров</button>
+</div>
+
+<!-- LOGIN OVERLAY -->
+<div class="overlay" id="login-overlay" style="display:none">
+  <div class="box">
+    <h3>🔐 Вход для партнёров</h3>
+    <p class="sub">Управление заявками</p>
+    <input type="text" id="login-email" placeholder="Email">
+    <input type="password" id="login-pass" placeholder="Пароль">
+    <div class="status err hidden" id="login-err"></div>
+    <button class="btn" onclick="doLogin()">Войти</button>
+    <button class="btn" style="background:transparent;border:1px solid #444;margin-top:4px" onclick="hideLogin()">Отмена</button>
+  </div>
+</div>
+
+<!-- CLIENT PANEL -->
+<div id="client-panel">
+  <div id="countries">
+    <h2>🌍 Выберите страну</h2>
+    <p class="sub">Подберём склад фулфилмента</p>
+    <div id="country-list">Загрузка...</div>
+  </div>
+  <div id="cities" class="hidden">
+    <button class="back" onclick="showStep('countries')">← Назад</button>
+    <h2>📍 Выберите город</h2>
+    <p class="sub">Введите название или выберите из списка</p>
+    <input type="text" placeholder="🔍 Поиск города..." oninput="filterCities(this.value)">
+    <div id="city-list"></div>
+  </div>
+  <div id="zones" class="hidden">
+    <button class="back" onclick="showStep('cities')">← Назад</button>
+    <h2>📍 Уточните район</h2>
+    <div id="zone-list"></div>
+  </div>
+  <div id="form" class="hidden">
+    <button class="back" onclick="showStep('zones')">← Назад</button>
+    <h2>📦 Заявка на фулфилмент</h2>
+    <p class="sub" id="form-addr"></p>
+    <div class="method-row">
+      <button class="on" data-m="FBO" onclick="setMethod('FBO',this)">📦 FBO</button>
+      <button data-m="FBS" onclick="setMethod('FBS',this)">🚚 FBS</button>
+    </div>
+    <input type="text" id="order-name" placeholder="Ваше имя" required>
+    <input type="tel" id="order-phone" placeholder="Телефон" required>
+    <input type="text" id="order-link" placeholder="Ссылка на товар (WB)" required>
+    <button class="btn" onclick="submitOrder()">Отправить заявку</button>
+    <div class="status hidden" id="status"></div>
+  </div>
+  <div id="success" class="hidden" style="text-align:center;padding-top:40px">
+    <h2 style="font-size:24px;color:#4caf50">✅ Заявка отправлена!</h2>
+    <p class="sub">Скоро с вами свяжется менеджер</p>
+    <button class="btn" onclick="resetForm()" style="width:200px;margin:20px auto">Новая заявка</button>
+  </div>
+</div>
+
+<!-- PARTNER PANEL -->
+<div id="partner-panel" class="hidden">
+  <h2>📦 Мои заявки</h2>
+  <p class="sub" id="partner-info"></p>
+  <div id="partner-orders">Загрузка...</div>
+</div>
+
+<script>
+// Init Telegram
+if (window.Telegram && window.Telegram.WebApp) {
+  window.Telegram.WebApp.ready();
+  window.Telegram.WebApp.expand();
+}
+
+// ==== PARTNER AUTH ====
+var TOKEN=localStorage.getItem("ff_token");
+var ROLE=localStorage.getItem("ff_role");
+
+function showLogin(){
+  document.getElementById("login-overlay").classList.remove("hidden");
+  document.getElementById("login-email").focus();
+}
+function hideLogin(){
+  document.getElementById("login-overlay").classList.add("hidden");
+  document.getElementById("login-err").classList.add("hidden");
+}
+
+function doLogin(){
+  var e=document.getElementById("login-email").value.trim();
+  var p=document.getElementById("login-pass").value;
+  if(!e||!p)return;
+  fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({login:e,password:p})})
+    .then(function(r){return r.json()})
+    .then(function(d){
+      if(d.ok){
+        TOKEN=d.token;ROLE=d.role;
+        localStorage.setItem("ff_token",d.token);
+        localStorage.setItem("ff_role",d.role);
+        hideLogin();
+        showPartnerPanel(d.user);
+      }else{
+        document.getElementById("login-err").textContent=d.error||"Ошибка";
+        document.getElementById("login-err").classList.remove("hidden");
+      }
+    });
+}
+
+function doLogout(){
+  localStorage.removeItem("ff_token");localStorage.removeItem("ff_role");
+  TOKEN=null;ROLE=null;
+  location.reload();
+}
+
+function showPartnerPanel(user){
+  document.getElementById("client-panel").classList.add("hidden");
+  document.getElementById("partner-panel").classList.remove("hidden");
+  document.getElementById("login-btn-top").classList.add("hidden");
+  document.getElementById("logout-btn").classList.remove("hidden");
+  document.getElementById("partner-info").textContent=(user.city||"")+(user.zone?" — "+user.zone:"");
+  loadPartnerOrders();
+}
+
+function loadPartnerOrders(){
+  fetch("/api/partner/orders",{headers:{Authorization:"***"+TOKEN}})
+    .then(function(r){return r.json()})
+    .then(function(d){
+      if(!d.orders||!d.orders.length){
+        document.getElementById("partner-orders").innerHTML="<div style='text-align:center;color:#777;padding:40px'>Заявок пока нет</div>";
+        return;
+      }
+      var lb={new:"Новая",accepted:"Принято",in_progress:"В работе",done:"Готово"};
+      var html="<table><thead><tr><th>ID</th><th>Клиент</th><th>Телефон</th><th>Ссылка</th><th>Способ</th><th>Статус</th><th>Дата</th></tr></thead><tbody>";
+      d.orders.forEach(function(o){
+        var opts="";
+        for(var k in lb)opts+="<option value="+k+(o.status===k?" selected":"")+">"+lb[k]+"</option>";
+        html+="<tr><td>#"+o.id+"</td><td>"+(o.name||"")+"</td><td>"+(o.phone||"")+"</td><td><a href="+(o.link||"")+" target=_blank style='color:#4da3ff'>ссылка</a></td><td>"+(o.method||"FBO")+"</td><td><select onchange='updOrder("+o.id+",this.value)' style='background:#000;border:1px solid #333;color:#eee;border-radius:4px;padding:2px 4px'>"+opts+"</select></td><td>"+(o.created_at||"").slice(0,16)+"</td></tr>";
+      });
+      html+="</tbody></table>";
+      document.getElementById("partner-orders").innerHTML=html;
+    });
+}
+
+function updOrder(id,st){
+  fetch("/api/partner/orders/"+id,{method:"PATCH",headers:{"Content-Type":"application/json",Authorization:"***"+TOKEN},body:JSON.stringify({status:st})});
+}
+
+// Auto-login if saved — проверяем что токен валиден
+if(TOKEN&&ROLE==="partner"){
+  fetch("/api/me",{headers:{Authorization:"***"+TOKEN}})
+    .then(function(r){if(!r.ok)throw 1;return r.json()})
+    .then(function(u){
+      document.getElementById("login-btn-top").classList.add("hidden");
+      document.getElementById("logout-btn").classList.remove("hidden");
+      showPartnerPanel(u);
+    })
+    .catch(function(){doLogout()});
+}
+}
+
+// ==== CLIENT FLOW ====
+var citiesData=[],country=null,city=null,zone=null,method="FBO";
+var COUNTRIES=[{name:"Россия",flag:"🇷🇺"},{name:"Китай",flag:"🇨🇳"},{name:"Казахстан",flag:"🇰🇿"},{name:"Киргизия",flag:"🇰🇬"},{name:"Армения",flag:"🇦🇲"}];
+
+// ==== CLIENT FLOW ====
+var citiesData=[{"key":"msk","name":"Москва","zones":["Север","Юг","Запад","Восток"],"country":"Россия"},{"key":"spb","name":"Санкт-Петербург","zones":null,"country":"Россия"},{"key":"nsk","name":"Новосибирск","zones":null,"country":"Россия"},{"key":"ekb","name":"Екатеринбург","zones":null,"country":"Россия"},{"key":"kazan","name":"Казань","zones":null,"country":"Россия"},{"key":"nn","name":"Нижний Новгород","zones":null,"country":"Россия"},{"key":"chelyabinsk","name":"Челябинск","zones":null,"country":"Россия"},{"key":"krasnoyarsk","name":"Красноярск","zones":null,"country":"Россия"},{"key":"samara","name":"Самара","zones":null,"country":"Россия"},{"key":"ufa","name":"Уфа","zones":null,"country":"Россия"},{"key":"rostov","name":"Ростов-на-Дону","zones":null,"country":"Россия"},{"key":"omsk","name":"Омск","zones":null,"country":"Россия"},{"key":"krasnodar","name":"Краснодар","zones":null,"country":"Россия"},{"key":"voronezh","name":"Воронеж","zones":null,"country":"Россия"},{"key":"perm","name":"Пермь","zones":null,"country":"Россия"},{"key":"volgograd","name":"Волгоград","zones":null,"country":"Россия"},{"key":"saratov","name":"Саратов","zones":null,"country":"Россия"},{"key":"tyumen","name":"Тюмень","zones":null,"country":"Россия"},{"key":"tolyatti","name":"Тольятти","zones":null,"country":"Россия"},{"key":"izhevsk","name":"Ижевск","zones":null,"country":"Россия"},{"key":"barnaul","name":"Барнаул","zones":null,"country":"Россия"},{"key":"ulyanovsk","name":"Ульяновск","zones":null,"country":"Россия"},{"key":"irkutsk","name":"Иркутск","zones":null,"country":"Россия"},{"key":"khabarovsk","name":"Хабаровск","zones":null,"country":"Россия"},{"key":"yaroslavl","name":"Ярославль","zones":null,"country":"Россия"},{"key":"vladivostok","name":"Владивосток","zones":null,"country":"Россия"},{"key":"makhachkala","name":"Махачкала","zones":null,"country":"Россия"},{"key":"tomsk","name":"Томск","zones":null,"country":"Россия"},{"key":"orenburg","name":"Оренбург","zones":null,"country":"Россия"},{"key":"kemerovo","name":"Кемерово","zones":null,"country":"Россия"},{"key":"novokuznetsk","name":"Новокузнецк","zones":null,"country":"Россия"},{"key":"ryazan","name":"Рязань","zones":null,"country":"Россия"},{"key":"astrahan","name":"Астрахань","zones":null,"country":"Россия"},{"key":"nabchelny","name":"Набережные Челны","zones":null,"country":"Россия"},{"key":"penza","name":"Пенза","zones":null,"country":"Россия"},{"key":"lipetsk","name":"Липецк","zones":null,"country":"Россия"},{"key":"kirov","name":"Киров","zones":null,"country":"Россия"},{"key":"cheboksary","name":"Чебоксары","zones":null,"country":"Россия"},{"key":"tula","name":"Тула","zones":null,"country":"Россия"},{"key":"kaliningrad","name":"Калининград","zones":null,"country":"Россия"},{"key":"balashiha","name":"Балашиха","zones":null,"country":"Россия"},{"key":"kursk","name":"Курск","zones":null,"country":"Россия"},{"key":"stavropol","name":"Ставрополь","zones":null,"country":"Россия"},{"key":"ulanude","name":"Улан-Удэ","zones":null,"country":"Россия"},{"key":"tver","name":"Тверь","zones":null,"country":"Россия"},{"key":"ivanovo","name":"Иваново","zones":null,"country":"Россия"},{"key":"bryansk","name":"Брянск","zones":null,"country":"Россия"},{"key":"sochi","name":"Сочи","zones":null,"country":"Россия"},{"key":"belgorod","name":"Белгород","zones":null,"country":"Россия"},{"key":"vladimir","name":"Владимир","zones":null,"country":"Россия"},{"key":"chita","name":"Чита","zones":null,"country":"Россия"},{"key":"arhangelsk","name":"Архангельск","zones":null,"country":"Россия"},{"key":"smolensk","name":"Смоленск","zones":null,"country":"Россия"},{"key":"kurgan","name":"Курган","zones":null,"country":"Россия"},{"key":"kaluga","name":"Калуга","zones":null,"country":"Россия"},{"key":"orel","name":"Орёл","zones":null,"country":"Россия"},{"key":"vladikavkaz","name":"Владикавказ","zones":null,"country":"Россия"},{"key":"grozny","name":"Грозный","zones":null,"country":"Россия"},{"key":"murmansk","name":"Мурманск","zones":null,"country":"Россия"},{"key":"surgut","name":"Сургут","zones":null,"country":"Россия"},{"key":"yakutsk","name":"Якутск","zones":null,"country":"Россия"},{"key":"petrozavodsk","name":"Петрозаводск","zones":null,"country":"Россия"},{"key":"syktyvkar","name":"Сыктывкар","zones":null,"country":"Россия"},{"key":"yoshkarola","name":"Йошкар-Ола","zones":null,"country":"Россия"},{"key":"tambov","name":"Тамбов","zones":null,"country":"Россия"},{"key":"saransk","name":"Саранск","zones":null,"country":"Россия"},{"key":"vologda","name":"Вологда","zones":null,"country":"Россия"},{"key":"pskov","name":"Псков","zones":null,"country":"Россия"},{"key":"kostroma","name":"Кострома","zones":null,"country":"Россия"},{"key":"novgorod","name":"Великий Новгород","zones":null,"country":"Россия"},{"key":"abakan","name":"Абакан","zones":null,"country":"Россия"},{"key":"birobidzhan","name":"Биробиджан","zones":null,"country":"Россия"},{"key":"blagoveshchensk","name":"Благовещенск","zones":null,"country":"Россия"},{"key":"maykop","name":"Майкоп","zones":null,"country":"Россия"},{"key":"nalchik","name":"Нальчик","zones":null,"country":"Россия"},{"key":"cherkessk","name":"Черкесск","zones":null,"country":"Россия"},{"key":"simferopol","name":"Симферополь","zones":null,"country":"Россия"},{"key":"sevastopol","name":"Севастополь","zones":null,"country":"Россия"},{"key":"magadan","name":"Магадан","zones":null,"country":"Россия"},{"key":"norilsk","name":"Норильск","zones":null,"country":"Россия"},{"key":"yuzhnosah","name":"Южно-Сахалинск","zones":null,"country":"Россия"},{"key":"petropavlovsk","name":"Петропавловск-Камчатский","zones":null,"country":"Россия"},{"key":"anadyr","name":"Анадырь","zones":null,"country":"Россия"},{"key":"nalchik2","name":"Назрань","zones":null,"country":"Россия"},{"key":"elista","name":"Элиста","zones":null,"country":"Россия"},{"key":"gornoaltaysk","name":"Горно-Алтайск","zones":null,"country":"Россия"},{"key":"kyzyl","name":"Кызыл","zones":null,"country":"Россия"},{"key":"cn-guangzhou","name":"Гуанчжоу, Китай","zones":null,"country":"Китай"},{"key":"cn-shanghai","name":"Шанхай, Китай","zones":null,"country":"Китай"},{"key":"cn-beijing","name":"Пекин, Китай","zones":null,"country":"Китай"},{"key":"cn-shenzhen","name":"Шэньчжэнь, Китай","zones":null,"country":"Китай"},{"key":"cn-yiwu","name":"Иу, Китай","zones":null,"country":"Китай"},{"key":"cn-hangzhou","name":"Ханчжоу, Китай","zones":null,"country":"Китай"},{"key":"cn-chengdu","name":"Чэнду, Китай","zones":null,"country":"Китай"},{"key":"kz-almaty","name":"Алматы, Казахстан","zones":null,"country":"Казахстан"},{"key":"kz-astana","name":"Астана, Казахстан","zones":null,"country":"Казахстан"},{"key":"kg-bishkek","name":"Бишкек, Киргизия","zones":null,"country":"Киргизия"},{"key":"am-yerevan","name":"Ереван, Армения","zones":null,"country":"Армения"}];;
+var country=null,city=null,zone=null,method="FBO";
+var COUNTRIES=[{name:"Россия",flag:"🇷🇺"},{name:"Китай",flag:"🇨🇳"},{name:"Казахстан",flag:"🇰🇿"},{name:"Киргизия",flag:"🇰🇬"},{name:"Армения",flag:"🇦🇲"}];
+(function renderCountries(){
+  var h="";
+  COUNTRIES.forEach(function(c){
+    var n=citiesData.filter(function(x){return x.country===c.name}).length;
+    h+="<div class=card onclick='pickCountry(\""+c.name+"\")'><span class=flag>"+c.flag+"</span><div><div class=name>"+c.name+"</div><div class=info>"+n+" городов</div></div></div>";
+  });
+  document.getElementById("country-list").innerHTML=h;
+})();
+
+function pickCountry(name){country=name;filterCities("");showStep("cities");}
+function filterCities(q){
+  q=(q||"").toLowerCase();
+  var f=citiesData.filter(function(c){return c.country===country&&c.name.toLowerCase().indexOf(q)>=0});
+  if(!f.length){document.getElementById("city-list").innerHTML="<div class=info style='text-align:center;padding:20px'>Ничего не найдено</div>";return}
+  document.getElementById("city-list").innerHTML=f.map(function(c){
+    return "<div class=card onclick='pickCity("+JSON.stringify(c.key)+",\""+c.name+"\","+JSON.stringify(c.zones||null)+")'><div><div class=name>"+c.name+"</div><div class=info>"+(c.zones?c.zones.length+" зоны":"")+"</div></div></div>";
+  }).join("");
+}
+function pickCity(key,name,zones){
+  city={key:key,name:name,zones:zones};
+  if(zones&&zones.length){
+    zone=null;
+    document.getElementById("zone-list").innerHTML=zones.map(function(z){
+      return "<div class=card onclick='pickZone(\""+z+"\")'><div class=name>"+z+"</div><div class=info>"+name+"</div></div>";
+    }).join("");
+    showStep("zones");
+  }else{zone="";showForm()}
+}
+function pickZone(z){zone=z;showForm()}
+function showForm(){document.getElementById("form-addr").textContent=city.name+(zone?(" — "+zone):"");showStep("form")}
+function setMethod(m,el){method=m;document.querySelectorAll(".method-row button").forEach(function(b){b.classList.toggle("on",b===el)})}
+function submitOrder(){
+  var name=document.getElementById("order-name").value.trim();
+  var phone=document.getElementById("order-phone").value.trim();
+  var link=document.getElementById("order-link").value.trim();
+  if(!name||!phone||!link){showStatus("Заполните все поля","err");return}
+  var btn=document.querySelector("#form .btn");
+  btn.disabled=true;btn.textContent="Отправка...";
+  fetch("/api/order",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:name,phone:phone,link:link,city:city.key,zone:zone,method:method})})
+    .then(function(r){return r.json()})
+    .then(function(d){
+      if(d.ok)showStep("success");
+      else{showStatus(d.error||"Ошибка","err");btn.disabled=false;btn.textContent="Отправить заявку"}
+    })
+    .catch(function(){showStatus("Ошибка соединения","err");btn.disabled=false;btn.textContent="Отправить заявку"});
+}
+function showStatus(msg,cls){var s=document.getElementById("status");s.textContent=msg;s.className="status "+cls;s.classList.remove("hidden")}
+function showStep(s){["countries","cities","zones","form","success"].forEach(function(id){var el=document.getElementById(id);if(el)el.classList.add("hidden")});document.getElementById(s).classList.remove("hidden")}
+function resetForm(){
+  document.getElementById("order-name").value="";
+  document.getElementById("order-phone").value="";
+  document.getElementById("order-link").value="";
+  document.getElementById("status").classList.add("hidden");
+  city=null;zone=null;country=null;
+  showStep("countries");
+}
+</script>
+</body>
+</html>
