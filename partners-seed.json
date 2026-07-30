@@ -1,0 +1,122 @@
+[
+  {
+    "login": "test@ful.ru",
+    "password": "",
+    "company": "ТестСклад",
+    "city": "Казань",
+    "contact": "Иван",
+    "phone": "+79991112233"
+  },
+  {
+    "login": "79207377977@yandex.ru",
+    "password": "",
+    "company": "ООО Фулфилмент",
+    "city": "Анадырь",
+    "contact": "Денис",
+    "phone": "+79207377977"
+  },
+  {
+    "login": "partner@test.ru",
+    "password": "pass1234",
+    "company": "ООО ТестФулфилмент",
+    "city": "Москва",
+    "contact": "Иван Петров",
+    "phone": "+79991234567"
+  },
+  {
+    "login": "preppack.msk@gmail.com",
+    "password": "Kostroma2020!",
+    "company": "PREP&PACK",
+    "city": "Москва",
+    "contact": "Алексей Никулин",
+    "phone": "+79771163811"
+  },
+  {
+    "login": "packdrivemsk@gmail.com",
+    "password": "PD611347",
+    "company": "Pack&Drive",
+    "city": "Москва",
+    "contact": "Валерий",
+    "phone": "+79522884483"
+  },
+  {
+    "login": "VRNpvz@yandex.ru",
+    "password": "NSWKwhy2",
+    "company": "ИП Зыков А.А.",
+    "city": "Воронеж",
+    "contact": "Антон",
+    "phone": "+79192460419"
+  },
+  {
+    "login": "fullfilpb@yandex.ru",
+    "password": "Paradigma!1488",
+    "company": "\"Пакуем быстро\"",
+    "city": "Москва",
+    "contact": "Егор Барков",
+    "phone": "+79080829700"
+  },
+  {
+    "login": "apelsinpak@gmail.com",
+    "password": "grfylhs",
+    "company": "ООО АПЕЛЬСИН",
+    "city": "Казань",
+    "contact": "Марат Ахметшин",
+    "phone": "89373210221"
+  },
+  {
+    "login": "79027377977@yandex.ru",
+    "password": "Denis2580Denis2580",
+    "company": "Денис (тест)",
+    "city": "Москва",
+    "contact": "Денис",
+    "phone": "+79027377977"
+  },
+  {
+    "login": "info@fox2box.ru",
+    "password": "Fox789563Box",
+    "company": "ИП Хорькова Оксана Анатольевна",
+    "city": "Москва",
+    "contact": "Кадим",
+    "phone": "+79533959595"
+  },
+  {
+    "login": "BerezhniyFF@yandex.ru",
+    "password": "22081987",
+    "company": "Бережный фулфилмент",
+    "city": "Москва",
+    "contact": "Мария",
+    "phone": "+79998662514"
+  },
+  {
+    "login": "magnitskayava@gmail.com",
+    "password": "PVZ79K1",
+    "company": "ИП Магницкая",
+    "city": "Москва",
+    "contact": "Магницкая Василиса",
+    "phone": "+79994517175"
+  },
+  {
+    "login": "berezhniyFF@yandex.ru",
+    "password": "22081987",
+    "company": "Бережный фулфилмент",
+    "city": "Москва",
+    "contact": "Мария",
+    "phone": "89998662514"
+  },
+  {
+    "login": "srtff1@yandex.com",
+    "password": "Sa000000",
+    "company": "Ф1",
+    "city": "Саратов",
+    "contact": "Александр",
+    "phone": "+79800671909"
+  },
+  {
+    "login": "info@optomist.ru",
+    "password": "Otids2025",
+    "company": "ФФ ОТИДС",
+    "city": "Москва",
+    "contact": "Андрей",
+    "phone": "+79167515927"
+  }
+]
