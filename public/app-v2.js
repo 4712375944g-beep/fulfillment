@@ -1056,6 +1056,22 @@
     elRegSubmit.addEventListener('click', doRegister);
 
     // Enter в поле пароля (логин)
+    // Показать/скрыть пароль (логин)
+    var loginPassToggle = document.getElementById('login-pass-toggle');
+    loginPassToggle.addEventListener('click', function() {
+      var inp = document.getElementById('login-pass');
+      if (inp.type === 'password') { inp.type = 'text'; loginPassToggle.textContent = '🙈'; }
+      else { inp.type = 'password'; loginPassToggle.textContent = '👁'; }
+    });
+
+    // Показать/скрыть пароль (регистрация)
+    var regPassToggle = document.getElementById('reg-pass-toggle');
+    regPassToggle.addEventListener('click', function() {
+      var inp = document.getElementById('reg-pass');
+      if (inp.type === 'password') { inp.type = 'text'; regPassToggle.textContent = '🙈'; }
+      else { inp.type = 'password'; regPassToggle.textContent = '👁'; }
+    });
+
     elLoginPass.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') doLogin();
     });

@@ -419,3 +419,9 @@ h2 {
 .partner-table th{text-align:left;padding:6px 4px;border-bottom:1px solid #333;color:#888;font-size:11px}
 .partner-table td{padding:8px 4px;border-bottom:1px solid #222;color:#ddd;vertical-align:top}
 .partner-table select{max-width:100px}
+
+/* Показать пароль */
+.pass-wrap{position:relative}
+.pass-wrap .form-input{padding-right:40px}
+.pass-toggle{position:absolute;right:0;top:0;height:100%;width:40px;background:transparent;border:none;color:#888;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.pass-toggle:hover{color:#fff}
