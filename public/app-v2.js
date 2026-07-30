@@ -74,6 +74,17 @@
   var elRegCancel = document.getElementById('register-cancel-btn');
   var elShowLogin = document.getElementById('show-login-btn');
 
+  // Checkboxes: методы
+  var elRegFbo = document.getElementById('reg-fbo');
+  var elRegFbs = document.getElementById('reg-fbs');
+  var elRegDbs = document.getElementById('reg-dbs');
+
+  // Checkboxes: маркетплейсы
+  var elRegWb = document.getElementById('reg-wb');
+  var elRegOzon = document.getElementById('reg-ozon');
+  var elRegYandex = document.getElementById('reg-yandex');
+  var elRegOther = document.getElementById('reg-other');
+
   // Countries
   var elCountryList = document.getElementById('country-list');
 
@@ -685,6 +696,19 @@
       return;
     }
 
+    // Собираем методы
+    var methods = [];
+    if (elRegFbo.checked) methods.push('FBO');
+    if (elRegFbs.checked) methods.push('FBS');
+    if (elRegDbs.checked) methods.push('DBS');
+
+    // Собираем маркетплейсы
+    var mkt = [];
+    if (elRegWb.checked) mkt.push('WB');
+    if (elRegOzon.checked) mkt.push('Ozon');
+    if (elRegYandex.checked) mkt.push('Yandex');
+    if (elRegOther.checked) mkt.push('Другое');
+
     elRegSubmit.disabled = true;
     elRegSubmit.textContent = 'Отправка...';
     elRegError.classList.add('hidden');
@@ -699,7 +723,9 @@
         company: company,
         city: city,
         contact: contact,
-        phone: phone
+        phone: phone,
+        methods: methods,
+        marketplaces: mkt
       })
     })
       .then(function (r) { return r.json(); })

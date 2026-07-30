@@ -82,7 +82,7 @@ app.get('/health', (_, res) => res.json({ status: 'ok', uptime: process.uptime()
 
 // ====== API: регистрация партнёра ======
 app.post('/api/register', (req, res) => {
-  const { email, password, company, city, zone, contact, phone, description } = req.body;
+  const { email, password, company, city, zone, contact, phone, description, methods, marketplaces } = req.body;
   if (!email || !password || !company || !city || !contact || !phone) {
     return res.status(400).json({ ok: false, error: 'Все поля обязательны' });
   }
@@ -93,18 +93,25 @@ app.post('/api/register', (req, res) => {
     return res.status(400).json({ ok: false, error: 'Этот email уже зарегистрирован' });
   }
 
+  const methodsStr = Array.isArray(methods) ? methods.join(',') : (methods || '');
+  const mktStr = Array.isArray(marketplaces) ? marketplaces.join(',') : (marketplaces || '');
+
   const user = {
     id: String(db.nextUserId++), login: email, password, role: 'partner',
     city, zone: zone || '', company, contact, phone,
+    methods: methodsStr, marketplaces: mktStr,
     description: description || '', status: 'pending',
     created_at: new Date().toISOString(),
   };
   db.users.push(user);
   saveDB(db);
 
+  const methodsShow = methodsStr ? '\n📦 ' + methodsStr : '';
+  const mktShow = mktStr ? '\n🏪 ' + mktStr : '';
+
   tg('sendMessage', {
     chat_id: CHAT_ID, parse_mode: 'HTML',
-    text: `🏭 <b>Новый партнёр (ожидает подтверждения)</b>\n\n📋 ${esc(company)}\n📍 ${city}${zone ? ' — ' + zone : ''}\n👤 ${esc(contact)}\n📞 ${esc(phone)}\n📧 ${esc(email)}`,
+    text: `🏭 <b>Новый партнёр (ожидает подтверждения)</b>\n\n📋 ${esc(company)}\n📍 ${city}${zone ? ' — ' + zone : ''}\n👤 ${esc(contact)}\n📞 ${esc(phone)}\n📧 ${esc(email)}${methodsShow}${mktShow}`,
     reply_markup: {
       inline_keyboard: [[
         { text: '✅ Дать доступ', callback_data: `apr:${user.id}` },
@@ -383,11 +390,18 @@ app.patch('/api/admin/partners/:id', auth, requireAdmin, (req, res) => {
 app.get('/api/partner/orders', auth, (req, res) => {
   if (req.user.role !== 'partner') return res.status(403).json({ error: 'Только для партнёров' });
   const db = loadDB();
+  const userMethods = req.user.methods ? req.user.methods.split(',') : [];
+  const userMkt = req.user.marketplaces ? req.user.marketplaces.split(',') : [];
   const orders = db.orders
-    .filter(o => o.city === req.user.city && o.zone === req.user.zone)
+    .filter(o => {
+      if (o.city !== req.user.city) return false;
+      if (userMethods.length && !userMethods.includes(o.method || 'FBO')) return false;
+      if (userMkt.length && !userMkt.includes(o.marketplace)) return false;
+      return true;
+    })
     .sort((a, b) => b.id - a.id)
     .slice(0, 100);
-  res.json({ orders, partner: { city: req.user.city, zone: req.user.zone } });
+  res.json({ orders, partner: { city: req.user.city, methods: req.user.methods, marketplaces: req.user.marketplaces } });
 });
 
 app.patch('/api/partner/orders/:id', auth, (req, res) => {

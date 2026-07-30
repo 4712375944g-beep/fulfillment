@@ -2,6 +2,7 @@ var TOKEN = localStorage.getItem('ff_token');
 var ROLE = localStorage.getItem('ff_role');
 var USER = JSON.parse(localStorage.getItem('ff_user') || '{}');
 var cities = [], selectedCountry = null, selectedCity = null;
+// Вспомогательная: звонок через создание элемента (обходит блокировку WebView)
 
 var COUNTRIES = [
   { name: 'Россия', flag: '🇷🇺' }, { name: 'Китай', flag: '🇨🇳' },
@@ -292,7 +293,7 @@ function loadPartnerOrders() {
         d.orders.map(function(o) {
           var opts = '';
           for (var k in lb) opts += '<option value="' + k + '"' + (o.status === k ? ' selected' : '') + '>' + lb[k] + '</option>';
-          return '<tr><td>#' + o.id + '</td><td>' + (o.name||'') + '</td><td>' + (o.phone||'') + '</td><td><a href="' + (o.link||'') + '" target="_blank" style="color:#4da3ff">ссылка</a></td><td><select class="action-select" onchange="updOrder(' + o.id + ',this.value)">' + opts + '</select></td><td>' + (o.created_at||'').slice(0,16) + '</td></tr>';
+          return '<tr><td>#' + o.id + '</td><td>' + (o.name||'') + '</td><td><input type="text" readonly value="' + (o.phone||'') + '" onclick="this.select()" style="background:transparent;border:none;color:#4da3ff;cursor:text;font-size:13px;width:120px;padding:0" /></td><td><a href="' + (o.link||'') + '" target="_blank" style="color:#4da3ff">ссылка</a></td><td>' + (o.method||'FBO') + '</td><td><select class="action-select" onchange="updOrder(' + o.id + ',this.value)">' + opts + '</select></td><td>' + (o.created_at||'').slice(0,16) + '</td></tr>';
         }).join('') + '</tbody></table>';
     });
 }
@@ -389,7 +390,7 @@ function loadRoutes() {
             '<div style="font-weight:600;color:#fff;font-size:15px">' + typeLabel + ': ' + r.from + ' → ' + r.to + '</div>' +
             '<div style="color:#aaa;font-size:13px">📅 ' + r.date + (r.volume ? ' | 📦 ' + r.volume : '') + '</div>' +
             (r.note ? '<div style="color:#888;font-size:12px">' + r.note + '</div>' : '') +
-            '<div style="color:#888;font-size:12px">🏢 ' + (r.partner_name || '') + ' | 📞 <a href="tel:' + (r.partner_phone || '') + '" style="color:#4da3ff;text-decoration:none">' + (r.partner_phone || '') + '</a></div>' +
+            '<div style="color:#888;font-size:12px">🏢 ' + (r.partner_name || '') + ' | 📞 <span onclick="window.location=\'tel:' + (r.partner_phone || '') + '\'" style="color:#4da3ff;text-decoration:underline;cursor:pointer">' + (r.partner_phone || '') + '</span></div>' +
           '</div>' +
           (isMine ? '<button onclick="deleteRoute(' + r.id + ')" style="background:#c44;border:none;color:#fff;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px">Удалить</button>' : '') +
         '</div>';

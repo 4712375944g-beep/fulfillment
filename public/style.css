@@ -393,3 +393,10 @@ h2 {
 /* Ссылки-кнопки */
 .btn-link{display:block;width:100%;background:transparent;border:none;color:#4da3ff;font-size:13px;padding:8px 0;cursor:pointer;text-align:center;margin-top:4px}
 .btn-link:hover{color:#6dbfff}
+
+/* Чекбоксы в регистрации */
+.checkbox-group{margin-bottom:12px}
+.checkbox-label{display:block;color:#999;font-size:13px;margin-bottom:6px}
+.checkbox-row{display:flex;flex-wrap:wrap;gap:8px}
+.chk{display:flex;align-items:center;gap:5px;font-size:14px;color:#ddd;cursor:pointer}
+.chk input[type=checkbox]{accent-color:#4da3ff;width:16px;height:16px;cursor:pointer;margin:0}

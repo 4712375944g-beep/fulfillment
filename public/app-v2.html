@@ -40,6 +40,23 @@
       <input class="form-input" id="reg-city" placeholder="Город (например: Москва)">
       <input class="form-input" id="reg-contact" placeholder="Контактное лицо">
       <input class="form-input" id="reg-phone" type="tel" placeholder="Телефон">
+      <div class="checkbox-group">
+        <label class="checkbox-label">📦 Методы работы:</label>
+        <div class="checkbox-row">
+          <label class="chk"><input type="checkbox" id="reg-fbo"> FBO</label>
+          <label class="chk"><input type="checkbox" id="reg-fbs"> FBS</label>
+          <label class="chk"><input type="checkbox" id="reg-dbs"> DBS</label>
+        </div>
+      </div>
+      <div class="checkbox-group">
+        <label class="checkbox-label">🏪 Маркетплейсы:</label>
+        <div class="checkbox-row">
+          <label class="chk"><input type="checkbox" id="reg-wb"> WB</label>
+          <label class="chk"><input type="checkbox" id="reg-ozon"> Ozon</label>
+          <label class="chk"><input type="checkbox" id="reg-yandex"> Yandex</label>
+          <label class="chk"><input type="checkbox" id="reg-other"> Другое</label>
+        </div>
+      </div>
       <div class="status err hidden" id="register-error"></div>
       <div class="status ok hidden" id="register-ok"></div>
       <button class="btn" id="register-submit-btn">Зарегистрироваться</button>
