@@ -157,6 +157,33 @@
     </div>
   </div>
 
+  <!-- === SCREEN: Admin Panel === -->
+  <div class="hidden" id="screen-admin">
+    <h2>🏭 Админ-панель</h2>
+    <div class="mr" id="admin-tabs">
+      <button class="on" data-atab="orders" id="atab-orders">📦 Заявки</button>
+      <button data-atab="partners" id="atab-partners">👥 Партнёры</button>
+    </div>
+    <div id="admin-content">
+      <div id="admin-orders">
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <select class="inp" id="admin-filter-city" onchange="loadAdminOrders()"><option value="">📍 Все города</option></select>
+          <select class="inp" id="admin-filter-status" onchange="loadAdminOrders()">
+            <option value="">📊 Все</option>
+            <option value="new">🟡 Новые</option>
+            <option value="accepted">🟢 Принято</option>
+            <option value="in_progress">🔵 В работе</option>
+            <option value="done">✅ Готово</option>
+          </select>
+        </div>
+        <div id="admin-orders-list"><div class="empty-state">Загрузка...</div></div>
+      </div>
+      <div id="admin-partners" class="hidden">
+        <div id="admin-partners-list"><div class="empty-state">Загрузка...</div></div>
+      </div>
+    </div>
+  </div>
+
   <script src="/app-v2.js"></script>
 </body>
 </html>

@@ -133,6 +133,13 @@
   var elPartnerInfo = document.getElementById('partner-info');
   var elPartnerOrders = document.getElementById('partner-orders');
 
+  // Admin
+  var elAdmin = document.getElementById('screen-admin');
+  var elAdminOrders = document.getElementById('admin-orders-list');
+  var elAdminPartners = document.getElementById('admin-partners-list');
+  var elAdminFilterCity = document.getElementById('admin-filter-city');
+  var elAdminFilterStatus = document.getElementById('admin-filter-status');
+
   // ==================== Навигация по экранам ====================
 
   function hideAllScreens() {
@@ -142,6 +149,7 @@
     elForm.classList.add('hidden');
     elSuccess.classList.add('hidden');
     elPartner.classList.add('hidden');
+    elAdmin.classList.add('hidden');
   }
 
   function showScreen(el) {
@@ -159,8 +167,12 @@
     } catch (e) { /* не в Telegram */ }
 
     // Если партнёр уже залогинен — показываем панель
-    if (TOKEN && ROLE === 'partner') {
-      showPartnerPanel();
+    if (TOKEN) {
+      if (ROLE === 'admin') {
+        showAdminPanel();
+      } else if (ROLE === 'partner') {
+        showPartnerPanel();
+      }
     } else {
       showScreen(elCountries);
     }
@@ -779,6 +791,7 @@
     localStorage.removeItem('ff_role');
     TOKEN = '';
     ROLE = '';
+    adminToken = '';
     elLoginBtn.classList.remove('hidden');
     elLogoutBtn.classList.add('hidden');
     showScreen(elCountries);
@@ -933,6 +946,95 @@
     }).catch(function () { /* игнорируем ошибки смены статуса */ });
   }
 
+  // ==================== Админ-панель ====================
+
+  var adminToken = TOKEN;
+
+  function showAdminPanel() {
+    adminToken = localStorage.getItem('ff_token') || TOKEN;
+    elLoginBtn.classList.add('hidden');
+    elLogoutBtn.classList.remove('hidden');
+    showScreen(elAdmin);
+    loadAdminOrders();
+  }
+
+  function switchAdminTab(tab) {
+    document.querySelectorAll('#admin-tabs button').forEach(function(b){b.classList.remove('on')});
+    document.getElementById('atab-' + tab).classList.add('on');
+    document.getElementById('admin-orders').classList.toggle('hidden', tab !== 'orders');
+    document.getElementById('admin-partners').classList.toggle('hidden', tab !== 'partners');
+    if (tab === 'orders') loadAdminOrders();
+    if (tab === 'partners') loadAdminPartners();
+  }
+
+  function loadAdminOrders() {
+    var city = elAdminFilterCity.value;
+    var status = elAdminFilterStatus.value;
+    var url = '/api/admin/orders?';
+    if (city) url += 'city=' + encodeURIComponent(city) + '&';
+    if (status) url += 'status=' + encodeURIComponent(status);
+
+    fetch(url, {headers:{Authorization:'Bearer '+adminToken}})
+      .then(function(r){return r.json()})
+      .then(function(d){
+        // Заполняем фильтр городов
+        if (d.cities && d.cities.length) {
+          elAdminFilterCity.innerHTML = '<option value="">📍 Все города</option>';
+          d.cities.forEach(function(c){elAdminFilterCity.innerHTML += '<option>'+c+'</option>'});
+        }
+        renderAdminOrders(d.orders||[]);
+      })
+      .catch(function(){elAdminOrders.innerHTML='<div class=empty-state>Ошибка загрузки</div>'});
+  }
+
+  function renderAdminOrders(orders) {
+    if (!orders.length) {elAdminOrders.innerHTML='<div class=empty-state>Заявок нет</div>';return}
+    var st={new:'Новая',accepted:'Принято',in_progress:'В работе',done:'Готово',cancelled:'Отмена'};
+    var h='<table class=partner-table><thead><tr><th>ID</th><th>Клиент</th><th>Город</th><th>Метод</th><th>Статус</th></tr></thead><tbody>';
+    orders.forEach(function(o){
+      h+='<tr><td>#'+o.id+'</td><td>'+(o.name||'')+'<br><small style=color:#888>'+o.phone+'</small></td><td>'+o.city+'</td><td>'+o.method+'</td><td><select onchange="updAdminOrder('+o.id+',this.value)" style=background:#111;color:#eee;border:1px solid #333;border-radius:4px;padding:2px 4px;font-size:12px>'+Object.keys(st).map(function(k){return'<option value='+k+(o.status===k?' selected':'')+'>'+st[k]+'</option>'}).join('')+'</select></td></tr>';
+    });
+    h+='</tbody></table>';
+    elAdminOrders.innerHTML=h;
+  }
+
+  function updAdminOrder(id,st){fetch('/api/admin/orders/'+id,{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:'Bearer '+adminToken},body:JSON.stringify({status:st})})}
+
+  function loadAdminPartners() {
+    fetch('/api/admin/partners',{headers:{Authorization:'Bearer '+adminToken}})
+      .then(function(r){return r.json()})
+      .then(function(d){
+        renderAdminPartners(d.partners||[]);
+      });
+  }
+
+  function renderAdminPartners(partners) {
+    if (!partners.length) {elAdminPartners.innerHTML='<div class=empty-state>Партнёров нет</div>';return}
+    var h='<table class=partner-table><thead><tr><th>Компания</th><th>Город</th><th>Методы</th><th>Маркетплейсы</th><th>Статус</th><th>Доступ до</th></tr></thead><tbody>';
+    partners.forEach(function(p){
+      var st=p.status==='approved'?'✅':'🟡 '+p.status;
+      if (p.status==='rejected') st='❌ Отказано';
+      h+='<tr><td><b>'+p.company+'</b><br><small style=color:#888>'+p.login+'</small></td><td>'+p.city+'</td><td>'+(p.methods||'-')+'</td><td>'+(p.marketplaces||'-')+'</td><td>'+st+'</td><td>'+(p.expires_at||'-');
+      if (p.status==='pending') h+=' <button onclick="approvePartner(\''+p.id+'\')" style="background:#4caf50;color:#fff;border:none;border-radius:4px;padding:2px 8px;cursor:pointer;font-size:12px">Одобрить</button>';
+      if (p.status==='approved') h+=' <button onclick="extendPartner(\''+p.id+'\')" style="background:#4da3ff;color:#fff;border:none;border-radius:4px;padding:2px 8px;cursor:pointer;font-size:12px">+1м</button>';
+      h+='</td></tr>';
+    });
+    h+='</tbody></table>';
+    elAdminPartners.innerHTML=h;
+  }
+
+  function approvePartner(id) {
+    fetch('/api/admin/partners/'+id+'/approve',{method:'POST',headers:{Authorization:'Bearer '+adminToken}})
+      .then(function(r){return r.json()})
+      .then(function(){loadAdminPartners()});
+  }
+
+  function extendPartner(id) {
+    fetch('/api/admin/partners/'+id,{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:'Bearer '+adminToken},body:JSON.stringify({months:1})})
+      .then(function(r){return r.json()})
+      .then(function(){loadAdminPartners()});
+  }
+
   // ==================== Привязка событий ====================
 
   function bindEvents() {
@@ -976,6 +1078,10 @@
 
     // Новая заявка (с экрана успеха)
     elSuccessNew.addEventListener('click', resetToCountries);
+
+    // Админка: табы
+    document.getElementById('atab-orders').addEventListener('click', function(){switchAdminTab('orders')});
+    document.getElementById('atab-partners').addEventListener('click', function(){switchAdminTab('partners')});
   }
 
   // Блокировка кнопки отправки без согласий
