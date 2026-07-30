@@ -693,7 +693,11 @@
           TOKEN = d.token;
           ROLE = d.role;
           hideLoginOverlay();
-          showPartnerPanel();
+          if (d.role === 'admin') {
+            showAdminPanel();
+          } else {
+            showPartnerPanel();
+          }
         } else {
           elLoginError.textContent = d.error || 'Неверный email или пароль';
           elLoginError.classList.remove('hidden');
