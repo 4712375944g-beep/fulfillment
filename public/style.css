@@ -1,418 +1,391 @@
-*, *::before, *::after {
+/* === SellFull v2 — Dark Theme === */
+
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
-  background: #000;
-  color: #fff;
-  height: 100vh;
-  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #121212;
+  color: #e0e0e0;
+  padding: 16px;
+  min-height: 100vh;
 }
 
-/* App layout */
-.app {
-  display: flex;
-  height: 100vh;
-}
-
-#map {
-  flex: 1;
-  height: 100%;
-}
-
-.panel {
-  width: 360px;
-  background: #111;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  border-left: 1px solid #2a2a2a;
-}
-
-.panel-section {
-  padding: 20px;
-}
-
-.panel-section h2 {
-  font-size: 18px;
-  margin-bottom: 4px;
-  font-weight: 600;
-  color: #fff;
-}
-
-.subtitle {
-  color: #aaa;
-  font-size: 13px;
-  margin-bottom: 16px;
-}
-
-/* Cards */
-.city-list, .zone-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.city-card, .zone-card {
-  background: #1c1c1c;
-  border: 1px solid #333;
-  border-radius: 12px;
-  padding: 14px;
-  cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
-}
-
-.city-card:hover, .zone-card:hover {
-  border-color: #4da3ff;
-  background: #222;
-}
-
-.city-card.active, .zone-card.active {
-  border-color: #4da3ff;
-  background: #1a2a3a;
-}
-
-.zone-card {
-  border-left: 4px solid #4da3ff;
-}
-
-.city-card h3, .zone-card h3 {
-  font-size: 16px;
-  color: #fff;
-  margin-bottom: 2px;
-}
-
-.city-card .details, .zone-card .details {
-  font-size: 12px;
-  color: #999;
-}
-
-/* Back button */
-.back-btn {
-  background: none;
-  border: none;
+/* === Typography === */
+h2 {
   color: #4da3ff;
-  font-size: 14px;
-  cursor: pointer;
-  padding: 0;
+  margin-bottom: 8px;
+  font-size: 18px;
+}
+
+.sub {
+  color: #999;
+  font-size: 13px;
   margin-bottom: 12px;
 }
 
-.back-btn:hover { color: #80c0ff; }
-
-/* Form */
-#order-form {
+/* === Toolbar (top-right login/logout) === */
+.toolbar {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 14px;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+  gap: 8px;
 }
 
-#order-form label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+/* === Buttons === */
+.btn {
+  width: 100%;
+  background: #4da3ff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: background 0.2s;
+}
+
+.btn:hover {
+  background: #3b8fd9;
+}
+
+.btn:disabled {
+  background: #444;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #2AABEE;
+  border: none;
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 16px;
   font-size: 13px;
-  color: #ccc;
+  cursor: pointer;
+  font-weight: 600;
+  transition: opacity 0.2s;
 }
 
-#order-form input, select {
-  background: #1c1c1c;
+.btn-secondary:hover {
+  opacity: 0.85;
+}
+
+.btn-ghost {
+  background: transparent;
   border: 1px solid #444;
+  color: #fff;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 4px;
+  width: 100%;
+}
+
+/* === Cards === */
+.card {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.card:hover {
+  background: #222;
+  border-color: #4da3ff;
+}
+
+.card:active {
+  background: #2a2a2a;
+}
+
+.card .flag {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.card .card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.card .name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #e0e0e0;
+}
+
+.card .info {
+  font-size: 12px;
+  color: #777;
+  margin-top: 2px;
+}
+
+/* === Zone card with colored border === */
+.card.zone-card {
+  border-left: 4px solid #4da3ff;
+}
+
+.card.zone-card[data-zone="Север"] {
+  border-left-color: #4da3ff;
+}
+
+.card.zone-card[data-zone="Юг"] {
+  border-left-color: #ff9800;
+}
+
+.card.zone-card[data-zone="Запад"] {
+  border-left-color: #e91e63;
+}
+
+.card.zone-card[data-zone="Восток"] {
+  border-left-color: #4caf50;
+}
+
+/* === Back button === */
+.back-btn {
+  color: #4da3ff;
+  font-size: 14px;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.back-btn:hover {
+  color: #80c0ff;
+}
+
+/* === Search input === */
+.search-input {
+  width: 100%;
+  background: #1a1a1a;
+  border: 1px solid #333;
   border-radius: 8px;
   padding: 10px 12px;
-  color: #fff;
+  color: #e0e0e0;
   font-size: 15px;
+  margin-bottom: 12px;
   transition: border-color 0.2s;
 }
 
-#order-form input:focus, select:focus {
+.search-input:focus {
   outline: none;
   border-color: #4da3ff;
 }
 
-.submit-btn {
-  background: #4da3ff;
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  padding: 12px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-  margin-top: 4px;
+.search-input::placeholder {
+  color: #666;
 }
 
-.submit-btn:hover { background: #3b8fd9; }
-.submit-btn:disabled { background: #444; cursor: not-allowed; }
-
-/* Status */
-.form-status {
-  margin-top: 14px;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 13px;
-}
-
-.form-status.success {
-  background: #0d2a0d;
-  border: 1px solid #2d6a2d;
-  color: #66bb6a;
-}
-
-.form-status.error {
-  background: #2a0d0d;
-  border: 1px solid #6a2d2d;
-  color: #ef5350;
-}
-
-/* Admin */
-.admin {
-  padding: 24px;
-  max-width: 1200px;
-  margin: 0 auto;
-  height: 100vh;
-  overflow-y: auto;
-}
-
-.admin h1 { font-size: 24px; margin-bottom: 20px; color: #fff; }
-
-.stats {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-}
-
-.stat-card {
-  background: #1c1c1c;
-  border: 1px solid #333;
-  border-radius: 12px;
-  padding: 14px;
-  min-width: 120px;
-}
-
-.stat-card .number { font-size: 26px; font-weight: 700; color: #fff; }
-.stat-card .label { font-size: 12px; color: #999; }
-
-.filters {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.filters select, .filters button {
-  background: #1c1c1c;
-  border: 1px solid #444;
-  border-radius: 8px;
-  padding: 8px 12px;
-  color: #fff;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.filters .export-btn {
-  background: #2d6a2d;
-  border: none;
-  color: #fff;
-  margin-left: auto;
-}
-
-.filters .partners-btn {
-  background: #4da3ff;
-  border: none;
-  color: #fff;
-}
-
-/* Table */
-table {
+/* === Form inputs === */
+.form-input {
   width: 100%;
-  border-collapse: collapse;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 10px;
+  color: #e0e0e0;
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #4da3ff;
+}
+
+.form-select {
+  width: 100%;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 10px;
+  color: #777;
+  font-size: 15px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.form-select.selected {
+  color: #e0e0e0;
+}
+
+.form-select option {
+  background: #1a1a1a;
+  color: #e0e0e0;
+}
+
+/* === Status messages === */
+.status {
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 12px;
   font-size: 13px;
 }
 
-th {
-  text-align: left;
-  padding: 10px 12px;
-  border-bottom: 2px solid #444;
-  color: #aaa;
-  font-weight: 600;
+.status.ok {
+  background: #0a2a0a;
+  color: #4caf50;
 }
 
-td {
-  padding: 10px 12px;
+.status.err {
+  background: #2a0a0a;
+  color: #f44336;
+}
+
+/* === Method tabs (FBO/FBS/DBS) === */
+.method-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.method-tabs button {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #333;
+  background: #1a1a1a;
+  color: #999;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.method-tabs button.active {
+  background: #4da3ff;
+  color: #fff;
+  border-color: #4da3ff;
+}
+
+/* === Partner table === */
+.partner-table {
+  width: 100%;
+  font-size: 13px;
+  border-collapse: collapse;
+}
+
+.partner-table th {
+  text-align: left;
+  padding: 8px 6px;
+  border-bottom: 2px solid #333;
+  color: #999;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.partner-table td {
+  padding: 8px 6px;
   border-bottom: 1px solid #222;
-  color: #eee;
   vertical-align: middle;
 }
 
-tr:hover { background: #181818; }
-
-.status-badge {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 12px;
+.partner-table a {
+  color: #4da3ff;
+  text-decoration: none;
 }
 
-.status-new { background: #333; color: #fff; }
-.status-accepted { background: #0d2a0d; color: #4caf50; }
-.status-in_progress { background: #0d1a2a; color: #4da3ff; }
-.status-done { background: #0d2a0d; color: #66bb6a; }
-.status-cancelled { background: #2a0d0d; color: #f44336; }
-
-.action-select {
+.partner-table select {
   background: #000;
-  border: 1px solid #444;
-  border-radius: 6px;
-  padding: 4px 8px;
-  color: #fff;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-/* Partner page */
-.partner {
-  padding: 24px;
-  max-width: 800px;
-  margin: 0 auto;
-  height: 100vh;
-  overflow-y: auto;
-}
-
-.partner h1 { font-size: 22px; margin-bottom: 8px; color: #fff; }
-
-.no-orders {
-  text-align: center;
-  padding: 60px 20px;
-  color: #777;
-  font-size: 15px;
-}
-
-/* Partner list in admin */
-.partner-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.partner-card {
-  background: #1c1c1c;
   border: 1px solid #333;
-  border-radius: 12px;
-  padding: 14px;
+  color: #eee;
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 12px;
+}
+
+/* === Login overlay === */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.92);
+  z-index: 100;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
+  justify-content: center;
+  padding: 20px;
 }
 
-.partner-card .partner-info { flex: 1; min-width: 200px; }
-.partner-card .partner-city { font-weight: 600; font-size: 15px; color: #fff; }
-.partner-card .partner-key { font-size: 12px; color: #888; font-family: monospace; word-break: break-all; }
-.partner-card .partner-link { font-size: 12px; color: #4da3ff; word-break: break-all; }
-
-.partner-card button {
-  background: #c44;
-  border: none;
-  color: #fff;
-  border-radius: 6px;
-  padding: 4px 12px;
-  cursor: pointer;
-  font-size: 12px;
+.overlay-box {
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 340px;
 }
 
-/* Hidden */
-.hidden { display: none !important; }
-
-/* Responsive */
-@media (max-width: 640px) {
-  .app { flex-direction: column; }
-  #map { height: 100vh; }
-  .panel { width: 100%; height: 100vh; }
-  .admin, .partner { padding: 12px; }
-  table { font-size: 12px; }
-  td, th { padding: 6px 4px; }
-}
-
-/* Leaflet fixes */
-.leaflet-container { background: #1a1a1a !important; }
-.leaflet-control-zoom a { background: #1c1c1c !important; color: #fff !important; border-color: #444 !important; }
-.leaflet-popup-content-wrapper { background: #1c1c1c !important; color: #fff !important; }
-.leaflet-popup-tip { background: #1c1c1c !important; }
-.leaflet-popup-content { color: #fff !important; }
-.leaflet-popup-content a { color: #4da3ff !important; }
-/* Country cards */
-.country-list { display: flex; flex-direction: column; gap: 10px; }
-.country-card { background: #1c1c1c; border: 1px solid #333; border-radius: 14px; padding: 18px; cursor: pointer; display: flex; align-items: center; gap: 14px; transition: border-color 0.2s, background 0.2s; }
-.country-card:hover { border-color: #4da3ff; background: #222; }
-.country-flag { font-size: 32px; }
-.country-name { font-size: 17px; font-weight: 600; color: #fff; flex: 1; }
-.country-cities { font-size: 12px; color: #888; }
-/* Search input */
-.search-input { width: 100%; background: #1c1c1c; border: 1px solid #444; border-radius: 10px; padding: 11px 14px; color: #fff; font-size: 15px; margin-bottom: 14px; transition: border-color 0.2s; }
-.search-input:focus { outline: none; border-color: #4da3ff; }
-.search-input::placeholder { color: #666; }
-
-/* Success animation */
-.success-block {
+.overlay-box h3 {
+  font-size: 18px;
+  margin-bottom: 4px;
   text-align: center;
-  padding: 30px 10px;
+  color: #e0e0e0;
 }
-.success-check {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 20px;
+
+.overlay-box .form-input {
+  width: 100%;
+  background: #1c1c1c;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 10px;
+  color: #fff;
+  font-size: 15px;
+  margin-bottom: 10px;
 }
-.check-svg {
-  width: 80px;
-  height: 80px;
+
+/* === Success screen === */
+.success-screen {
+  text-align: center;
+  padding-top: 40px;
 }
-.check-circle {
-  stroke: #4caf50;
-  stroke-width: 2;
-  stroke-dasharray: 166;
-  stroke-dashoffset: 166;
-  animation: circle-draw 0.6s ease-out forwards;
-}
-.check-mark {
-  stroke: #4caf50;
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-dasharray: 48;
-  stroke-dashoffset: 48;
-  animation: check-draw 0.4s 0.4s ease-out forwards;
-}
-@keyframes circle-draw {
-  to { stroke-dashoffset: 0; }
-}
-@keyframes check-draw {
-  to { stroke-dashoffset: 0; }
-}
-.success-title {
-  font-size: 22px;
+
+.success-screen h2 {
+  font-size: 24px;
   color: #4caf50;
-  margin-bottom: 8px;
 }
-.success-text {
-  color: #aaa;
+
+.success-screen .btn {
+  width: 200px;
+  margin: 20px auto;
+}
+
+/* === Utility === */
+.hidden {
+  display: none !important;
+}
+
+.no-results {
+  color: #888;
+  padding: 20px;
+  text-align: center;
   font-size: 14px;
-  margin-bottom: 24px;
-  line-height: 1.5;
 }
-.success-btn {
-  display: inline-block;
-  width: auto;
-  padding: 10px 32px;
+
+/* === Partner orders empty state === */
+.empty-state {
+  text-align: center;
+  color: #777;
+  padding: 40px;
+  font-size: 15px;
 }
-#main-app { flex-direction: column; }
-.panel { width: 100% !important; max-width: 100% !important; border-left: none !important; }

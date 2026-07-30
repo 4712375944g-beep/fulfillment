@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>SellFull</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+  <!-- === Toolbar (login/logout) === -->
+  <div class="toolbar">
+    <button class="btn-secondary hidden" id="logout-btn">🚪 Выйти</button>
+    <button class="btn-secondary" id="login-btn">🔐 Вход для партнёров</button>
+  </div>
+
+  <!-- === Login Overlay === -->
+  <div class="overlay hidden" id="login-overlay">
+    <div class="overlay-box">
+      <h3>🔐 Вход для партнёров</h3>
+      <p class="sub">Управление заявками</p>
+      <input class="form-input" id="login-email" placeholder="Email" type="email" autocomplete="email">
+      <input class="form-input" id="login-pass" type="password" placeholder="Пароль" autocomplete="current-password">
+      <div class="status err hidden" id="login-error"></div>
+      <button class="btn" id="login-submit-btn">Войти</button>
+      <button class="btn-ghost" id="login-cancel-btn">Отмена</button>
+    </div>
+  </div>
+
+  <!-- === SCREEN: Countries === -->
+  <div id="screen-countries">
+    <h2>🌍 Выберите страну</h2>
+    <p class="sub">Подберём склад фулфилмента</p>
+    <div id="country-list">
+      <!-- Рендерится динамически -->
+    </div>
+  </div>
+
+  <!-- === SCREEN: Cities === -->
+  <div class="hidden" id="screen-cities">
+    <button class="back-btn" id="cities-back-btn">← Назад</button>
+    <h2>📍 <span id="cities-title">Выберите город</span></h2>
+    <p class="sub">Введите название или выберите из списка</p>
+    <input class="search-input" id="city-search" placeholder="🔍 Поиск города...">
+    <div id="city-list">
+      <!-- Рендерится динамически -->
+    </div>
+    <div class="no-results hidden" id="city-no-results">Ничего не найдено</div>
+  </div>
+
+  <!-- === SCREEN: Zones (only for Moscow) === -->
+  <div class="hidden" id="screen-zones">
+    <button class="back-btn" id="zones-back-btn">← Назад</button>
+    <h2>📍 Уточните район</h2>
+    <p class="sub" id="zones-subtitle"></p>
+    <div id="zone-list">
+      <!-- Рендерится динамически -->
+    </div>
+  </div>
+
+  <!-- === SCREEN: Order Form === -->
+  <div class="hidden" id="screen-form">
+    <button class="back-btn" id="form-back-btn">← Назад</button>
+    <h2>📦 Заявка на фулфилмент</h2>
+    <p class="sub" id="form-subtitle"></p>
+    <input class="form-input" id="form-name" placeholder="Ваше имя" autocomplete="name">
+    <input class="form-input" id="form-phone" type="tel" placeholder="Телефон" autocomplete="tel">
+    <input class="form-input" id="form-link" placeholder="Ссылка на товар" autocomplete="url">
+
+    <select class="form-select" id="form-method">
+      <option value="" disabled selected>Способ доставки</option>
+      <option value="FBO">FBO</option>
+      <option value="FBS">FBS</option>
+      <option value="DBS">DBS</option>
+    </select>
+
+    <select class="form-select" id="form-marketplace">
+      <option value="" disabled selected>Площадка</option>
+      <option value="WB">WB</option>
+      <option value="Ozon">Ozon</option>
+      <option value="Yandex">Yandex</option>
+      <option value="Другое">Другое</option>
+    </select>
+
+    <!-- Hidden city key and zone -->
+    <input type="hidden" id="form-city-key" value="">
+    <input type="hidden" id="form-zone" value="">
+
+    <button class="btn" id="form-submit-btn">Отправить заявку</button>
+    <div class="status err hidden" id="form-status"></div>
+  </div>
+
+  <!-- === SCREEN: Success === -->
+  <div class="hidden success-screen" id="screen-success">
+    <h2>✅ Заявка отправлена!</h2>
+    <p class="sub">Скоро с вами свяжется менеджер</p>
+    <button class="btn" id="success-new-btn">Новая заявка</button>
+  </div>
+
+  <!-- === SCREEN: Partner Orders === -->
+  <div class="hidden" id="screen-partner">
+    <h2>📦 Мои заявки</h2>
+    <p class="sub" id="partner-info"></p>
+    <div id="partner-orders">
+      <div class="empty-state">Загрузка...</div>
+    </div>
+  </div>
+
+  <script src="/app-v2.js"></script>
+</body>
+</html>
