@@ -405,3 +405,8 @@ h2 {
 .consent-group{margin:12px 0;padding:8px 0;border-top:1px solid #333}
 .consent-chk{font-size:13px!important;color:#aaa!important;line-height:1.4}
 .consent-chk a{text-decoration:underline}
+
+/* Футер с контактом */
+.contact-footer{text-align:center;padding:16px 0 8px}
+.contact-footer a{color:#4da3ff;text-decoration:none;font-size:14px}
+.contact-footer a:hover{color:#6dbfff}
