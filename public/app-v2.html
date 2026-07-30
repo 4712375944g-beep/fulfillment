@@ -25,6 +25,26 @@
       <div class="status err hidden" id="login-error"></div>
       <button class="btn" id="login-submit-btn">Войти</button>
       <button class="btn-ghost" id="login-cancel-btn">Отмена</button>
+      <button class="btn-link" id="show-register-btn">Нет аккаунта? Зарегистрироваться</button>
+    </div>
+  </div>
+
+  <!-- === Register Overlay === -->
+  <div class="overlay hidden" id="register-overlay">
+    <div class="overlay-box">
+      <h3>📝 Регистрация партнёра</h3>
+      <p class="sub">Заполните данные для доступа к заявкам</p>
+      <input class="form-input" id="reg-email" placeholder="Email" type="email" autocomplete="email">
+      <input class="form-input" id="reg-pass" type="password" placeholder="Пароль (мин. 4 символа)">
+      <input class="form-input" id="reg-company" placeholder="Название компании">
+      <input class="form-input" id="reg-city" placeholder="Город (например: Москва)">
+      <input class="form-input" id="reg-contact" placeholder="Контактное лицо">
+      <input class="form-input" id="reg-phone" type="tel" placeholder="Телефон">
+      <div class="status err hidden" id="register-error"></div>
+      <div class="status ok hidden" id="register-ok"></div>
+      <button class="btn" id="register-submit-btn">Зарегистрироваться</button>
+      <button class="btn-ghost" id="register-cancel-btn">Отмена</button>
+      <button class="btn-link" id="show-login-btn">Уже есть аккаунт? Войти</button>
     </div>
   </div>
 

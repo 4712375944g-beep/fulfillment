@@ -389,3 +389,7 @@ h2 {
   padding: 40px;
   font-size: 15px;
 }
+
+/* Ссылки-кнопки */
+.btn-link{display:block;width:100%;background:transparent;border:none;color:#4da3ff;font-size:13px;padding:8px 0;cursor:pointer;text-align:center;margin-top:4px}
+.btn-link:hover{color:#6dbfff}

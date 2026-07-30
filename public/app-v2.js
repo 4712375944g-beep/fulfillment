@@ -58,6 +58,21 @@
   var elLoginError = document.getElementById('login-error');
   var elLoginSubmit = document.getElementById('login-submit-btn');
   var elLoginCancel = document.getElementById('login-cancel-btn');
+  var elShowRegister = document.getElementById('show-register-btn');
+
+  // Register overlay
+  var elRegisterOverlay = document.getElementById('register-overlay');
+  var elRegEmail = document.getElementById('reg-email');
+  var elRegPass = document.getElementById('reg-pass');
+  var elRegCompany = document.getElementById('reg-company');
+  var elRegCity = document.getElementById('reg-city');
+  var elRegContact = document.getElementById('reg-contact');
+  var elRegPhone = document.getElementById('reg-phone');
+  var elRegError = document.getElementById('register-error');
+  var elRegOk = document.getElementById('register-ok');
+  var elRegSubmit = document.getElementById('register-submit-btn');
+  var elRegCancel = document.getElementById('register-cancel-btn');
+  var elShowLogin = document.getElementById('show-login-btn');
 
   // Countries
   var elCountryList = document.getElementById('country-list');
@@ -573,17 +588,37 @@
 
   function showLoginOverlay() {
     elLoginOverlay.classList.remove('hidden');
+    elRegisterOverlay.classList.add('hidden');
     elLoginEmail.value = '';
     elLoginPass.value = '';
     elLoginError.classList.add('hidden');
     elLoginSubmit.disabled = false;
     elLoginSubmit.textContent = 'Войти';
-    // Фокус на email
     setTimeout(function () { elLoginEmail.focus(); }, 100);
   }
 
   function hideLoginOverlay() {
     elLoginOverlay.classList.add('hidden');
+  }
+
+  function showRegisterOverlay() {
+    elLoginOverlay.classList.add('hidden');
+    elRegisterOverlay.classList.remove('hidden');
+    elRegEmail.value = '';
+    elRegPass.value = '';
+    elRegCompany.value = '';
+    elRegCity.value = '';
+    elRegContact.value = '';
+    elRegPhone.value = '';
+    elRegError.classList.add('hidden');
+    elRegOk.classList.add('hidden');
+    elRegSubmit.disabled = false;
+    elRegSubmit.textContent = 'Зарегистрироваться';
+    setTimeout(function () { elRegEmail.focus(); }, 100);
+  }
+
+  function hideRegisterOverlay() {
+    elRegisterOverlay.classList.add('hidden');
   }
 
   function doLogin() {
@@ -626,6 +661,66 @@
         elLoginError.classList.remove('hidden');
         elLoginSubmit.disabled = false;
         elLoginSubmit.textContent = 'Войти';
+      });
+  }
+
+  // ==================== Партнёр: регистрация ====================
+
+  function doRegister() {
+    var email = elRegEmail.value.trim();
+    var pass = elRegPass.value;
+    var company = elRegCompany.value.trim();
+    var city = elRegCity.value.trim();
+    var contact = elRegContact.value.trim();
+    var phone = elRegPhone.value.trim();
+
+    if (!email || !pass || !company || !city || !contact || !phone) {
+      elRegError.textContent = 'Заполните все поля';
+      elRegError.classList.remove('hidden');
+      return;
+    }
+    if (pass.length < 4) {
+      elRegError.textContent = 'Пароль должен быть от 4 символов';
+      elRegError.classList.remove('hidden');
+      return;
+    }
+
+    elRegSubmit.disabled = true;
+    elRegSubmit.textContent = 'Отправка...';
+    elRegError.classList.add('hidden');
+    elRegOk.classList.add('hidden');
+
+    fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: email,
+        password: pass,
+        company: company,
+        city: city,
+        contact: contact,
+        phone: phone
+      })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.ok) {
+          elRegOk.textContent = '✅ Заявка отправлена! Администратор проверит и активирует доступ.';
+          elRegOk.classList.remove('hidden');
+          elRegSubmit.disabled = true;
+          elRegSubmit.textContent = 'Готово';
+        } else {
+          elRegError.textContent = d.error || 'Ошибка регистрации';
+          elRegError.classList.remove('hidden');
+          elRegSubmit.disabled = false;
+          elRegSubmit.textContent = 'Зарегистрироваться';
+        }
+      })
+      .catch(function () {
+        elRegError.textContent = 'Ошибка соединения';
+        elRegError.classList.remove('hidden');
+        elRegSubmit.disabled = false;
+        elRegSubmit.textContent = 'Зарегистрироваться';
       });
   }
 
@@ -798,7 +893,15 @@
     elLoginCancel.addEventListener('click', hideLoginOverlay);
     elLoginSubmit.addEventListener('click', doLogin);
 
-    // Enter в поле пароля
+    // Переключение логин ↔ регистрация
+    elShowRegister.addEventListener('click', showRegisterOverlay);
+    elShowLogin.addEventListener('click', showLoginOverlay);
+
+    // Регистрация
+    elRegCancel.addEventListener('click', hideRegisterOverlay);
+    elRegSubmit.addEventListener('click', doRegister);
+
+    // Enter в поле пароля (логин)
     elLoginPass.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') doLogin();
     });
