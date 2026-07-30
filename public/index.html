@@ -1,157 +1,112 @@
-<!DOCTYPE html><html lang=ru><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>SellFull</title><script src="https://telegram.org/js/telegram-web-app.js"></script><style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#121212;color:#e0e0e0;padding:16px}
-h2{color:#4da3ff;margin-bottom:8px}.sub{color:#999;font-size:13px;margin-bottom:12px}
-.card{background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:14px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:12px}
-.card:active{background:#2a2a2a}.flag{font-size:28px}.name{font-size:16px;font-weight:600}.info{font-size:12px;color:#777}
-.back{color:#4da3ff;font-size:14px;background:none;border:none;padding:0;margin-bottom:8px;cursor:pointer}
-.srch{width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:10px;color:#e0e0e0;font-size:15px;margin-bottom:12px}
-.srch:focus{outline:none;border-color:#4da3ff}
-.inp{width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:10px;color:#e0e0e0;font-size:15px;margin-bottom:8px}
-.btn{width:100%;background:#4da3ff;color:#fff;border:none;border-radius:8px;padding:12px;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px}
-.btn2{background:#2AABEE;border:none;color:#fff;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;font-weight:600}
-.hid{display:none}.st{padding:12px;border-radius:8px;margin-top:12px;font-size:13px}
-.st.ok{background:#0a2a0a;color:#4caf50}.st.err{background:#2a0a0a;color:#f44336}
-.mr{display:flex;gap:8px;margin-bottom:12px}
-.mr button{flex:1;padding:8px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#999;font-size:13px;cursor:pointer}
-.mr button.on{background:#4da3ff;color:#fff;border-color:#4da3ff}
-.tr{display:flex;justify-content:flex-end;margin-bottom:12px}
-.ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.92);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
-.bx{background:#111;border:1px solid #2a2a2a;border-radius:16px;padding:24px;width:100%;max-width:340px}
-.bx h3{font-size:18px;margin-bottom:4px;text-align:center}
-.bx .inp{width:100%;background:#1c1c1c;border:1px solid #444;border-radius:8px;padding:10px;color:#fff;font-size:15px;margin-bottom:10px}
-</style></head><body>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>SellFull</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
 
-<div class=tr>
-  <button class="btn2 hid" id=lo-btn onclick="localStorage.removeItem('ff_token');localStorage.removeItem('ff_role');location.reload()">🚪 Выйти</button>
-  <button class=btn2 id=li-btn onclick="document.getElementById('ov').style.display='flex'">🔐 Вход для партнёров</button>
-</div>
-
-<div class=ov id=ov style=display:none>
-  <div class=bx>
-    <h3>🔐 Вход для партнёров</h3><p class=sub>Управление заявками</p>
-    <input class=inp id=le placeholder=Email>
-    <input class=inp type=password id=lp placeholder=Пароль>
-    <div class="st err hid" id=ler></div>
-    <button class=btn onclick="var e=document.getElementById('le').value.trim(),p=document.getElementById('lp').value;if(!e||!p)return;fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({login:e,password:p})}).then(function(r){return r.json()}).then(function(d){if(d.ok){localStorage.setItem('ff_token',d.token);localStorage.setItem('ff_role',d.role);document.getElementById('ov').style.display='none';showPP(d.user)}else{var er=document.getElementById('ler');er.textContent=d.error||'Ошибка';er.classList.remove('hid')}})">Войти</button>
-    <button class=btn style=background:transparent;border:1px solid #444;margin-top:4px onclick="document.getElementById('ov').style.display='none'">Отмена</button>
+  <!-- === Toolbar (login/logout) === -->
+  <div class="toolbar">
+    <button class="btn-secondary hidden" id="logout-btn">🚪 Выйти</button>
+    <button class="btn-secondary" id="login-btn">🔐 Вход для партнёров</button>
   </div>
-</div>
 
-<!-- СТРАНЫ -->
-<div id=co>
-<h2>🌍 Выберите страну</h2><p class=sub>Подберём склад фулфилмента</p>
-<div class=card onclick="document.getElementById('co').classList.add('hid');document.getElementById('ci').classList.remove('hid');document.getElementById('sq').value='';var cs=document.querySelectorAll('.ci-card');for(var i=0;i<cs.length;i++)cs[i].style.display=cs[i].getAttribute('data-c')==='Россия'?'':'none'"><span class=flag>🇷🇺</span><div><div class=name>Россия</div><div class=info>87 городов</div></div></div>
-<div class=card onclick="document.getElementById('co').classList.add('hid');document.getElementById('ci').classList.remove('hid');document.getElementById('sq').value='';var cs=document.querySelectorAll('.ci-card');for(var i=0;i<cs.length;i++)cs[i].style.display=cs[i].getAttribute('data-c')==='Китай'?'':'none'"><span class=flag>🇨🇳</span><div><div class=name>Китай</div><div class=info>7 городов</div></div></div>
-<div class=card onclick="document.getElementById('co').classList.add('hid');document.getElementById('ci').classList.remove('hid');document.getElementById('sq').value='';var cs=document.querySelectorAll('.ci-card');for(var i=0;i<cs.length;i++)cs[i].style.display=cs[i].getAttribute('data-c')==='Казахстан'?'':'none'"><span class=flag>🇰🇿</span><div><div class=name>Казахстан</div><div class=info>2 городов</div></div></div>
-<div class=card onclick="document.getElementById('co').classList.add('hid');document.getElementById('ci').classList.remove('hid');document.getElementById('sq').value='';var cs=document.querySelectorAll('.ci-card');for(var i=0;i<cs.length;i++)cs[i].style.display=cs[i].getAttribute('data-c')==='Киргизия'?'':'none'"><span class=flag>🇰🇬</span><div><div class=name>Киргизия</div><div class=info>1 городов</div></div></div>
-<div class=card onclick="document.getElementById('co').classList.add('hid');document.getElementById('ci').classList.remove('hid');document.getElementById('sq').value='';var cs=document.querySelectorAll('.ci-card');for(var i=0;i<cs.length;i++)cs[i].style.display=cs[i].getAttribute('data-c')==='Армения'?'':'none'"><span class=flag>🇦🇲</span><div><div class=name>Армения</div><div class=info>1 городов</div></div></div>
-<div class=card onclick="document.getElementById('co').classList.add('hid');document.getElementById('ci').classList.remove('hid');document.getElementById('sq').value='';var cs=document.querySelectorAll('.ci-card');for(var i=0;i<cs.length;i++)cs[i].style.display=cs[i].getAttribute('data-c')==='Узбекистан'?'':'none'"><span class=flag>🇺🇿</span><div><div class=name>Узбекистан</div><div class=info>6 городов</div></div></div>
-</div>
-
-<!-- ГОРОДА -->
-<div id=ci class=hid>
-  <button class=back onclick="document.getElementById('ci').classList.add('hid');document.getElementById('co').classList.remove('hid')">← Назад</button>
-  <h2>📍 Выберите город</h2>
-  <p class=sub>Введите название или выберите из списка</p>
-  <input class=srch id=sq placeholder="🔍 Поиск города..." oninput="var q=this.value.toLowerCase(),cs=document.querySelectorAll('.ci-card');for(var i=0;i<cs.length;i++){if(cs[i].style.display!=='none'){var n=cs[i].textContent.toLowerCase();cs[i].style.display=q&&n.indexOf(q)<0?'none':''}}else{if(!q)cs[i].style.display=cs[i].getAttribute('data-c')===document.getElementById('ci').getAttribute('data-co')?'':'none'}}">
-  <div id=cl>
-<!-- RUSSIA CITIES -->
-<div class="card ci-card" data-c=Россия data-k=msk data-z="Север,Юг,Запад,Восток" onclick="var z=this.getAttribute('data-z');if(z){document.getElementById('ci').classList.add('hid');document.getElementById('zl').innerHTML='<div class=card onclick=\"document.getElementById(\\'fz\\').value=\\'Север\\';goForm()\">Север</div><div class=card onclick=\"document.getElementById(\\'fz\\').value=\\'Юг\\';goForm()\">Юг</div><div class=card onclick=\"document.getElementById(\\'fz\\').value=\\'Запад\\';goForm()\">Запад</div><div class=card onclick=\"document.getElementById(\\'fz\\').value=\\'Восток\\';goForm()\">Восток</div>';document.getElementById('zo').classList.remove('hid')}else{document.getElementById('fz').value='';goForm()}document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim()"><div class=name>Москва</div><div class=info>4 зоны</div></div>
-<div class="card ci-card" data-c=Россия data-k=spb data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Санкт-Петербург</div></div>
-<div class="card ci-card" data-c=Россия data-k=nsk data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Новосибирск</div></div>
-<div class="card ci-card" data-c=Россия data-k=ekb data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Екатеринбург</div></div>
-<div class="card ci-card" data-c=Россия data-k=kazan data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Казань</div></div>
-<div class="card ci-card" data-c=Россия data-k=nn data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Нижний Новгород</div></div>
-<div class="card ci-card" data-c=Россия data-k=chelyabinsk data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Челябинск</div></div>
-<div class="card ci-card" data-c=Россия data-k=krasnoyarsk data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Красноярск</div></div>
-<div class="card ci-card" data-c=Россия data-k=samara data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Самара</div></div>
-<div class="card ci-card" data-c=Россия data-k=ufa data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Уфа</div></div>
-<div class="card ci-card" data-c=Россия data-k=rostov data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Ростов-на-Дону</div></div>
-<div class="card ci-card" data-c=Россия data-k=omsk data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Омск</div></div>
-<div class="card ci-card" data-c=Россия data-k=krasnodar data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Краснодар</div></div>
-<div class="card ci-card" data-c=Россия data-k=voronezh data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Воронеж</div></div>
-<div class="card ci-card" data-c=Россия data-k=volgograd data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Волгоград</div></div>
-<div class="card ci-card" data-c=Россия data-k=perm data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Пермь</div></div>
-<div class="card ci-card" data-c=Россия data-k=saratov data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Саратов</div></div>
-<div class="card ci-card" data-c=Россия data-k=tyumen data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Тюмень</div></div>
-<div class="card ci-card" data-c=Россия data-k=tolyatti data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Тольятти</div></div>
-<div class="card ci-card" data-c=Россия data-k=izhevsk data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Ижевск</div></div>
-<div class="card ci-card" data-c=Россия data-k=barnaul data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Барнаул</div></div>
-<div class="card ci-card" data-c=Россия data-k=ulyanovsk data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Ульяновск</div></div>
-<div class="card ci-card" data-c=Россия data-k=irkutsk data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Иркутск</div></div>
-<div class="card ci-card" data-c=Россия data-k=khabarovsk data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Хабаровск</div></div>
-<div class="card ci-card" data-c=Россия data-k=yaroslavl data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Ярославль</div></div>
-<div class="card ci-card" data-c=Россия data-k=vladivostok data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Владивосток</div></div>
-<div class="card ci-card" data-c=Россия data-k=makhachkala data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Махачкала</div></div>
-<div class="card ci-card" data-c=Россия data-k=tomsk data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Томск</div></div>
-<div class="card ci-card" data-c=Россия data-k=orenburg data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Оренбург</div></div>
-<div class="card ci-card" data-c=Россия data-k=kemerovo data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Кемерово</div></div>
-<div class="card ci-card" data-c=Россия data-k=ryazan data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Рязань</div></div>
-<!-- CHINA -->
-<div class="card ci-card" data-c=Китай data-k=cn-guangzhou data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Гуанчжоу</div></div>
-<div class="card ci-card" data-c=Китай data-k=cn-yiwu data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Иу</div></div>
-<div class="card ci-card" data-c=Китай data-k=cn-beijing data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Пекин</div></div>
-<div class="card ci-card" data-c=Китай data-k=cn-hangzhou data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Ханчжоу</div></div>
-<div class="card ci-card" data-c=Китай data-k=cn-chengdu data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Чэнду</div></div>
-<div class="card ci-card" data-c=Китай data-k=cn-shanghai data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Шанхай</div></div>
-<div class="card ci-card" data-c=Китай data-k=cn-shenzhen data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Шэньчжэнь</div></div>
-<!-- KAZAKHSTAN -->
-<div class="card ci-card" data-c=Казахстан data-k=kz-almaty data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Алматы</div></div>
-<div class="card ci-card" data-c=Казахстан data-k=kz-astana data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Астана</div></div>
-<!-- KYRGYZSTAN -->
-<div class="card ci-card" data-c=Киргизия data-k=kg-bishkek data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Бишкек</div></div>
-<!-- ARMENIA -->
-<div class="card ci-card" data-c=Армения data-k=am-yerevan data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Ереван</div></div>
-<div class="card ci-card" data-c=Узбекистан data-k=uz-tashkent data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Ташкент</div></div>
-<div class="card ci-card" data-c=Узбекистан data-k=uz-samarkand data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Самарканд</div></div>
-<div class="card ci-card" data-c=Узбекистан data-k=uz-bukhara data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Бухара</div></div>
-<div class="card ci-card" data-c=Узбекистан data-k=uz-namangan data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Наманган</div></div>
-<div class="card ci-card" data-c=Узбекистан data-k=uz-andijan data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Андижан</div></div>
-<div class="card ci-card" data-c=Узбекистан data-k=uz-fergana data-z="" onclick="document.getElementById('fz').value='';document.getElementById('fc').value=this.getAttribute('data-k');document.getElementById('fa').textContent=this.textContent.trim();goForm()"><div class=name>Фергана</div></div>
+  <!-- === Login Overlay === -->
+  <div class="overlay hidden" id="login-overlay">
+    <div class="overlay-box">
+      <h3>🔐 Вход для партнёров</h3>
+      <p class="sub">Управление заявками</p>
+      <input class="form-input" id="login-email" placeholder="Email" type="email" autocomplete="email">
+      <input class="form-input" id="login-pass" type="password" placeholder="Пароль" autocomplete="current-password">
+      <div class="status err hidden" id="login-error"></div>
+      <button class="btn" id="login-submit-btn">Войти</button>
+      <button class="btn-ghost" id="login-cancel-btn">Отмена</button>
+    </div>
   </div>
-</div>
 
-<!-- ЗОНЫ -->
-<div id=zo class=hid>
-  <button class=back onclick="document.getElementById('zo').classList.add('hid');document.getElementById('ci').classList.remove('hid')">← Назад</button>
-  <h2>📍 Уточните район</h2>
-  <div id=zl></div>
-</div>
+  <!-- === SCREEN: Countries === -->
+  <div id="screen-countries">
+    <h2>🌍 Выберите страну</h2>
+    <p class="sub">Подберём склад фулфилмента</p>
+    <div id="country-list">
+      <!-- Рендерится динамически -->
+    </div>
+  </div>
 
-<!-- ФОРМА -->
-<div id=fo class=hid>
-  <button class=back onclick="document.getElementById('fo').classList.add('hid');document.getElementById('ci').classList.remove('hid')">← Назад</button>
-  <h2>📦 Заявка на фулфилмент</h2>
-  <p class=sub id=fa></p>
-  <input class=inp id=fn placeholder="Ваше имя">
-  <input class=inp type=tel id=fp placeholder=Телефон>
-  <input class=inp id=fl placeholder="Ссылка на товар">
-  <select class=inp id=ft onchange="this.style.color='#e0e0e0'"><option value="" disabled selected style=color:#777>Способ доставки</option><option>FBO</option><option>FBS</option><option>DBS</option></select>
-  <select class=inp id=fm onchange="this.style.color='#e0e0e0'"><option value="" disabled selected style=color:#777>Площадка</option><option>WB</option><option>Ozon</option><option>Yandex</option><option>Другое</option></select>
-  <input type=hidden id=fc value=""><input type=hidden id=fz value="">
-  <button class=btn id=fbtn onclick="var n=document.getElementById('fn').value.trim(),p=document.getElementById('fp').value.trim(),l=document.getElementById('fl').value.trim(),t=document.getElementById('ft').value,m=document.getElementById('fm').value,c=document.getElementById('fc').value,z=document.getElementById('fz').value,s=document.getElementById('fst'),b=document.getElementById('fbtn');if(!n||!p||!l||!t){s.textContent='Заполните поля';s.className='st err';s.classList.remove('hid');return}b.disabled=true;b.textContent='Отправка...';fetch('/api/order',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,phone:p,link:l,city:c,zone:z,method:t,marketplace:m})}).then(function(r){return r.json()}).then(function(d){if(d.ok){document.getElementById('fo').classList.add('hid');document.getElementById('su').classList.remove('hid')}else{s.textContent=d.error||'Ошибка';s.className='st err';s.classList.remove('hid');b.disabled=false;b.textContent='Отправить заявку'}}).catch(function(){s.textContent='Ошибка';s.className='st err';s.classList.remove('hid');b.disabled=false;b.textContent='Отправить заявку'})">Отправить заявку</button>
-  <div class="st hid" id=fst></div>
-</div>
+  <!-- === SCREEN: Cities === -->
+  <div class="hidden" id="screen-cities">
+    <button class="back-btn" id="cities-back-btn">← Назад</button>
+    <h2>📍 <span id="cities-title">Выберите город</span></h2>
+    <p class="sub">Введите название или выберите из списка</p>
+    <input class="search-input" id="city-search" placeholder="🔍 Поиск города...">
+    <div id="city-list">
+      <!-- Рендерится динамически -->
+    </div>
+    <div class="no-results hidden" id="city-no-results">Ничего не найдено</div>
+  </div>
 
-<!-- УСПЕХ -->
-<div id=su class=hid style=text-align:center;padding-top:40px>
-  <h2 style=font-size:24px;color:#4caf50>✅ Заявка отправлена!</h2>
-  <p class=sub>Скоро с вами свяжется менеджер</p>
-  <button class=btn onclick="document.getElementById('su').classList.add('hid');document.getElementById('co').classList.remove('hid')" style=width:200px;margin:20px auto>Новая заявка</button>
-</div>
+  <!-- === SCREEN: Zones (only for Moscow) === -->
+  <div class="hidden" id="screen-zones">
+    <button class="back-btn" id="zones-back-btn">← Назад</button>
+    <h2>📍 Уточните район</h2>
+    <p class="sub" id="zones-subtitle"></p>
+    <div id="zone-list">
+      <!-- Рендерится динамически -->
+    </div>
+  </div>
 
-<!-- ПАРТНЁР -->
-<div id=pp class=hid>
-  <h2>📦 Мои заявки</h2><p class=sub id=pi></p>
-  <div id=po>Загрузка...</div>
-</div>
+  <!-- === SCREEN: Order Form === -->
+  <div class="hidden" id="screen-form">
+    <button class="back-btn" id="form-back-btn">← Назад</button>
+    <h2>📦 Заявка на фулфилмент</h2>
+    <p class="sub" id="form-subtitle"></p>
+    <input class="form-input" id="form-name" placeholder="Ваше имя" autocomplete="name">
+    <input class="form-input" id="form-phone" type="tel" placeholder="Телефон" autocomplete="tel">
+    <input class="form-input" id="form-link" placeholder="Ссылка на товар" autocomplete="url">
 
-<script>
-try{var t=window.Telegram&&window.Telegram.WebApp;if(t){t.ready();t.expand()}}catch(e){}
-function goForm(){document.getElementById('zo').classList.add('hid');document.getElementById('fo').classList.remove('hid')}
-function showPP(u){document.getElementById('co').classList.add('hid');document.getElementById('pp').classList.remove('hid');document.getElementById('li-btn').classList.add('hid');document.getElementById('lo-btn').classList.remove('hid');document.getElementById('pi').textContent=(u.city||'')+(u.zone?' — '+u.zone:'');LP()}
-function LP(){var T=***"ff_token");fetch("/api/partner/orders",{headers:{Authorization:"***"+T}}).then(function(r){return r.json()}).then(function(d){if(!d.orders||!d.orders.length){document.getElementById("po").innerHTML='<div style=text-align:center;color:#777;padding:40px>Заявок пока нет</div>';return}var lb={new:"Новая",accepted:"Принято",in_progress:"В работе",done:"Готово"},h='<table><thead><tr><th>ID</th><th>Клиент</th><th>Телефон</th><th>Ссылка</th><th>Способ</th><th>Статус</th><th>Дата</th></tr></thead><tbody>';d.orders.forEach(function(o){var opts="";for(var k in lb)opts+='<option value='+k+(o.status===k?' selected':'')+'>'+lb[k]+'</option>';h+='<tr><td>#'+o.id+'</td><td>'+(o.name||"")+'</td><td>'+(o.phone||"")+'</td><td><a href='+(o.link||"")+' target=_blank style=color:#4da3ff>ссылка</a></td><td>'+(o.method||"FBO")+'</td><td><select onchange="U('+o.id+',this.value)" style=background:#000;border:1px solid #333;color:#eee;border-radius:4px;padding:2px 4px>'+opts+'</select></td><td>'+(o.created_at||"").slice(0,16)+'</td></tr>'});h+='</tbody></table>';document.getElementById("po").innerHTML=h})}
-function U(id,st){var T=***"ff_token");fetch("/api/partner/orders/"+id,{method:"PATCH",headers:{"Content-Type":"application/json",Authorization:"***"+T},body:JSON.stringify({status:st})})}
-</script>
-</body></html>
+    <select class="form-select" id="form-method">
+      <option value="" disabled selected>Способ доставки</option>
+      <option value="FBO">FBO</option>
+      <option value="FBS">FBS</option>
+      <option value="DBS">DBS</option>
+    </select>
+
+    <select class="form-select" id="form-marketplace">
+      <option value="" disabled selected>Площадка</option>
+      <option value="WB">WB</option>
+      <option value="Ozon">Ozon</option>
+      <option value="Yandex">Yandex</option>
+      <option value="Другое">Другое</option>
+    </select>
+
+    <!-- Hidden city key and zone -->
+    <input type="hidden" id="form-city-key" value="">
+    <input type="hidden" id="form-zone" value="">
+
+    <button class="btn" id="form-submit-btn">Отправить заявку</button>
+    <div class="status err hidden" id="form-status"></div>
+  </div>
+
+  <!-- === SCREEN: Success === -->
+  <div class="hidden success-screen" id="screen-success">
+    <h2>✅ Заявка отправлена!</h2>
+    <p class="sub">Скоро с вами свяжется менеджер</p>
+    <button class="btn" id="success-new-btn">Новая заявка</button>
+  </div>
+
+  <!-- === SCREEN: Partner Orders === -->
+  <div class="hidden" id="screen-partner">
+    <h2>📦 Мои заявки</h2>
+    <p class="sub" id="partner-info"></p>
+    <div id="partner-orders">
+      <div class="empty-state">Загрузка...</div>
+    </div>
+  </div>
+
+  <script src="/app-v2.js"></script>
+</body>
+</html>
