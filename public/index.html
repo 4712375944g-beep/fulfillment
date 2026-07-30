@@ -124,7 +124,13 @@
       </div>
     </div>
 
-    <!-- Hidden city key and zone -->
+
+    <div class="checkbox-group consent-group">
+      <label class="chk consent-chk"><input type="checkbox" id="order-consent-pd" onchange="updConsent()"> Принимаю <a href="/oferta.html" target="_blank" style="color:#4da3ff">условия оферты</a> и согласен на обработку персональных данных</label>
+      <label class="chk consent-chk"><input type="checkbox" id="order-consent-contact" onchange="updConsent()"> Согласен на передачу контактов партнёрам для связи</label>
+    </div>
+
+        <!-- Hidden city key and zone -->
     <input type="hidden" id="form-city-key" value="">
     <input type="hidden" id="form-zone" value="">
 

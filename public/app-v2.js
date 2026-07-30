@@ -122,6 +122,10 @@
   var elOrderYandex = document.getElementById('order-yandex');
   var elOrderOther = document.getElementById('order-other');
 
+  // Чекбоксы согласия
+  var elConsentPd = document.getElementById('order-consent-pd');
+  var elConsentContact = document.getElementById('order-consent-contact');
+
   // Success
   var elSuccessNew = document.getElementById('success-new-btn');
 
@@ -497,6 +501,9 @@
     elOrderOzon.checked = false;
     elOrderYandex.checked = false;
     elOrderOther.checked = false;
+    if (elConsentPd) elConsentPd.checked = false;
+    if (elConsentContact) elConsentContact.checked = false;
+    updConsent();
 
     // Скрываем статус
     elFormStatus.classList.add('hidden');
@@ -533,6 +540,10 @@
 
     // Валидация
     if (!name || !phone || !link || methods.length === 0 || mkt.length === 0) {
+      showFormError('Заполните все поля');
+      return;
+    }
+    if (!elConsentPd.checked || !elConsentContact.checked) {
       showFormError('Заполните все поля');
       return;
     }
@@ -966,6 +977,17 @@
     // Новая заявка (с экрана успеха)
     elSuccessNew.addEventListener('click', resetToCountries);
   }
+
+  // Блокировка кнопки отправки без согласий
+  window.updConsent = function() {
+    var b = document.getElementById('form-submit-btn');
+    var pd = document.getElementById('order-consent-pd');
+    var ct = document.getElementById('order-consent-contact');
+    if (pd && ct) {
+      b.disabled = !(pd.checked && ct.checked);
+      b.style.opacity = b.disabled ? '0.5' : '1';
+    }
+  };
 
   // Запуск
   init();

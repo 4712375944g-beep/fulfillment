@@ -400,3 +400,8 @@ h2 {
 .checkbox-row{display:flex;flex-wrap:wrap;gap:8px}
 .chk{display:flex;align-items:center;gap:5px;font-size:14px;color:#ddd;cursor:pointer}
 .chk input[type=checkbox]{accent-color:#4da3ff;width:16px;height:16px;cursor:pointer;margin:0}
+
+/* Чекбоксы согласия */
+.consent-group{margin:12px 0;padding:8px 0;border-top:1px solid #333}
+.consent-chk{font-size:13px!important;color:#aaa!important;line-height:1.4}
+.consent-chk a{text-decoration:underline}
