@@ -402,13 +402,8 @@
     selectedCity = city;
     selectedZone = '';
 
-    if (city.zones && city.zones.length > 0) {
-      // Есть зоны → показываем экран зон
-      showZoneScreen(city);
-    } else {
-      // Нет зон → сразу форма
-      showFormScreen(city, '');
-    }
+    // Без зон — сразу форма для любого города
+    showFormScreen(city, '');
   }
 
   // ==================== Экран зон ====================
@@ -570,11 +565,8 @@
   }
 
   function goBackFromForm() {
-    if (selectedCity && selectedCity.zones && selectedCity.zones.length > 0) {
-      showScreen(elZones);
-    } else {
-      showScreen(elCities);
-    }
+    // Без зон — всегда назад к городам
+    showScreen(elCities);
   }
 
   // ==================== Партнёр: вход ====================
