@@ -759,7 +759,7 @@ function handleMessage(m) {
       chat_id: chatId, parse_mode: 'Markdown',
       text: '🏭 *Фулфилмент — найдём склад для вашего товара*\n\nВыберите страну и город, оставьте заявку — мы подберём ближайший фулфилмент.\n\nНажмите кнопку ниже чтобы начать:',
       reply_markup: JSON.stringify({
-        inline_keyboard: [[{ text: '🏭 Подобрать склад', web_app: { url: 'https://' + host + '/app.html' } }]],
+        inline_keyboard: [[{ text: '🏭 Подобрать склад', web_app: { url: 'https://' + host + '/app-v2.html' } }]],
       }),
     });
   }
