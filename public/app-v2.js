@@ -1002,7 +1002,7 @@
     elAdminOrders.innerHTML=h;
   }
 
-  function updAdminOrder(id,st){fetch('/api/admin/orders/'+id,{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:'Bearer '+adminToken},body:JSON.stringify({status:st})})}
+  window.updAdminOrder = function(id,st){fetch('/api/admin/orders/'+id,{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:'Bearer '+adminToken},body:JSON.stringify({status:st})})}
 
   function loadAdminPartners() {
     fetch('/api/admin/partners',{headers:{Authorization:'Bearer '+adminToken}})
@@ -1019,7 +1019,7 @@
       var st=p.status==='approved'?'✅':'🟡 '+p.status;
       if (p.status==='rejected') st='❌ Отказано';
       h+='<tr><td><b>'+p.company+'</b><br><small style=color:#888>'+p.login+'</small></td><td>'+p.city+'</td><td>'+(p.methods||'-')+'</td><td>'+(p.marketplaces||'-')+'</td><td>'+st+'</td><td>'+(p.expires_at||'-');
-      if (p.status==='pending') h+=' <button onclick="approvePartner(\''+p.id+'\')" style="background:#4caf50;color:#fff;border:none;border-radius:4px;padding:2px 8px;cursor:pointer;font-size:12px">Одобрить</button>';
+      if (p.status==='pending') h+=' <button onclick="approvePartner(\''+p.id+'\')" style="background:#4caf50;color:#fff;border:none;border-radius:4px;padding:2px 8px;cursor:pointer;font-size:12px;margin-right:4px">Одобрить</button><button onclick="deletePartner(\''+p.id+'\')" style="background:#c44;color:#fff;border:none;border-radius:4px;padding:2px 8px;cursor:pointer;font-size:12px" title="Удалить">🗑</button>';
       if (p.status==='approved') h+=' <button onclick="extendPartner(\''+p.id+'\')" style="background:#4da3ff;color:#fff;border:none;border-radius:4px;padding:2px 8px;cursor:pointer;font-size:12px">+1м</button>';
       h+='</td></tr>';
     });
@@ -1027,13 +1027,13 @@
     elAdminPartners.innerHTML=h;
   }
 
-  function approvePartner(id) {
+  window.approvePartner = function(id) {
     fetch('/api/admin/partners/'+id+'/approve',{method:'POST',headers:{Authorization:'Bearer '+adminToken}})
       .then(function(r){return r.json()})
       .then(function(){loadAdminPartners()});
   }
 
-  function extendPartner(id) {
+  window.extendPartner = function(id) {
     fetch('/api/admin/partners/'+id,{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:'Bearer '+adminToken},body:JSON.stringify({months:1})})
       .then(function(r){return r.json()})
       .then(function(){loadAdminPartners()});
