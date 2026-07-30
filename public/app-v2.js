@@ -170,19 +170,7 @@
   }
 
   function styleSelects() {
-    var selects = [
-      elFormMethod,
-      elFormMarketplace
-    ];
-    selects.forEach(function (sel) {
-      sel.addEventListener('change', function () {
-        if (sel.value) {
-          sel.classList.add('selected');
-        } else {
-          sel.classList.remove('selected');
-        }
-      });
-    });
+    // Чекбоксы вместо select — функция больше не нужна
   }
 
   // ==================== API: загрузка городов ====================
@@ -502,8 +490,6 @@
     elFormName.value = '';
     elFormPhone.value = '';
     elFormLink.value = '';
-    elFormMethod.selectedIndex = 0;
-    elFormMethod.classList.remove('selected');
     elOrderFbo.checked = false;
     elOrderFbs.checked = false;
     elOrderDbs.checked = false;
