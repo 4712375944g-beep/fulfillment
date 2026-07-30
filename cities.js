@@ -107,5 +107,13 @@ const CITIES_DATA = {
 
   // Армения
   'am-yerevan':     { name: 'Ереван, Армения',    coords: [40.1792, 44.4991], country: 'Армения' },
+
+  // Узбекистан
+  'uz-tashkent':    { name: 'Ташкент, Узбекистан',    coords: [41.2995, 69.2401], country: 'Узбекистан' },
+  'uz-samarkand':   { name: 'Самарканд, Узбекистан',  coords: [39.6542, 66.9597], country: 'Узбекистан' },
+  'uz-bukhara':     { name: 'Бухара, Узбекистан',     coords: [39.7750, 64.4233], country: 'Узбекистан' },
+  'uz-namangan':    { name: 'Наманган, Узбекистан',    coords: [40.9983, 71.6726], country: 'Узбекистан' },
+  'uz-andijan':     { name: 'Андижан, Узбекистан',     coords: [40.7833, 72.3333], country: 'Узбекистан' },
+  'uz-fergana':     { name: 'Фергана, Узбекистан',     coords: [40.3842, 71.7843], country: 'Узбекистан' },
 };
 module.exports = CITIES_DATA;
