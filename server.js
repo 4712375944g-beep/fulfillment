@@ -235,8 +235,8 @@ app.get('/api/cities', (req, res) => {
 
 // ====== API: заявка клиента ======
 app.post('/api/order', (req, res) => {
-  const { name, phone, link, city, zone, method } = req.body;
-  if (!name || !phone || !link || !city) {
+  const { name, phone, link, city, zone, methods, marketplaces } = req.body;
+  if (!name || !phone || !link || !city || !methods) {
     return res.status(400).json({ ok: false, error: 'Все поля обязательны' });
   }
   const cityInfo = CITIES[city];
@@ -395,8 +395,8 @@ app.get('/api/partner/orders', auth, (req, res) => {
   const orders = db.orders
     .filter(o => {
       if (o.city !== req.user.city) return false;
-      if (userMethods.length && !userMethods.includes(o.method || 'FBO')) return false;
-      if (userMkt.length && !userMkt.includes(o.marketplace)) return false;
+      if (userMethods.length && !userMethods.some(function(m){return (o.methods||'').split(',').includes(m)})) return false;
+      if (userMkt.length && !userMkt.some(function(m){return (o.marketplaces||'').split(',').includes(m)})) return false;
       return true;
     })
     .sort((a, b) => b.id - a.id)

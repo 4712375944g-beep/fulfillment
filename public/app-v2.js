@@ -113,6 +113,15 @@
   var elFormSubmit = document.getElementById('form-submit-btn');
   var elFormStatus = document.getElementById('form-status');
 
+  // Checkboxes метода и площадки в форме заявки
+  var elOrderFbo = document.getElementById('order-fbo');
+  var elOrderFbs = document.getElementById('order-fbs');
+  var elOrderDbs = document.getElementById('order-dbs');
+  var elOrderWb = document.getElementById('order-wb');
+  var elOrderOzon = document.getElementById('order-ozon');
+  var elOrderYandex = document.getElementById('order-yandex');
+  var elOrderOther = document.getElementById('order-other');
+
   // Success
   var elSuccessNew = document.getElementById('success-new-btn');
 
@@ -495,8 +504,13 @@
     elFormLink.value = '';
     elFormMethod.selectedIndex = 0;
     elFormMethod.classList.remove('selected');
-    elFormMarketplace.selectedIndex = 0;
-    elFormMarketplace.classList.remove('selected');
+    elOrderFbo.checked = false;
+    elOrderFbs.checked = false;
+    elOrderDbs.checked = false;
+    elOrderWb.checked = false;
+    elOrderOzon.checked = false;
+    elOrderYandex.checked = false;
+    elOrderOther.checked = false;
 
     // Скрываем статус
     elFormStatus.classList.add('hidden');
@@ -515,14 +529,25 @@
     var name = elFormName.value.trim();
     var phone = elFormPhone.value.trim();
     var link = elFormLink.value.trim();
-    var method = elFormMethod.value;
-    var marketplace = elFormMarketplace.value;
     var cityKey = elFormCityKey.value;
     var zone = elFormZone.value;
 
+    // Собираем методы
+    var methods = [];
+    if (elOrderFbo.checked) methods.push('FBO');
+    if (elOrderFbs.checked) methods.push('FBS');
+    if (elOrderDbs.checked) methods.push('DBS');
+
+    // Собираем маркетплейсы
+    var mkt = [];
+    if (elOrderWb.checked) mkt.push('WB');
+    if (elOrderOzon.checked) mkt.push('Ozon');
+    if (elOrderYandex.checked) mkt.push('Yandex');
+    if (elOrderOther.checked) mkt.push('Другое');
+
     // Валидация
-    if (!name || !phone || !link || !method) {
-      showFormError('Заполните все обязательные поля');
+    if (!name || !phone || !link || methods.length === 0 || mkt.length === 0) {
+      showFormError('Заполните все поля');
       return;
     }
 
@@ -540,8 +565,8 @@
         link: link,
         city: cityKey,
         zone: zone,
-        method: method,
-        marketplace: marketplace
+        methods: methods.join(','),
+        marketplaces: mkt.join(',')
       })
     })
       .then(function (r) { return r.json(); })

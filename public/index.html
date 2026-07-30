@@ -105,20 +105,24 @@
     <input class="form-input" id="form-phone" type="tel" placeholder="Телефон" autocomplete="tel">
     <input class="form-input" id="form-link" placeholder="Ссылка на товар" autocomplete="url">
 
-    <select class="form-select" id="form-method">
-      <option value="" disabled selected>Способ доставки</option>
-      <option value="FBO">FBO</option>
-      <option value="FBS">FBS</option>
-      <option value="DBS">DBS</option>
-    </select>
+    <div class="checkbox-group">
+      <label class="checkbox-label">📦 Способ доставки:</label>
+      <div class="checkbox-row">
+        <label class="chk"><input type="checkbox" id="order-fbo"> FBO</label>
+        <label class="chk"><input type="checkbox" id="order-fbs"> FBS</label>
+        <label class="chk"><input type="checkbox" id="order-dbs"> DBS</label>
+      </div>
+    </div>
 
-    <select class="form-select" id="form-marketplace">
-      <option value="" disabled selected>Площадка</option>
-      <option value="WB">WB</option>
-      <option value="Ozon">Ozon</option>
-      <option value="Yandex">Yandex</option>
-      <option value="Другое">Другое</option>
-    </select>
+    <div class="checkbox-group">
+      <label class="checkbox-label">🏪 Площадка:</label>
+      <div class="checkbox-row">
+        <label class="chk"><input type="checkbox" id="order-wb"> WB</label>
+        <label class="chk"><input type="checkbox" id="order-ozon"> Ozon</label>
+        <label class="chk"><input type="checkbox" id="order-yandex"> Yandex</label>
+        <label class="chk"><input type="checkbox" id="order-other"> Другое</label>
+      </div>
+    </div>
 
     <!-- Hidden city key and zone -->
     <input type="hidden" id="form-city-key" value="">
