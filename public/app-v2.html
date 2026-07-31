@@ -5,185 +5,372 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>SellFull</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="/style.css">
+  <style>
+    /* ==== TELEGRAM-STYLE DESIGN SYSTEM ==== */
+    :root {
+      --bg: #0f0f0f;
+      --surface: #1c1c1e;
+      --surface2: #2c2c2e;
+      --border: #38383a;
+      --text: #f5f5f5;
+      --text2: #98989e;
+      --blue: #2aabee;
+      --blue-hover: #1d94d4;
+      --green: #34c759;
+      --red: #ff3b30;
+      --orange: #ff9500;
+      --radius: 14px;
+      --shadow: 0 2px 12px rgba(0,0,0,0.3);
+    }
+
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      padding: 16px;
+    }
+
+    /* ==== TOOLBAR ==== */
+    .toolbar { display:flex; justify-content:flex-end; gap:8px; margin-bottom:20px; }
+    .btn-sm {
+      padding: 7px 14px; border-radius: 10px; border: 1px solid var(--border);
+      background: transparent; color: var(--text2); font-size: 13px; cursor: pointer;
+      transition: all .15s;
+    }
+    .btn-sm:hover { border-color: var(--blue); color: var(--blue); }
+    .hidden { display:none !important; }
+
+    /* ==== OVERLAYS ==== */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      display: flex; align-items: center; justify-content: center; z-index: 100;
+      padding: 20px;
+    }
+    .overlay-box {
+      background: var(--surface); border-radius: var(--radius); padding: 24px;
+      width: 100%; max-width: 380px; box-shadow: var(--shadow);
+    }
+    .overlay-box h3 { font-size: 17px; margin-bottom: 6px; }
+    .overlay-box .sub { font-size: 13px; color: var(--text2); margin-bottom: 16px; }
+
+    /* ==== INPUTS ==== */
+    .inp {
+      width: 100%; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--surface2); color: var(--text); font-size: 14px; outline: none;
+      margin-bottom: 10px; transition: border-color .15s;
+    }
+    .inp:focus { border-color: var(--blue); }
+    .inp::placeholder { color: var(--text2); }
+
+    .pass-wrap { position:relative; margin-bottom:10px; }
+    .pass-wrap .inp { margin-bottom:0; padding-right:44px; }
+    .pass-toggle {
+      position:absolute; right:8px; top:50%; transform:translateY(-50%);
+      background:none; border:none; font-size:18px; cursor:pointer; padding:4px 8px;
+    }
+
+    /* ==== BUTTONS ==== */
+    .btn {
+      width:100%; padding:12px; border:none; border-radius:10px; background:var(--blue);
+      color:#fff; font-size:15px; font-weight:600; cursor:pointer; margin-bottom:8px;
+      transition: background .15s;
+    }
+    .btn:hover { background: var(--blue-hover); }
+    .btn:disabled { opacity:0.4; cursor:not-allowed; }
+
+    .btn-ghost {
+      width:100%; padding:10px; border:none; border-radius:10px; background:transparent;
+      color:var(--text2); font-size:14px; cursor:pointer; margin-bottom:6px;
+    }
+    .btn-link {
+      width:100%; padding:8px; border:none; border-radius:10px; background:transparent;
+      color:var(--blue); font-size:13px; cursor:pointer;
+    }
+
+    .btn-back {
+      display:inline-flex; align-items:center; gap:4px; padding:8px 14px;
+      border-radius:10px; border:1px solid var(--border); background:transparent;
+      color:var(--text2); font-size:14px; cursor:pointer; margin-bottom:16px;
+      transition: all .15s;
+    }
+    .btn-back:hover { border-color:var(--blue); color:var(--blue); }
+
+    /* ==== STATUS ==== */
+    .status { padding:10px 14px; border-radius:10px; font-size:13px; margin-bottom:10px; }
+    .status.err { background:rgba(255,59,48,0.1); color:var(--red); }
+    .status.ok { background:rgba(52,199,89,0.1); color:var(--green); }
+
+    /* ==== SCREENS ==== */
+    .screen h2 { font-size:22px; margin-bottom:4px; }
+    .screen .subtitle { font-size:13px; color:var(--text2); margin-bottom:16px; }
+
+    /* ==== COUNTRY CARDS ==== */
+    .card-grid { display:flex; flex-direction:column; gap:10px; }
+    .card {
+      display:flex; align-items:center; gap:14px; background:var(--surface);
+      border-radius:var(--radius); padding:16px 18px; cursor:pointer;
+      box-shadow:var(--shadow); transition: transform .1s;
+    }
+    .card:active { transform:scale(0.98); }
+    .card .flag { font-size:32px; }
+    .card .card-body { flex:1; }
+    .card .name { font-size:16px; font-weight:600; }
+    .card .info { font-size:13px; color:var(--text2); margin-top:2px; }
+
+    /* ==== CITY CARDS ==== */
+    .card-zone .info { color:var(--blue); }
+
+    /* ==== SEARCH ==== */
+    .search-inp {
+      width:100%; padding:11px 14px 11px 38px; border-radius:10px; border:1px solid var(--border);
+      background:var(--surface2); color:var(--text); font-size:14px; outline:none;
+      margin-bottom:14px; transition: border-color .15s;
+    }
+    .search-inp:focus { border-color:var(--blue); }
+    .search-wrap { position:relative; }
+    .search-wrap .search-icon {
+      position:absolute; left:12px; top:50%; transform:translateY(-50%);
+      color:var(--text2); font-size:16px; pointer-events:none;
+    }
+    .no-results { text-align:center; color:var(--text2); padding:24px; font-size:14px; }
+
+    /* ==== FORM ==== */
+    .chk-group { margin-bottom:14px; }
+    .chk-group .chk-label { font-size:12px; color:var(--text2); margin-bottom:6px; display:block; text-transform:uppercase; letter-spacing:0.3px; }
+    .chk-row { display:flex; flex-wrap:wrap; gap:6px; }
+    .chk {
+      display:flex; align-items:center; gap:6px; padding:8px 13px; border-radius:20px;
+      border:1px solid var(--border); font-size:13px; cursor:pointer; color:var(--text2);
+      transition: all .15s; user-select:none;
+    }
+    .chk input { display:none; }
+    .chk.checked { border-color:var(--blue); background:rgba(42,171,238,0.1); color:var(--blue); }
+
+    .consent-group { background:var(--surface); border-radius:12px; padding:14px; }
+    .consent-group .chk { border:none; padding:6px 0; font-size:12px; width:100%; }
+    .consent-group .chk.checked { background:transparent; color:var(--green); }
+
+    /* ==== SUCCESS ==== */
+    .success-screen { text-align:center; padding:40px 20px; }
+    .success-screen h2 { font-size:24px; margin-bottom:8px; }
+    .success-screen .btn { max-width:250px; margin:20px auto 0; }
+
+    /* ==== PARTNER ORDERS ==== */
+    .order-card {
+      background:var(--surface); border-radius:var(--radius); padding:14px 16px;
+      margin-bottom:10px; box-shadow:var(--shadow);
+    }
+    .order-card .order-header { display:flex; justify-content:space-between; margin-bottom:6px; }
+    .order-card .order-id { font-weight:600; font-size:14px; }
+    .order-card .order-status { font-size:12px; padding:3px 8px; border-radius:6px; }
+    .status-new { background:rgba(255,149,0,0.15); color:var(--orange); }
+    .status-accepted { background:rgba(42,171,238,0.15); color:var(--blue); }
+    .status-in_progress { background:rgba(255,149,0,0.15); color:var(--orange); }
+    .status-done { background:rgba(52,199,89,0.15); color:var(--green); }
+    .order-card .order-info { font-size:13px; color:var(--text2); }
+    .empty-state { text-align:center; color:var(--text2); padding:40px; font-size:14px; }
+
+    /* ==== ADMIN ==== */
+    .admin-tabs { display:flex; gap:4px; margin-bottom:16px; background:var(--surface); border-radius:10px; padding:3px; }
+    .admin-tab {
+      flex:1; padding:9px; border:none; border-radius:8px; font-size:13px; font-weight:500;
+      cursor:pointer; background:transparent; color:var(--text2); transition:all .2s;
+    }
+    .admin-tab.on { background:var(--blue); color:#fff; }
+    .admin-order-card {
+      background:var(--surface); border-radius:var(--radius); padding:14px 16px;
+      margin-bottom:10px; box-shadow:var(--shadow);
+    }
+    .admin-order-card .order-top { display:flex; justify-content:space-between; margin-bottom:8px; flex-wrap:wrap; gap:6px; }
+    .admin-order-card select { padding:5px 10px; border-radius:8px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-size:12px; }
+
+    .contact-footer { text-align:center; margin-top:24px; padding-bottom:20px; }
+    .contact-footer a { color:var(--blue); text-decoration:none; font-size:13px; }
+
+    /* ==== MARKETPLACE CHIPS ==== */
+    .mkt-row { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+    .mkt-chip {
+      padding:7px 13px; border-radius:20px; font-size:13px; font-weight:500;
+      cursor:pointer; border:1px solid var(--border); background:transparent;
+      color:var(--text2); transition:all .2s; user-select:none;
+    }
+    .mkt-chip input { display:none; }
+    .mkt-chip.sel-wb { background:rgba(139,111,230,0.2); border-color:#8b6fe6; color:#c4b5ff; }
+    .mkt-chip.sel-ozon { background:rgba(0,91,255,0.2); border-color:#005bff; color:#6ba3ff; }
+    .mkt-chip.sel-yandex { background:rgba(252,224,0,0.15); border-color:#fce000; color:#fce000; }
+    .mkt-chip.sel-other { background:rgba(255,255,255,0.06); border-color:#666; color:#ccc; }
+  </style>
 </head>
 <body>
 
-  <!-- === Toolbar (login/logout) === -->
-  <div class="toolbar">
-    <button class="btn-secondary hidden" id="logout-btn">🚪 Выйти</button>
-    <button class="btn-secondary" id="login-btn">🔐 Вход для партнёров</button>
+<div class="toolbar">
+  <button class="btn-sm hidden" id="logout-btn">🚪 Выйти</button>
+  <button class="btn-sm" id="login-btn">🔐 Вход для партнёров</button>
+</div>
+
+<!-- ==== LOGIN OVERLAY ==== -->
+<div class="overlay hidden" id="login-overlay">
+  <div class="overlay-box">
+    <h3>🔐 Вход для партнёров</h3>
+    <p class="sub">Управление заявками и маршрутами</p>
+    <input class="inp" id="login-email" placeholder="Email" type="email" autocomplete="email">
+    <div class="pass-wrap"><input class="inp" id="login-pass" type="password" placeholder="Пароль" autocomplete="current-password"><button class="pass-toggle" id="login-pass-toggle" type="button" tabindex="-1">👁</button></div>
+    <div class="status err hidden" id="login-error"></div>
+    <button class="btn" id="login-submit-btn">Войти</button>
+    <button class="btn-ghost" id="login-cancel-btn">Отмена</button>
+    <button class="btn-link" id="show-register-btn">Нет аккаунта? Зарегистрироваться</button>
   </div>
+</div>
 
-  <!-- === Login Overlay === -->
-  <div class="overlay hidden" id="login-overlay">
-    <div class="overlay-box">
-      <h3>🔐 Вход для партнёров</h3>
-      <p class="sub">Управление заявками</p>
-      <input class="form-input" id="login-email" placeholder="Email" type="email" autocomplete="email">
-      <div class="pass-wrap"><input class="form-input" id="login-pass" type="password" placeholder="Пароль" autocomplete="current-password"><button class="pass-toggle" id="login-pass-toggle" type="button" tabindex="-1">👁</button></div>
-      <div class="status err hidden" id="login-error"></div>
-      <button class="btn" id="login-submit-btn">Войти</button>
-      <button class="btn-ghost" id="login-cancel-btn">Отмена</button>
-      <button class="btn-link" id="show-register-btn">Нет аккаунта? Зарегистрироваться</button>
-    </div>
-  </div>
-
-  <!-- === Register Overlay === -->
-  <div class="overlay hidden" id="register-overlay">
-    <div class="overlay-box">
-      <h3>📝 Регистрация партнёра</h3>
-      <p class="sub">Заполните данные для доступа к заявкам</p>
-      <input class="form-input" id="reg-email" placeholder="Email" type="email" autocomplete="email">
-      <div class="pass-wrap"><input class="form-input" id="reg-pass" type="password" placeholder="Пароль (мин. 4 символа)"><button class="pass-toggle" id="reg-pass-toggle" type="button" tabindex="-1">👁</button></div>
-      <input class="form-input" id="reg-company" placeholder="Название компании">
-      <input class="form-input" id="reg-city" placeholder="Город (например: Москва)">
-      <input class="form-input" id="reg-contact" placeholder="Контактное лицо">
-      <input class="form-input" id="reg-phone" type="tel" placeholder="Телефон">
-      <div class="checkbox-group">
-        <label class="checkbox-label">📦 Методы работы:</label>
-        <div class="checkbox-row">
-          <label class="chk"><input type="checkbox" id="reg-fbo"> FBO</label>
-          <label class="chk"><input type="checkbox" id="reg-fbs"> FBS</label>
-          <label class="chk"><input type="checkbox" id="reg-dbs"> DBS</label>
-        </div>
-      </div>
-      <div class="checkbox-group">
-        <label class="checkbox-label">🏪 Маркетплейсы:</label>
-        <div class="checkbox-row">
-          <label class="chk"><input type="checkbox" id="reg-wb"> WB</label>
-          <label class="chk"><input type="checkbox" id="reg-ozon"> Ozon</label>
-          <label class="chk"><input type="checkbox" id="reg-yandex"> Yandex</label>
-          <label class="chk"><input type="checkbox" id="reg-other"> Другое</label>
-        </div>
-      </div>
-      <div class="status err hidden" id="register-error"></div>
-      <div class="status ok hidden" id="register-ok"></div>
-      <button class="btn" id="register-submit-btn">Зарегистрироваться</button>
-      <button class="btn-ghost" id="register-cancel-btn">Отмена</button>
-      <button class="btn-link" id="show-login-btn">Уже есть аккаунт? Войти</button>
-    </div>
-  </div>
-
-  <!-- === SCREEN: Countries === -->
-  <div id="screen-countries">
-    <h2>🌍 Выберите страну</h2>
-    <p class="sub">Подберём склад фулфилмента</p>
-    <div id="country-list">
-      <!-- Рендерится динамически -->
-    </div>
-    <div class="contact-footer">
-      <a href="https://t.me/idenisovdenis" target="_blank">📞 Связь с администратором</a>
-    </div>
-  </div>
-
-  <!-- === SCREEN: Cities === -->
-  <div class="hidden" id="screen-cities">
-    <button class="back-btn" id="cities-back-btn">← Назад</button>
-    <h2>📍 <span id="cities-title">Выберите город</span></h2>
-    <p class="sub">Введите название или выберите из списка</p>
-    <input class="search-input" id="city-search" placeholder="🔍 Поиск города...">
-    <div id="city-list">
-      <!-- Рендерится динамически -->
-    </div>
-    <div class="no-results hidden" id="city-no-results">Ничего не найдено</div>
-  </div>
-
-  <!-- === SCREEN: Zones (only for Moscow) === -->
-  <div class="hidden" id="screen-zones">
-    <button class="back-btn" id="zones-back-btn">← Назад</button>
-    <h2>📍 Уточните район</h2>
-    <p class="sub" id="zones-subtitle"></p>
-    <div id="zone-list">
-      <!-- Рендерится динамически -->
-    </div>
-  </div>
-
-  <!-- === SCREEN: Order Form === -->
-  <div class="hidden" id="screen-form">
-    <button class="back-btn" id="form-back-btn">← Назад</button>
-    <h2>📦 Заявка на фулфилмент</h2>
-    <p class="sub" id="form-subtitle"></p>
-    <input class="form-input" id="form-name" placeholder="Ваше имя" autocomplete="name">
-    <input class="form-input" id="form-phone" type="tel" placeholder="Телефон" autocomplete="tel">
-    <input class="form-input" id="form-link" placeholder="Ссылка на товар" autocomplete="url">
-
-    <div class="checkbox-group">
-      <label class="checkbox-label">📦 Способ доставки:</label>
-      <div class="checkbox-row">
-        <label class="chk"><input type="checkbox" id="order-fbo"> FBO</label>
-        <label class="chk"><input type="checkbox" id="order-fbs"> FBS</label>
-        <label class="chk"><input type="checkbox" id="order-dbs"> DBS</label>
+<!-- ==== REGISTER OVERLAY ==== -->
+<div class="overlay hidden" id="register-overlay">
+  <div class="overlay-box">
+    <h3>📝 Регистрация партнёра</h3>
+    <p class="sub">Заполните данные для доступа к заявкам</p>
+    <input class="inp" id="reg-email" placeholder="Email" type="email" autocomplete="email">
+    <div class="pass-wrap"><input class="inp" id="reg-pass" type="password" placeholder="Пароль (мин. 4 символа)"><button class="pass-toggle" id="reg-pass-toggle" type="button" tabindex="-1">👁</button></div>
+    <input class="inp" id="reg-company" placeholder="Название компании">
+    <input class="inp" id="reg-city" placeholder="Город (например: Москва)">
+    <input class="inp" id="reg-contact" placeholder="Контактное лицо">
+    <input class="inp" id="reg-phone" type="tel" placeholder="Телефон">
+    <div class="chk-group">
+      <span class="chk-label">📦 Методы работы</span>
+      <div class="chk-row">
+        <label class="chk" id="chk-fbo"><input type="checkbox" id="reg-fbo"> FBO</label>
+        <label class="chk" id="chk-fbs"><input type="checkbox" id="reg-fbs"> FBS</label>
+        <label class="chk" id="chk-dbs"><input type="checkbox" id="reg-dbs"> DBS</label>
       </div>
     </div>
-
-    <div class="checkbox-group">
-      <label class="checkbox-label">🏪 Площадка:</label>
-      <div class="checkbox-row">
-        <label class="chk"><input type="checkbox" id="order-wb"> WB</label>
-        <label class="chk"><input type="checkbox" id="order-ozon"> Ozon</label>
-        <label class="chk"><input type="checkbox" id="order-yandex"> Yandex</label>
-        <label class="chk"><input type="checkbox" id="order-other"> Другое</label>
+    <div class="chk-group">
+      <span class="chk-label">🏪 Маркетплейсы</span>
+      <div class="mkt-row" id="reg-mkt">
+        <label class="mkt-chip" id="reg-mkt-wb"><input type="checkbox" id="reg-wb"> 🟣 WB</label>
+        <label class="mkt-chip" id="reg-mkt-ozon"><input type="checkbox" id="reg-ozon"> 🔵 Ozon</label>
+        <label class="mkt-chip" id="reg-mkt-yandex"><input type="checkbox" id="reg-yandex"> 🟡 Яндекс</label>
+        <label class="mkt-chip" id="reg-mkt-other"><input type="checkbox" id="reg-other"> ⚪ Другое</label>
       </div>
     </div>
+    <div class="status err hidden" id="register-error"></div>
+    <div class="status ok hidden" id="register-ok"></div>
+    <button class="btn" id="register-submit-btn">Зарегистрироваться</button>
+    <button class="btn-ghost" id="register-cancel-btn">Отмена</button>
+    <button class="btn-link" id="show-login-btn">Уже есть аккаунт? Войти</button>
+  </div>
+</div>
 
+<!-- ==== SCREEN: Countries ==== -->
+<div class="screen" id="screen-countries">
+  <h2>🌍 Выберите страну</h2>
+  <p class="subtitle">Подберём склад фулфилмента</p>
+  <div class="card-grid" id="country-list"></div>
+  <div class="contact-footer">
+    <a href="https://t.me/idenisovdenis" target="_blank">📞 Связь с администратором</a>
+  </div>
+</div>
 
-    <div class="checkbox-group consent-group">
-      <label class="chk consent-chk"><input type="checkbox" id="order-consent-pd" onchange="updConsent()"> Принимаю <a href="/oferta.html" target="_blank" style="color:#4da3ff">условия оферты</a> и согласен на обработку персональных данных</label>
-      <label class="chk consent-chk"><input type="checkbox" id="order-consent-contact" onchange="updConsent()"> Согласен на передачу контактов партнёрам для связи</label>
+<!-- ==== SCREEN: Cities ==== -->
+<div class="screen hidden" id="screen-cities">
+  <button class="btn-back" id="cities-back-btn">← Назад</button>
+  <h2>📍 <span id="cities-title">Выберите город</span></h2>
+  <p class="subtitle">Введите название или выберите из списка</p>
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input class="search-inp" id="city-search" placeholder="Поиск города...">
+  </div>
+  <div class="card-grid" id="city-list"></div>
+  <div class="no-results hidden" id="city-no-results">Ничего не найдено</div>
+</div>
+
+<!-- ==== SCREEN: Zones (Moscow only) ==== -->
+<div class="screen hidden" id="screen-zones">
+  <button class="btn-back" id="zones-back-btn">← Назад</button>
+  <h2>📍 Уточните район</h2>
+  <p class="subtitle" id="zones-subtitle"></p>
+  <div class="card-grid" id="zone-list"></div>
+</div>
+
+<!-- ==== SCREEN: Order Form ==== -->
+<div class="screen hidden" id="screen-form">
+  <button class="btn-back" id="form-back-btn">← Назад</button>
+  <h2>📦 Заявка на фулфилмент</h2>
+  <p class="subtitle" id="form-subtitle"></p>
+  <input class="inp" id="form-name" placeholder="Ваше имя" autocomplete="name">
+  <input class="inp" id="form-phone" type="tel" placeholder="Телефон" autocomplete="tel">
+  <input class="inp" id="form-link" placeholder="Ссылка на товар" autocomplete="url">
+
+  <div class="chk-group">
+    <span class="chk-label">📦 Способ доставки</span>
+    <div class="chk-row">
+      <label class="chk" id="chk-order-fbo"><input type="checkbox" id="order-fbo"> FBO</label>
+      <label class="chk" id="chk-order-fbs"><input type="checkbox" id="order-fbs"> FBS</label>
+      <label class="chk" id="chk-order-dbs"><input type="checkbox" id="order-dbs"> DBS</label>
     </div>
-
-        <!-- Hidden city key and zone -->
-    <input type="hidden" id="form-city-key" value="">
-    <input type="hidden" id="form-zone" value="">
-
-    <button class="btn" id="form-submit-btn">Отправить заявку</button>
-    <div class="status err hidden" id="form-status"></div>
   </div>
 
-  <!-- === SCREEN: Success === -->
-  <div class="hidden success-screen" id="screen-success">
-    <h2>✅ Заявка отправлена!</h2>
-    <p class="sub">Скоро с вами свяжется менеджер</p>
-    <button class="btn" id="success-new-btn">Новая заявка</button>
-  </div>
-
-  <!-- === SCREEN: Partner Orders === -->
-  <div class="hidden" id="screen-partner">
-    <h2>📦 Мои заявки</h2>
-    <p class="sub" id="partner-info"></p>
-    <div id="partner-orders">
-      <div class="empty-state">Загрузка...</div>
+  <div class="chk-group">
+    <span class="chk-label">🏪 Площадка</span>
+    <div class="mkt-row" id="order-mkt">
+      <label class="mkt-chip" id="mkt-order-wb"><input type="checkbox" id="order-wb"> 🟣 WB</label>
+      <label class="mkt-chip" id="mkt-order-ozon"><input type="checkbox" id="order-ozon"> 🔵 Ozon</label>
+      <label class="mkt-chip" id="mkt-order-yandex"><input type="checkbox" id="order-yandex"> 🟡 Яндекс</label>
+      <label class="mkt-chip" id="mkt-order-other"><input type="checkbox" id="order-other"> ⚪ Другое</label>
     </div>
   </div>
 
-  <!-- === SCREEN: Admin Panel === -->
-  <div class="hidden" id="screen-admin">
-    <h2>🏭 Админ-панель</h2>
-    <div class="mr" id="admin-tabs">
-      <button class="on" data-atab="orders" id="atab-orders">📦 Заявки</button>
-      <button data-atab="partners" id="atab-partners">👥 Партнёры</button>
-    </div>
-    <div id="admin-content">
-      <div id="admin-orders">
-        <div style="display:flex;gap:8px;margin-bottom:12px">
-          <select class="inp" id="admin-filter-city" onchange="loadAdminOrders()"><option value="">📍 Все города</option></select>
-          <select class="inp" id="admin-filter-status" onchange="loadAdminOrders()">
-            <option value="">📊 Все</option>
-            <option value="new">🟡 Новые</option>
-            <option value="accepted">🟢 Принято</option>
-            <option value="in_progress">🔵 В работе</option>
-            <option value="done">✅ Готово</option>
-          </select>
-        </div>
-        <div id="admin-orders-list"><div class="empty-state">Загрузка...</div></div>
+  <div class="chk-group consent-group">
+    <label class="chk consent-chk" id="chk-consent-pd"><input type="checkbox" id="order-consent-pd"> Принимаю <a href="/oferta.html" target="_blank" style="color:var(--blue)">условия оферты</a> и согласен на обработку данных</label>
+    <label class="chk consent-chk" id="chk-consent-contact"><input type="checkbox" id="order-consent-contact"> Согласен на передачу контактов партнёрам</label>
+  </div>
+
+  <input type="hidden" id="form-city-key" value="">
+  <input type="hidden" id="form-zone" value="">
+
+  <button class="btn" id="form-submit-btn">Отправить заявку</button>
+  <div class="status err hidden" id="form-status"></div>
+</div>
+
+<!-- ==== SCREEN: Success ==== -->
+<div class="screen hidden success-screen" id="screen-success">
+  <h2>✅ Заявка отправлена!</h2>
+  <p class="subtitle">Скоро с вами свяжется менеджер</p>
+  <button class="btn" id="success-new-btn">Новая заявка</button>
+</div>
+
+<!-- ==== SCREEN: Partner Orders ==== -->
+<div class="screen hidden" id="screen-partner">
+  <h2>📦 Мои заявки</h2>
+  <p class="subtitle" id="partner-info"></p>
+  <div id="partner-orders"><div class="empty-state">Загрузка...</div></div>
+</div>
+
+<!-- ==== SCREEN: Admin Panel ==== -->
+<div class="screen hidden" id="screen-admin">
+  <h2>🏭 Админ-панель</h2>
+  <div class="admin-tabs" id="admin-tabs">
+    <button class="admin-tab on" data-atab="orders" id="atab-orders">📦 Заявки</button>
+    <button class="admin-tab" data-atab="partners" id="atab-partners">👥 Партнёры</button>
+  </div>
+  <div id="admin-content">
+    <div id="admin-orders">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <select class="inp" id="admin-filter-city" onchange="loadAdminOrders()" style="margin-bottom:0"><option value="">📍 Все города</option></select>
+        <select class="inp" id="admin-filter-status" onchange="loadAdminOrders()" style="margin-bottom:0">
+          <option value="">📊 Все</option>
+          <option value="new">🟡 Новые</option>
+          <option value="accepted">🟢 Принято</option>
+          <option value="in_progress">🔵 В работе</option>
+          <option value="done">✅ Готово</option>
+        </select>
       </div>
-      <div id="admin-partners" class="hidden">
-        <div id="admin-partners-list"><div class="empty-state">Загрузка...</div></div>
-      </div>
+      <div id="admin-orders-list"><div class="empty-state">Загрузка...</div></div>
     </div>
+    <div id="admin-partners" class="hidden"><div id="admin-partners-list"><div class="empty-state">Загрузка...</div></div></div>
   </div>
+</div>
 
-  <script src="/app-v2.js"></script>
+<script src="/app-v2.js"></script>
 </body>
 </html>
