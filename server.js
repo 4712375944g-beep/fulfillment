@@ -897,6 +897,28 @@ function handleMessage(m) {
     return;
   }
 
+  // /reset — восстановить пароль
+  var resetMatch = text.match(/^\/reset(?:@Sell_full_bot)?\s+(.+)$/);
+  if (resetMatch) {
+    var resetEmail = resetMatch[1].trim();
+    var dbReset = loadDB();
+    var partnerReset = dbReset.users.find(function(u) { return u.role === 'partner' && u.login === resetEmail; });
+    if (partnerReset) {
+      partnerReset.password = crypto.randomBytes(4).toString('hex');
+      saveDB(dbReset);
+      tg('sendMessage', { chat_id: chatId, parse_mode: 'HTML', text: '🔑 <b>Новый пароль:</b> <code>' + partnerReset.password + '</code>\n\nИспользуйте его для входа в кабинет партнёра.' });
+    } else {
+      tg('sendMessage', { chat_id: chatId, text: '⚠️ Партнёр с таким email не найден.' });
+    }
+    return;
+  }
+
+  // /reset без email — подсказка
+  if (text === '/reset' || text === '/reset@Sell_full_bot') {
+    tg('sendMessage', { chat_id: chatId, parse_mode: 'HTML', text: '🔑 <b>Восстановление пароля</b>\n\nНапишите: <code>/reset email@example.com</code>' });
+    return;
+  }
+
   // /status — только для владельца
   if ((text === '/status' || text === '/status@Sell_full_bot') && String(chatId) === CHAT_ID) {
     const db = loadDB();
