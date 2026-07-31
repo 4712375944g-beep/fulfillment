@@ -286,5 +286,8 @@ async function doLogout() {
 
 function esc(s) { return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''; }
 
+// Кнопка Выйти
+function logout() { doLogout(); }
+
 loadOrders();
 loadCities();
