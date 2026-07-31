@@ -4,11 +4,12 @@ const { Pool } = require('pg');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  // Railway требует SSL
-  ssl: { rejectUnauthorized: false },
-  // Таймаут соединения
-  connectionTimeoutMillis: 10000,
-  // Максимум соединений в пуле
+  // Railway: SSL зависит от типа базы. Пробуем без явного ssl — pg сам решит.
+  // Если нужен SSL: Railway добавит ?sslmode=require в DATABASE_URL
+  ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('sslmode=require')
+    ? { rejectUnauthorized: false }
+    : false,
+  connectionTimeoutMillis: 15000,
   max: 10,
 });
 
