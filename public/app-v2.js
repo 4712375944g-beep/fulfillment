@@ -680,10 +680,15 @@
     elLoginSubmit.textContent = 'Вход...';
     elLoginError.classList.add('hidden');
 
+    // Получаем Telegram ID для авто-привязки
+    var tgUser = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user)
+      ? window.Telegram.WebApp.initDataUnsafe.user.id
+      : null;
+
     fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ login: email, password: pass })
+      body: JSON.stringify({ login: email, password: pass, tg_user_id: tgUser })
     })
       .then(function (r) { return r.json(); })
       .then(function (d) {

@@ -233,6 +233,12 @@ app.post('/api/login', (req, res) => {
     return res.status(403).json({ ok: false, error: 'Срок доступа истёк. Свяжитесь с администратором для продления.' });
   }
 
+  // Авто-привязка Telegram ID (если логин через Mini App)
+  const tgUserId = req.body.tg_user_id;
+  if (user.role === 'partner' && tgUserId) {
+    user.chat_id = String(tgUserId);
+  }
+
   const token = crypto.randomBytes(24).toString('hex');
   db.tokens[token] = user.id;
   saveDB(db);
