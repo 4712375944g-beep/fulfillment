@@ -65,6 +65,19 @@ function initDB() {
   // Счётчики
   if (!db.nextId) db.nextId = 1;
   if (!db.nextUserId) db.nextUserId = 1;
+
+  // Всегда создаём тестового партнёра для Дениса
+  if (!db.users.find(u => u.login === 'denis@test.com')) {
+    db.users.push({
+      id: String(db.nextUserId++), login: 'denis@test.com', password: 'test1234',
+      role: 'partner', city: 'Москва', zone: 'Север', company: 'Денис',
+      contact: 'Денис', phone: '+79000000000',
+      methods: 'FBO,FBS', marketplaces: 'WB,Ozon',
+      status: 'approved', created_at: new Date().toISOString(),
+    });
+    saveDB(db);
+    console.log('✅ Партнёр denis@test.com создан');
+  }
 }
 initDB();
 
