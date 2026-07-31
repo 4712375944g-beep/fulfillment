@@ -348,6 +348,18 @@ app.post('/api/order', (req, res) => {
   });
 
   res.json({ ok: true, id: order.id });
+
+  // Рассылаем уведомления партнёрам по городу
+  const cityPartners = db.users.filter(u =>
+    u.role === 'partner' && u.status === 'approved' &&
+    u.city === cityInfo.name && u.chat_id
+  );
+  cityPartners.forEach(p => {
+    tg('sendMessage', {
+      chat_id: p.chat_id, parse_mode: 'HTML',
+      text: `🔔 <b>Новая заявка в ${esc(cityInfo.name)}</b>\n\n👤 ${esc(order.name)}\n📞 ${esc(order.phone)}\n🔗 ${esc(order.link)}\n📦 ${order.method || 'FBO'}`,
+    });
+  });
 });
 
 // ====== Admin: заявки ======
@@ -566,6 +578,7 @@ app.delete('/api/routes/:id', auth, (req, res) => {
 
 // ====== Telegram Webhook ======
 const pendingCustomDate = {};
+const pendingBind = {}; // ожидание email для привязки партнёра
 
 app.post('/telegram-webhook', (req, res) => {
   // Callback Query
@@ -854,6 +867,33 @@ function handleMessage(m) {
       tg('sendMessage', { chat_id: chatId, text: '⚠️ Неверный формат. Введите дату как ГГГГ-ММ-ДД (например: 2026-10-29)' });
     }
     delete pendingCustomDate[chatId];
+    return;
+  }
+
+  // Привязка партнёра: ждём email после /bind
+  if (pendingBind[chatId]) {
+    delete pendingBind[chatId];
+    var emailMatch = text.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/);
+    if (emailMatch) {
+      var db = loadDB();
+      var partner = db.users.find(function(u) { return u.role === 'partner' && u.login === emailMatch[0]; });
+      if (partner) {
+        partner.chat_id = String(chatId);
+        saveDB(db);
+        tg('sendMessage', { chat_id: chatId, parse_mode: 'HTML', text: '✅ <b>Готово!</b> Теперь вы будете получать уведомления о новых заявках в вашем городе.' });
+      } else {
+        tg('sendMessage', { chat_id: chatId, text: '⚠️ Партнёр с таким email не найден. Убедитесь что вы зарегистрированы и вводите тот же email что при регистрации.' });
+      }
+    } else {
+      tg('sendMessage', { chat_id: chatId, text: '⚠️ Неверный формат email. Попробуйте ещё раз: /bind' });
+    }
+    return;
+  }
+
+  // /bind — привязать Telegram к аккаунту партнёра
+  if (text === '/bind' || text === '/bind@Sell_full_bot') {
+    pendingBind[chatId] = true;
+    tg('sendMessage', { chat_id: chatId, parse_mode: 'HTML', text: '📧 <b>Введите ваш email</b> (тот что использовали при регистрации).\n\nЭто привяжет Telegram к вашему аккаунту, и вы будете получать уведомления о новых заявках в вашем городе.' });
     return;
   }
 
