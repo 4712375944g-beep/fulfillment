@@ -835,10 +835,22 @@ function handleCallbackQuery(cb) {
       user.status = 'approved';
       user.expires_at = d.toISOString().slice(0, 10);
       saveDB(db);
-      tg('editMessageText', {
-        chat_id: chatId, message_id: msgId, parse_mode: 'HTML',
-        text: (msg.text || '') + '\n\n✅ <b>Доступ выдан!</b>\n📅 До: ' + user.expires_at,
-      });
+      var host = process.env.RAILWAY_PUBLIC_DOMAIN || 'fulfillment-production-26aa.up.railway.app';
+      var approvalText = (msg.text || '') + '\n\n✅ <b>Доступ выдан!</b>\n📅 До: ' + user.expires_at +
+        '\n\n🔑 <b>Данные для входа:</b>\nЛогин: <code>' + esc(user.login) + '</code>\nПароль: <code>' + esc(user.password) + '</code>' +
+        '\n\n🔗 Кабинет: ' + host + '/partner' +
+        '\n\n📋 <i>Передайте партнёру логин/пароль. Попросите его написать /start в @Sell_full_bot для получения уведомлений о заявках.</i>';
+      tg('editMessageText', { chat_id: chatId, message_id: msgId, parse_mode: 'HTML', text: approvalText });
+      // Если у партнёра есть chat_id — отправляем ему приветствие
+      if (user.chat_id) {
+        tg('sendMessage', { chat_id: user.chat_id, parse_mode: 'HTML', text:
+          '🎉 <b>Регистрация подтверждена!</b>\n\n' +
+          '🔑 <b>Логин:</b> <code>' + esc(user.login) + '</code>\n' +
+          '🔒 <b>Пароль:</b> <code>' + esc(user.password) + '</code>\n\n' +
+          '🔗 Кабинет партнёра: ' + host + '/partner\n\n' +
+          '📋 Здесь вы будете видеть заявки клиентов и управлять маршрутами. Уведомления о новых заявках будут приходить сюда же.'
+        });
+      }
     }
     delete pendingCustomDate[chatId];
   }
