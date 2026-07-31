@@ -5,21 +5,127 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Панель фулфилмента</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Стили вкладок */
+    .tabs { display:flex; gap:8px; margin-bottom:20px; }
+    .tab-btn { padding:10px 20px; border:none; border-radius:8px; cursor:pointer; font-size:14px; background:#2a2a3e; color:#999; transition:all 0.2s; }
+    .tab-btn.active { background:#4da3ff; color:#fff; }
+    .tab-btn:hover:not(.active) { background:#33334d; }
+
+    /* Форма маршрута */
+    .route-form { background:#1e1e2e; border-radius:12px; padding:20px; margin-bottom:20px; }
+    .route-form h3 { margin:0 0 16px 0; font-size:16px; }
+    .form-row { display:flex; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
+    .form-row label { flex:1; min-width:140px; }
+    .form-row label span { display:block; font-size:12px; color:#999; margin-bottom:4px; }
+    .form-row input, .form-row select { width:100%; padding:10px 12px; border-radius:8px; border:1px solid #333; background:#16162a; color:#fff; font-size:14px; box-sizing:border-box; }
+    .checkbox-group { display:flex; gap:16px; flex-wrap:wrap; }
+    .checkbox-group label { display:flex; align-items:center; gap:6px; cursor:pointer; font-size:14px; color:#ccc; }
+    .checkbox-group input[type="checkbox"] { width:18px; height:18px; accent-color:#4da3ff; }
+    .route-form button[type="submit"] { width:100%; padding:12px; border:none; border-radius:8px; background:#4da3ff; color:#fff; font-size:15px; cursor:pointer; font-weight:600; margin-top:8px; }
+    .route-form button[type="submit"]:disabled { opacity:0.4; cursor:not-allowed; }
+    .form-error { color:#ff6b6b; font-size:13px; margin-top:8px; display:none; }
+    .form-success { color:#4de44d; font-size:13px; margin-top:8px; display:none; }
+
+    /* Карточки маршрутов */
+    .route-card { background:#1e1e2e; border-radius:12px; padding:16px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+    .route-card .route-info { flex:1; min-width:200px; }
+    .route-card .route-title { font-size:15px; font-weight:600; margin:0 0 6px; }
+    .route-card .route-meta { font-size:13px; color:#999; line-height:1.6; }
+    .route-card .route-meta .mkt-badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; margin-left:4px; font-weight:600; }
+    .mkt-wb { background:#8b6fe6; color:#fff; }
+    .mkt-ozon { background:#005bff; color:#fff; }
+    .mkt-yandex { background:#fce000; color:#000; }
+    .mkt-other { background:#555; color:#fff; }
+    .route-card .route-contact { text-align:right; min-width:140px; }
+    .route-card .route-contact a { display:block; color:#4da3ff; text-decoration:none; font-size:13px; margin-bottom:2px; }
+    .route-card .route-contact .phone { color:#aaa; font-size:13px; }
+    .route-card .route-delete { background:none; border:1px solid #c44; color:#c44; border-radius:6px; padding:4px 10px; cursor:pointer; font-size:12px; margin-top:6px; }
+    .route-card .route-cargo { font-weight:600; color:#aaa; }
+    .no-routes { text-align:center; color:#666; padding:30px; font-size:14px; }
+  </style>
 </head>
 <body class="partner-body">
   <div class="partner">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div><h1 id="partner-title" style="margin:0">📦 Загрузка...</h1>
       <p style="color:#999;margin:4px 0 0" id="partner-subtitle"></p></div>
       <button onclick="logout()" style="background:#c44;border:none;color:#fff;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px">🚪 Выйти</button>
     </div>
 
-    <div style="margin-bottom:16px"><span style="color:#999;font-size:13px" id="order-count"></span></div>
+    <!-- Вкладки -->
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-orders-btn" onclick="switchTab('orders')">📦 Заявки</button>
+      <button class="tab-btn" id="tab-routes-btn" onclick="switchTab('routes')">🚚 Маршруты</button>
+    </div>
 
-    <table>
-      <thead><tr><th>ID</th><th>Имя</th><th>Телефон</th><th>Ссылка</th><th>Статус</th><th>Дата</th></tr></thead>
-      <tbody id="orders-table"></tbody>
-    </table>
+    <!-- Заявки -->
+    <div id="tab-orders">
+      <div style="margin-bottom:16px"><span style="color:#999;font-size:13px" id="order-count"></span></div>
+      <table>
+        <thead><tr><th>ID</th><th>Имя</th><th>Телефон</th><th>Ссылка</th><th>Статус</th><th>Дата</th></tr></thead>
+        <tbody id="orders-table"></tbody>
+      </table>
+    </div>
+
+    <!-- Маршруты -->
+    <div id="tab-routes" style="display:none">
+      <!-- Форма создания -->
+      <div class="route-form">
+        <h3>🚚 Опубликовать маршрут</h3>
+        <div class="form-row">
+          <label><span>Откуда (город)</span>
+            <select id="rt-from" onchange="onRouteFromChange()">
+              <option value="">— Выберите город —</option>
+            </select>
+          </label>
+          <label><span>Куда (город)</span>
+            <select id="rt-to" onchange="onRouteToChange()">
+              <option value="">— Выберите город —</option>
+            </select>
+          </label>
+          <label><span>Дата поездки</span>
+            <input type="date" id="rt-date" min="">
+          </label>
+        </div>
+
+        <div class="form-row">
+          <label><span>Маркетплейсы (куда везёте)</span>
+            <div class="checkbox-group" id="rt-mkt" style="padding-top:6px">
+              <label><input type="checkbox" value="WB"> 🟣 WB</label>
+              <label><input type="checkbox" value="Ozon"> 🔵 Ozon</label>
+              <label><input type="checkbox" value="Yandex"> 🟡 Яндекс</label>
+              <label><input type="checkbox" value="Другое"> ⚪ Другое</label>
+            </div>
+          </label>
+        </div>
+
+        <div class="form-row">
+          <label><span>Поддоны, шт</span>
+            <input type="number" id="rt-pallets" min="0" value="0" placeholder="0">
+          </label>
+          <label><span>Короба, шт</span>
+            <input type="number" id="rt-boxes" min="0" value="0" placeholder="0">
+          </label>
+        </div>
+
+        <div class="form-row">
+          <label><span>Ник в Telegram</span>
+            <input type="text" id="rt-tg" placeholder="@username">
+          </label>
+          <label><span>Телефон</span>
+            <input type="tel" id="rt-phone" placeholder="+7 900 000-00-00">
+          </label>
+        </div>
+
+        <button type="submit" onclick="createRoute()">📤 Опубликовать</button>
+        <div class="form-error" id="rt-error"></div>
+        <div class="form-success" id="rt-success"></div>
+      </div>
+
+      <!-- Список маршрутов -->
+      <div id="routes-list"></div>
+    </div>
   </div>
   <script src="partner.js"></script>
 </body>

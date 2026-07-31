@@ -417,31 +417,51 @@ app.patch('/api/partner/orders/:id', auth, (req, res) => {
   res.json({ ok: true });
 });
 
-// ====== Маршруты ======
+// ====== Маршруты (попутные перевозки) ======
+// GET — все маршруты, у которых дата ещё не прошла
 app.get('/api/routes', auth, (req, res) => {
   const db = loadDB();
   if (!db.routes) db.routes = [];
-  const routes = [...db.routes].sort((a, b) => a.date.localeCompare(b.date));
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  // Показываем только маршруты с датой >= сегодня
+  const routes = [...db.routes]
+    .filter(r => r.date >= today)
+    .sort((a, b) => a.date.localeCompare(b.date));
   res.json({ routes });
 });
 
+// POST — создать маршрут
 app.post('/api/routes', auth, (req, res) => {
   if (req.user.role !== 'partner') return res.status(403).json({ error: 'Только для партнёров' });
-  const { type, from, to, date, volume, note } = req.body;
-  if (!type || !from || !to || !date) {
-    return res.status(400).json({ error: 'Тип, откуда, куда и дата обязательны' });
+  const { from_city, to_city, date, marketplaces, pallets, boxes, contact_tg, contact_phone } = req.body;
+
+  if (!from_city || !to_city || !date) {
+    return res.status(400).json({ error: 'Город отправления, город назначения и дата обязательны' });
   }
+
+  // Хотя бы один тип груза должен быть указан
+  const palletsNum = parseInt(pallets) || 0;
+  const boxesNum = parseInt(boxes) || 0;
+  if (palletsNum + boxesNum === 0) {
+    return res.status(400).json({ error: 'Укажите количество поддонов или коробов' });
+  }
+
   const db = loadDB();
   if (!db.routes) db.routes = [];
   if (!db.nextRouteId) db.nextRouteId = 1;
 
   const route = {
-    id: db.nextRouteId++, type, from, to, date,
-    volume: volume || '', note: note || '',
+    id: db.nextRouteId++,
+    from_city,          // город отправления
+    to_city,            // город назначения
+    date,               // дата поездки
+    marketplaces: Array.isArray(marketplaces) ? marketplaces : (marketplaces ? [marketplaces] : []),
+    pallets: palletsNum,  // кол-во поддонов
+    boxes: boxesNum,       // кол-во коробов
+    contact_tg: (contact_tg || '').replace('@', '').trim(),
+    contact_phone: (contact_phone || '').trim(),
     partner_id: req.user.id,
     partner_name: req.user.company || req.user.login,
-    partner_contact: req.user.contact || '',
-    partner_phone: req.user.phone || '',
     created_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
   };
   db.routes.push(route);
@@ -449,6 +469,7 @@ app.post('/api/routes', auth, (req, res) => {
   res.json({ ok: true, route });
 });
 
+// DELETE — удалить свой маршрут (или админ может любой)
 app.delete('/api/routes/:id', auth, (req, res) => {
   const db = loadDB();
   if (!db.routes) db.routes = [];

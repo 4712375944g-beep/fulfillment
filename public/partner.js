@@ -8,10 +8,23 @@ if (!TOKEN || ROLE !== 'partner') {
 }
 
 const AUTH_HEADER = { 'Authorization': 'Bearer ' + TOKEN };
-
 const statusLabels = { new: 'Новая', accepted: 'Принято', in_progress: 'В работе', done: 'Готово' };
 
-async function init() {
+// ====== Переключение вкладок ======
+let currentTab = 'orders';
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tab-orders').style.display = tab === 'orders' ? '' : 'none';
+  document.getElementById('tab-routes').style.display = tab === 'routes' ? '' : 'none';
+  document.getElementById('tab-orders-btn').className = 'tab-btn' + (tab === 'orders' ? ' active' : '');
+  document.getElementById('tab-routes-btn').className = 'tab-btn' + (tab === 'routes' ? ' active' : '');
+
+  if (tab === 'routes') loadRoutes();
+}
+
+// ====== Вкладка: Заявки ======
+async function loadOrders() {
   try {
     const resp = await fetch('/api/partner/orders', { headers: AUTH_HEADER });
     if (!resp.ok) {
@@ -66,6 +79,206 @@ async function updateStatus(orderId, status) {
   }
 }
 
+// ====== Вкладка: Маршруты ======
+let allCities = [];
+
+// Загрузка списка городов для дропдаунов
+async function loadCities() {
+  if (allCities.length) return;
+  try {
+    const resp = await fetch('/api/cities');
+    if (resp.ok) allCities = await resp.json();
+  } catch (e) {
+    console.error('Ошибка загрузки городов:', e);
+  }
+  // Заполняем оба дропдауна
+  fillCitySelect(document.getElementById('rt-from'));
+  fillCitySelect(document.getElementById('rt-to'));
+
+  // Устанавливаем min дату — сегодня
+  const dateInput = document.getElementById('rt-date');
+  if (dateInput) dateInput.min = new Date().toISOString().slice(0, 10);
+}
+
+function fillCitySelect(select) {
+  const current = select.value;
+  select.innerHTML = '<option value="">— Выберите город —</option>';
+  allCities.forEach(function(c) {
+    const flag = countryFlag(c.country);
+    select.innerHTML += `<option value="${esc(c.name)}">${flag} ${esc(c.name)}${c.country ? ' (' + esc(c.country) + ')' : ''}</option>`;
+  });
+  if (current) select.value = current;
+}
+
+function countryFlag(country) {
+  const map = { 'Россия': '🇷🇺', 'Китай': '🇨🇳', 'Казахстан': '🇰🇿', 'Киргизия': '🇰🇬', 'Армения': '🇦🇲', 'Узбекистан': '🇺🇿' };
+  return map[country] || '🏳️';
+}
+
+function onRouteFromChange() {}
+function onRouteToChange() {}
+
+// Создание маршрута
+async function createRoute() {
+  const from_city = document.getElementById('rt-from').value;
+  const to_city = document.getElementById('rt-to').value;
+  const date = document.getElementById('rt-date').value;
+  const pallets = parseInt(document.getElementById('rt-pallets').value) || 0;
+  const boxes = parseInt(document.getElementById('rt-boxes').value) || 0;
+  const contact_tg = document.getElementById('rt-tg').value.trim();
+  const contact_phone = document.getElementById('rt-phone').value.trim();
+
+  // Сбор выбранных маркетплейсов
+  const mktChecks = document.querySelectorAll('#rt-mkt input[type="checkbox"]:checked');
+  const marketplaces = Array.from(mktChecks).map(function(cb) { return cb.value; });
+
+  // Скрыть предыдущие сообщения
+  document.getElementById('rt-error').style.display = 'none';
+  document.getElementById('rt-success').style.display = 'none';
+
+  // Валидация
+  if (!from_city) return showRtError('Выберите город отправления');
+  if (!to_city) return showRtError('Выберите город назначения');
+  if (!date) return showRtError('Выберите дату поездки');
+  if (pallets + boxes === 0) return showRtError('Укажите количество поддонов или коробов');
+
+  try {
+    const resp = await fetch('/api/routes', {
+      method: 'POST',
+      headers: { ...AUTH_HEADER, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from_city, to_city, date, marketplaces, pallets, boxes, contact_tg, contact_phone }),
+    });
+
+    const data = await resp.json();
+    if (!resp.ok) {
+      showRtError(data.error || 'Ошибка создания маршрута');
+      return;
+    }
+
+    // Успех — очищаем форму
+    document.getElementById('rt-from').value = '';
+    document.getElementById('rt-to').value = '';
+    document.getElementById('rt-date').value = '';
+    document.getElementById('rt-pallets').value = '0';
+    document.getElementById('rt-boxes').value = '0';
+    document.getElementById('rt-tg').value = '';
+    document.getElementById('rt-phone').value = '';
+    mktChecks.forEach(function(cb) { cb.checked = false; });
+
+    document.getElementById('rt-success').textContent = '✅ Маршрут опубликован!';
+    document.getElementById('rt-success').style.display = 'block';
+
+    loadRoutes(); // обновить список
+  } catch (e) {
+    showRtError('Ошибка соединения');
+    console.error(e);
+  }
+}
+
+function showRtError(msg) {
+  const el = document.getElementById('rt-error');
+  el.textContent = '⚠️ ' + msg;
+  el.style.display = 'block';
+}
+
+// Загрузка и отображение маршрутов
+async function loadRoutes() {
+  const list = document.getElementById('routes-list');
+  list.innerHTML = '<div style="text-align:center;color:#666;padding:20px">Загрузка...</div>';
+
+  // Параллельно грузим города (если ещё нет) и маршруты
+  await loadCities();
+
+  try {
+    const resp = await fetch('/api/routes', { headers: AUTH_HEADER });
+    if (!resp.ok) throw new Error('Ошибка загрузки');
+
+    const { routes } = await resp.json();
+    if (!routes || routes.length === 0) {
+      list.innerHTML = '<div class="no-routes">🚛 Маршрутов пока нет. Опубликуйте первый!</div>';
+      return;
+    }
+
+    list.innerHTML = routes.map(function(r) {
+      // Формируем строку груза
+      var cargoParts = [];
+      if (r.pallets && r.pallets > 0) cargoParts.push(r.pallets + ' подд.');
+      if (r.boxes && r.boxes > 0) cargoParts.push(r.boxes + ' кор.');
+
+      // Формируем бейджи маркетплейсов
+      var mktBadges = '';
+      if (r.marketplaces && r.marketplaces.length) {
+        mktBadges = r.marketplaces.map(function(m) {
+          var cls = '';
+          var emoji = '';
+          if (m === 'WB') { cls = 'mkt-wb'; emoji = '🟣'; }
+          else if (m === 'Ozon') { cls = 'mkt-ozon'; emoji = '🔵'; }
+          else if (m === 'Yandex') { cls = 'mkt-yandex'; emoji = '🟡'; }
+          else { cls = 'mkt-other'; emoji = '⚪'; }
+          return `<span class="mkt-badge ${cls}">${emoji} ${esc(m)}</span>`;
+        }).join(' ');
+      }
+
+      // Контакт
+      var contactHtml = '';
+      if (r.contact_tg) {
+        contactHtml += `<a href="https://t.me/${esc(r.contact_tg)}" target="_blank">📩 @${esc(r.contact_tg)}</a>`;
+      }
+      if (r.contact_phone) {
+        contactHtml += `<span class="phone">📞 ${esc(r.contact_phone)}</span>`;
+      }
+
+      // Дата в читаемом виде
+      var dateDisplay = formatDate(r.date);
+
+      return `
+      <div class="route-card">
+        <div class="route-info">
+          <div class="route-title">📅 ${esc(dateDisplay)} — ${esc(r.from_city)} → ${esc(r.to_city)} ${mktBadges}</div>
+          <div class="route-meta">
+            <span class="route-cargo">📦 ${cargoParts.join(' + ') || 'нет данных'}</span>
+            &nbsp;·&nbsp; ${esc(r.partner_name)}
+          </div>
+        </div>
+        <div class="route-contact">
+          ${contactHtml}
+          <button class="route-delete" onclick="deleteRoute(${r.id})" title="Удалить маршрут">✕</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    console.error(e);
+    list.innerHTML = '<div style="text-align:center;color:#c44;padding:20px">❌ Не удалось загрузить маршруты</div>';
+  }
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  var parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  var months = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+  var m = parseInt(parts[1]) - 1;
+  return parts[2] + ' ' + (months[m] || parts[1]) + ' ' + parts[0];
+}
+
+// Удаление маршрута
+async function deleteRoute(id) {
+  if (!confirm('Удалить этот маршрут?')) return;
+  try {
+    const resp = await fetch('/api/routes/' + id, { method: 'DELETE', headers: AUTH_HEADER });
+    if (resp.ok) {
+      loadRoutes();
+    } else {
+      const data = await resp.json();
+      alert('Ошибка: ' + (data.error || 'не удалось удалить'));
+    }
+  } catch (e) {
+    console.error(e);
+    alert('Ошибка соединения');
+  }
+}
+
+// ====== Выход ======
 async function logout() {
   await fetch('/api/logout', { method: 'POST', headers: { ...AUTH_HEADER, 'Content-Type': 'application/json' }});
   localStorage.removeItem('ff_token');
@@ -74,7 +287,9 @@ async function logout() {
 }
 
 function esc(s) {
-  return s ? s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+  return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
 }
 
-init();
+// ====== Инициализация ======
+loadOrders();
+loadCities(); // кэшируем список городов
