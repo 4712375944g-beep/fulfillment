@@ -118,14 +118,24 @@ function countryFlag(country) {
 function onRouteFromChange() {}
 function onRouteToChange() {}
 
-// Подсветка выбранного направления
+// Подсветка выбранного направления и смена названий полей
 function onDirectionChange(radio) {
   document.getElementById('lbl-vezet').style.borderColor = 'transparent';
   document.getElementById('lbl-ischet').style.borderColor = 'transparent';
+  
+  var palletsLabel = document.querySelector('label[for="rt-pallets"] span') || document.getElementById('rt-pallets').previousElementSibling;
+  var boxesLabel = document.querySelector('label[for="rt-boxes"] span') || document.getElementById('rt-boxes').previousElementSibling;
+  
   if (radio.value === 'везет') {
     document.getElementById('lbl-vezet').style.borderColor = '#4de44d';
+    // Меняем названия на "вместимость"
+    document.getElementById('lbl-pallets').textContent = 'Могу взять поддонов, шт';
+    document.getElementById('lbl-boxes').textContent = 'Могу взять коробок 60×40×40, шт';
   } else {
     document.getElementById('lbl-ischet').style.borderColor = '#ff6b6b';
+    // Меняем названия на "нужно отвезти"
+    document.getElementById('lbl-pallets').textContent = 'Нужно отвезти поддонов, шт';
+    document.getElementById('lbl-boxes').textContent = 'Нужно отвезти коробок 60×40×40, шт';
   }
 }
 
@@ -216,10 +226,21 @@ async function loadRoutes() {
     }
 
     list.innerHTML = routes.map(function(r) {
-      // Формируем строку груза
-      var cargoParts = [];
-      if (r.pallets && r.pallets > 0) cargoParts.push(r.pallets + ' подд.');
-      if (r.boxes && r.boxes > 0) cargoParts.push(r.boxes + ' кор.');
+      // Формируем строку груза в зависимости от направления
+      var cargoHtml = '';
+      if (r.direction === 'везет') {
+        // Водитель — показывает вместимость
+        var capParts = [];
+        if (r.pallets && r.pallets > 0) capParts.push('поддонов: ' + r.pallets);
+        if (r.boxes && r.boxes > 0) capParts.push('коробок 60×40×40: ' + r.boxes);
+        cargoHtml = '🚛 <b>Мест:</b> ' + (capParts.length ? capParts.join(', ') : 'не указано');
+      } else {
+        // Ищет перевозку — показывает что везёт
+        var cargoParts = [];
+        if (r.pallets && r.pallets > 0) cargoParts.push(r.pallets + ' подд.');
+        if (r.boxes && r.boxes > 0) cargoParts.push(r.boxes + ' кор. 60×40×40');
+        cargoHtml = '📦 <b>Груз:</b> ' + (cargoParts.length ? cargoParts.join(' + ') : 'не указан');
+      }
 
       // Формируем бейджи маркетплейсов
       var mktBadges = '';
@@ -262,7 +283,7 @@ async function loadRoutes() {
             ${dirBadge}📅 ${esc(dateDisplay)} — ${esc(r.from_city)} → ${esc(r.to_city)} ${mktBadges}
           </div>
           <div class="route-meta">
-            <span class="route-cargo">📦 ${cargoParts.join(' + ') || 'нет данных'}</span>
+            <span class="route-cargo">${cargoHtml}</span>
             &nbsp;·&nbsp; ${esc(r.partner_name)}
           </div>
         </div>

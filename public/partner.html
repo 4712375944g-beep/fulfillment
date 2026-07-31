@@ -78,11 +78,11 @@
         <div class="form-row">
           <label style="flex:1 1 100%"><span>Я</span>
             <div class="checkbox-group" id="rt-direction" style="padding-top:6px">
+              <label style="background:#2e1a1a;border-radius:8px;padding:10px 14px;cursor:pointer;border:2px solid transparent" id="lbl-ischet">
+                <input type="radio" name="direction" value="ищет" checked onchange="onDirectionChange(this)"> 📦 <b>Ищу перевозку</b> — нужно отвезти мой груз
+              </label>
               <label style="background:#1a2e1a;border-radius:8px;padding:10px 14px;cursor:pointer;border:2px solid transparent" id="lbl-vezet">
                 <input type="radio" name="direction" value="везет" onchange="onDirectionChange(this)"> 🚛 <b>Везу</b> — есть машина, могу взять попутный груз
-              </label>
-              <label style="background:#2e1a1a;border-radius:8px;padding:10px 14px;cursor:pointer;border:2px solid transparent" id="lbl-ischet">
-                <input type="radio" name="direction" value="ищет" onchange="onDirectionChange(this)"> 📦 <b>Ищу перевозку</b> — нужно отвезти мой груз
               </label>
             </div>
           </label>
@@ -116,10 +116,10 @@
         </div>
 
         <div class="form-row">
-          <label><span>Поддоны, шт</span>
+          <label><span id="lbl-pallets">Нужно отвезти поддонов, шт</span>
             <input type="number" id="rt-pallets" min="0" value="0" placeholder="0">
           </label>
-          <label><span>Короба, шт</span>
+          <label><span id="lbl-boxes">Нужно отвезти коробок 60×40×40, шт</span>
             <input type="number" id="rt-boxes" min="0" value="0" placeholder="0">
           </label>
         </div>
