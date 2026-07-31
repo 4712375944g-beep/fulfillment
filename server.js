@@ -433,10 +433,13 @@ app.get('/api/routes', auth, (req, res) => {
 // POST — создать маршрут
 app.post('/api/routes', auth, (req, res) => {
   if (req.user.role !== 'partner') return res.status(403).json({ error: 'Только для партнёров' });
-  const { from_city, to_city, date, marketplaces, pallets, boxes, contact_tg, contact_phone } = req.body;
+  const { from_city, to_city, date, marketplaces, pallets, boxes, contact_tg, contact_phone, direction } = req.body;
 
   if (!from_city || !to_city || !date) {
     return res.status(400).json({ error: 'Город отправления, город назначения и дата обязательны' });
+  }
+  if (!direction || !['везет','ищет'].includes(direction)) {
+    return res.status(400).json({ error: 'Выберите: везу или ищу перевозку' });
   }
 
   // Хотя бы один тип груза должен быть указан
@@ -458,6 +461,7 @@ app.post('/api/routes', auth, (req, res) => {
     marketplaces: Array.isArray(marketplaces) ? marketplaces : (marketplaces ? [marketplaces] : []),
     pallets: palletsNum,  // кол-во поддонов
     boxes: boxesNum,       // кол-во коробов
+    direction,           // "везет" — сам на машине, "ищет" — хочет отправить груз
     contact_tg: (contact_tg || '').replace('@', '').trim(),
     contact_phone: (contact_phone || '').trim(),
     partner_id: req.user.id,

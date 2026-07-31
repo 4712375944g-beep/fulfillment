@@ -118,6 +118,17 @@ function countryFlag(country) {
 function onRouteFromChange() {}
 function onRouteToChange() {}
 
+// Подсветка выбранного направления
+function onDirectionChange(radio) {
+  document.getElementById('lbl-vezet').style.borderColor = 'transparent';
+  document.getElementById('lbl-ischet').style.borderColor = 'transparent';
+  if (radio.value === 'везет') {
+    document.getElementById('lbl-vezet').style.borderColor = '#4de44d';
+  } else {
+    document.getElementById('lbl-ischet').style.borderColor = '#ff6b6b';
+  }
+}
+
 // Создание маршрута
 async function createRoute() {
   const from_city = document.getElementById('rt-from').value;
@@ -127,6 +138,10 @@ async function createRoute() {
   const boxes = parseInt(document.getElementById('rt-boxes').value) || 0;
   const contact_tg = document.getElementById('rt-tg').value.trim();
   const contact_phone = document.getElementById('rt-phone').value.trim();
+
+  // Направление
+  const dirRadio = document.querySelector('input[name="direction"]:checked');
+  const direction = dirRadio ? dirRadio.value : '';
 
   // Сбор выбранных маркетплейсов
   const mktChecks = document.querySelectorAll('#rt-mkt input[type="checkbox"]:checked');
@@ -139,6 +154,7 @@ async function createRoute() {
   // Валидация
   if (!from_city) return showRtError('Выберите город отправления');
   if (!to_city) return showRtError('Выберите город назначения');
+  if (!direction) return showRtError('Выберите: везу или ищу перевозку');
   if (!date) return showRtError('Выберите дату поездки');
   if (pallets + boxes === 0) return showRtError('Укажите количество поддонов или коробов');
 
@@ -146,7 +162,7 @@ async function createRoute() {
     const resp = await fetch('/api/routes', {
       method: 'POST',
       headers: { ...AUTH_HEADER, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from_city, to_city, date, marketplaces, pallets, boxes, contact_tg, contact_phone }),
+      body: JSON.stringify({ from_city, to_city, date, marketplaces, pallets, boxes, contact_tg, contact_phone, direction }),
     });
 
     const data = await resp.json();
@@ -231,10 +247,20 @@ async function loadRoutes() {
       // Дата в читаемом виде
       var dateDisplay = formatDate(r.date);
 
+      // Направление: везет или ищет
+      var dirBadge = '';
+      if (r.direction === 'везет') {
+        dirBadge = '<span style="display:inline-block;padding:3px 8px;border-radius:4px;font-size:12px;background:#1a3a1a;color:#4de44d;margin-right:6px">🚛 Везу</span>';
+      } else if (r.direction === 'ищет') {
+        dirBadge = '<span style="display:inline-block;padding:3px 8px;border-radius:4px;font-size:12px;background:#3a1a1a;color:#ff6b6b;margin-right:6px">📦 Ищу перевозку</span>';
+      }
+
       return `
       <div class="route-card">
         <div class="route-info">
-          <div class="route-title">📅 ${esc(dateDisplay)} — ${esc(r.from_city)} → ${esc(r.to_city)} ${mktBadges}</div>
+          <div class="route-title">
+            ${dirBadge}📅 ${esc(dateDisplay)} — ${esc(r.from_city)} → ${esc(r.to_city)} ${mktBadges}
+          </div>
           <div class="route-meta">
             <span class="route-cargo">📦 ${cargoParts.join(' + ') || 'нет данных'}</span>
             &nbsp;·&nbsp; ${esc(r.partner_name)}
