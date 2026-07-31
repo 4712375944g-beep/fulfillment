@@ -241,6 +241,46 @@
     .mkt-badge-ozon { background:rgba(0,91,255,0.2); color:#6ba3ff; }
     .mkt-badge-yandex { background:rgba(252,224,0,0.15); color:#fce000; }
     .mkt-badge-other { background:rgba(255,255,255,0.06); color:#aaa; }
+
+    /* ==== ФОРМА СОЗДАНИЯ МАРШРУТА ==== */
+    .route-form {
+      background:var(--surface); border-radius:var(--radius); padding:18px;
+      box-shadow:var(--shadow);
+    }
+    .direction-toggle {
+      display:flex; background:var(--surface2); border-radius:10px;
+      padding:3px; margin-bottom:14px;
+    }
+    .dir-option {
+      flex:1; padding:8px 6px; text-align:center; border-radius:8px;
+      cursor:pointer; font-size:12px; font-weight:500; color:var(--text2);
+      transition:all .2s; border:none; background:transparent;
+    }
+    .dir-option.active-seek { background:rgba(255,149,0,0.15); color:var(--orange); font-weight:600; }
+    .dir-option.active-drive { background:rgba(52,199,89,0.15); color:var(--green); font-weight:600; }
+    .form-row { display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+    .field { flex:1; min-width:100px; }
+    .field label { display:block; font-size:11px; color:var(--text2); margin-bottom:3px; text-transform:uppercase; letter-spacing:0.3px; }
+    .field input, .field select {
+      width:100%; padding:9px 10px; border-radius:10px; border:1px solid var(--border);
+      background:var(--surface2); color:var(--text); font-size:13px; outline:none;
+    }
+    .field-arrow { display:flex; align-items:center; padding:12px 2px 0; color:var(--text2); font-size:16px; }
+    .cargo-row { display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+    .cargo-field { flex:1; min-width:120px; }
+    .cargo-field label { display:block; font-size:12px; color:var(--text2); margin-bottom:3px; }
+    .stepper {
+      display:flex; align-items:center; border:1px solid var(--border);
+      border-radius:10px; background:var(--surface2); overflow:hidden;
+    }
+    .stepper button {
+      width:36px; height:36px; border:none; background:transparent;
+      color:var(--blue); font-size:18px; font-weight:600; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .stepper input {
+      width:44px; text-align:center; border:none; background:transparent;
+      color:var(--text); font-size:15px; font-weight:600; outline:none;
   </style>
 </head>
 <body>
@@ -394,7 +434,72 @@
 
   <!-- Маршруты -->
   <div id="partner-routes" class="hidden">
-    <div class="admin-tabs" id="route-filter" style="margin-bottom:14px">
+    <!-- Форма создания (BlaBlaCar-style) -->
+    <div class="route-form" style="margin-bottom:16px">
+      <h3 style="font-size:15px;margin-bottom:12px">🚚 Новый маршрут</h3>
+
+      <div class="direction-toggle">
+        <button class="dir-option active-seek" id="dir-seek-mini" onclick="setDirMini('ищет')">
+          <span style="font-size:16px">📦</span> Ищу перевозку
+        </button>
+        <button class="dir-option" id="dir-drive-mini" onclick="setDirMini('везет')">
+          <span style="font-size:16px">🚛</span> Везу
+        </button>
+      </div>
+
+      <div class="form-row">
+        <div class="field" style="flex:1;min-width:100px">
+          <label>Откуда</label>
+          <select id="rt-from-mini"><option value="">Город</option></select>
+        </div>
+        <div class="field-arrow">→</div>
+        <div class="field" style="flex:1;min-width:100px">
+          <label>Куда</label>
+          <select id="rt-to-mini"><option value="">Город</option></select>
+        </div>
+        <div class="field" style="max-width:140px">
+          <label>Дата</label>
+          <input type="date" id="rt-date-mini" min="">
+        </div>
+      </div>
+
+      <div class="mkt-row" id="rt-mkt-mini">
+        <span class="mkt-chip" onclick="toggleMktMini(this,'WB')">🟣 WB</span>
+        <span class="mkt-chip" onclick="toggleMktMini(this,'Ozon')">🔵 Ozon</span>
+        <span class="mkt-chip" onclick="toggleMktMini(this,'Yandex')">🟡 Яндекс</span>
+        <span class="mkt-chip" onclick="toggleMktMini(this,'Другое')">⚪ Другое</span>
+      </div>
+
+      <div class="cargo-row">
+        <div class="cargo-field">
+          <label id="lbl-pallets-mini">Нужно отвезти поддонов</label>
+          <div class="stepper">
+            <button onclick="stepCargoMini('rt-pallets-mini',-1)">−</button>
+            <input type="number" id="rt-pallets-mini" min="0" value="0" readonly>
+            <button onclick="stepCargoMini('rt-pallets-mini',1)">+</button>
+          </div>
+        </div>
+        <div class="cargo-field">
+          <label id="lbl-boxes-mini">Нужно отвезти коробок 60×40×40</label>
+          <div class="stepper">
+            <button onclick="stepCargoMini('rt-boxes-mini',-1)">−</button>
+            <input type="number" id="rt-boxes-mini" min="0" value="0" readonly>
+            <button onclick="stepCargoMini('rt-boxes-mini',1)">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="field"><label>Telegram</label><input type="text" id="rt-tg-mini" placeholder="@username"></div>
+        <div class="field"><label>Телефон</label><input type="tel" id="rt-phone-mini" placeholder="+7 900 000-00-00"></div>
+      </div>
+
+      <button class="btn" onclick="createRouteMini()" style="margin-top:4px">📤 Опубликовать</button>
+      <div class="status err hidden" id="rt-err-mini"></div>
+      <div class="status ok hidden" id="rt-ok-mini"></div>
+    </div>
+
+    <!-- Фильтр -->
       <button class="admin-tab on" onclick="filterRoutesMini('all', this)">Все</button>
       <button class="admin-tab" onclick="filterRoutesMini('ищет', this)">📦 Ищут</button>
       <button class="admin-tab" onclick="filterRoutesMini('везет', this)">🚛 Везут</button>

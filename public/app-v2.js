@@ -1118,6 +1118,8 @@
   // Маршруты (попутные перевозки) — Mini App ======
   var miniRouteFilter = 'all';
   var miniAllRoutes = [];
+  var miniDir = 'ищет';
+  var miniMarkets = [];
 
   window.switchPartnerTab = function(tab) {
     document.getElementById('ptab-orders').className = 'admin-tab' + (tab === 'orders' ? ' on' : '');
@@ -1186,7 +1188,7 @@
           if (m === 'WB') c = 'mkt-badge-wb';
           else if (m === 'Ozon') c = 'mkt-badge-ozon';
           else if (m === 'Yandex') c = 'mkt-badge-yandex';
-          return '<span class="mkt-badge ' + c + '">' + esc(r) + '</span>';
+          return '<span class="mkt-badge ' + c + '">' + esc(esc, m) + '</span>';
         }).join('');
       }
 
@@ -1212,6 +1214,97 @@
         '</div>' +
       '</div>';
     }).join('');
+  }
+
+  // ====== Создание маршрута из Mini App ======
+  window.setDirMini = function(dir) {
+    miniDir = dir;
+    document.getElementById('dir-seek-mini').className = 'dir-option' + (dir === 'ищет' ? ' active-seek' : '');
+    document.getElementById('dir-drive-mini').className = 'dir-option' + (dir === 'везет' ? ' active-drive' : '');
+    document.getElementById('lbl-pallets-mini').textContent = dir === 'ищет' ? 'Нужно отвезти поддонов' : 'Могу взять поддонов';
+    document.getElementById('lbl-boxes-mini').textContent = dir === 'ищет' ? 'Нужно отвезти коробок 60×40×40' : 'Могу взять коробок 60×40×40';
+  };
+
+  window.toggleMktMini = function(el, val) {
+    var idx = miniMarkets.indexOf(val);
+    if (idx >= 0) { miniMarkets.splice(idx, 1); el.className = 'mkt-chip'; }
+    else {
+      miniMarkets.push(val);
+      var c = 'mkt-chip sel-';
+      if (val === 'WB') c += 'wb';
+      else if (val === 'Ozon') c += 'ozon';
+      else if (val === 'Yandex') c += 'yandex';
+      else c += 'other';
+      el.className = c;
+    }
+  };
+
+  window.stepCargoMini = function(id, delta) {
+    var el = document.getElementById(id);
+    el.value = Math.max(0, (parseInt(el.value) || 0) + delta);
+  };
+
+  window.createRouteMini = async function() {
+    var from = document.getElementById('rt-from-mini').value;
+    var to = document.getElementById('rt-to-mini').value;
+    var date = document.getElementById('rt-date-mini').value;
+    var pallets = parseInt(document.getElementById('rt-pallets-mini').value) || 0;
+    var boxes = parseInt(document.getElementById('rt-boxes-mini').value) || 0;
+    var tg = document.getElementById('rt-tg-mini').value.trim();
+    var phone = document.getElementById('rt-phone-mini').value.trim();
+
+    var errEl = document.getElementById('rt-err-mini');
+    var okEl = document.getElementById('rt-ok-mini');
+    errEl.classList.add('hidden');
+    okEl.classList.add('hidden');
+
+    if (!from) { errEl.textContent = 'Выберите город отправления'; errEl.classList.remove('hidden'); return; }
+    if (!to) { errEl.textContent = 'Выберите город назначения'; errEl.classList.remove('hidden'); return; }
+    if (!date) { errEl.textContent = 'Выберите дату'; errEl.classList.remove('hidden'); return; }
+    if (pallets + boxes === 0) { errEl.textContent = 'Укажите количество'; errEl.classList.remove('hidden'); return; }
+
+    try {
+      var resp = await fetch('/api/routes?token=' + encodeURIComponent(TOKEN), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from_city: from, to_city: to, date: date,
+          marketplaces: miniMarkets, pallets: pallets, boxes: boxes,
+          contact_tg: tg, contact_phone: phone, direction: miniDir,
+        }),
+      });
+      var data = await resp.json();
+      if (!resp.ok) { errEl.textContent = data.error || 'Ошибка'; errEl.classList.remove('hidden'); return; }
+
+      // Очистка
+      document.getElementById('rt-from-mini').value = '';
+      document.getElementById('rt-to-mini').value = '';
+      document.getElementById('rt-date-mini').value = '';
+      document.getElementById('rt-pallets-mini').value = '0';
+      document.getElementById('rt-boxes-mini').value = '0';
+      document.getElementById('rt-tg-mini').value = '';
+      document.getElementById('rt-phone-mini').value = '';
+      miniMarkets = [];
+      document.querySelectorAll('#rt-mkt-mini .mkt-chip').forEach(function(c) { c.className = 'mkt-chip'; });
+
+      okEl.textContent = '✅ Маршрут опубликован';
+      okEl.classList.remove('hidden');
+      loadMiniRoutes();
+    } catch (e) { errEl.textContent = 'Ошибка соединения'; errEl.classList.remove('hidden'); }
+  };
+
+  // Инициализация дропдаунов городов в форме маршрута
+  function initRouteCities() {
+    ['rt-from-mini','rt-to-mini'].forEach(function(id) {
+      var sel = document.getElementById(id);
+      if (!sel) return;
+      sel.innerHTML = '<option value="">Город</option>';
+      cities.forEach(function(c) {
+        sel.innerHTML += '<option value="' + esc(c.name) + '">' + (FLAGS[c.country]||'') + ' ' + esc(c.name) + '</option>';
+      });
+    });
+    var d = document.getElementById('rt-date-mini');
+    if (d) d.min = new Date().toISOString().slice(0, 10);
   }
 
   // Запуск
