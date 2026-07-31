@@ -144,14 +144,14 @@
     .chk {
       display:flex; align-items:center; gap:6px; padding:8px 13px; border-radius:20px;
       border:1px solid var(--border); font-size:13px; cursor:pointer; color:var(--text2);
-      transition: all .15s; user-select:none;
+      transition: all .15s; user-select:none; background:transparent;
     }
     .chk input { display:none; }
-    .chk.checked { border-color:var(--blue); background:rgba(42,171,238,0.1); color:var(--blue); }
+    .chk.sel { border-color:var(--blue); background:rgba(42,171,238,0.1); color:var(--blue); }
 
     .consent-group { background:var(--surface); border-radius:12px; padding:14px; }
     .consent-group .chk { border:none; padding:6px 0; font-size:12px; width:100%; }
-    .consent-group .chk.checked { background:transparent; color:var(--green); }
+    .consent-group .chk.sel { background:transparent; color:var(--green); }
 
     /* ==== SUCCESS ==== */
     .success-screen { text-align:center; padding:40px 20px; }
