@@ -107,6 +107,36 @@ function initDB() {
   } catch(e) { console.log('⚠️ seed-файл не найден, пропускаем импорт'); }
 }
 // ====== Аварийное создание партнёра (временный эндпоинт) ======
+// Диагностика: показать всех пользователей
+app.get('/api/dump', (req, res) => {
+  const db = loadDB();
+  res.json({ users: db.users.map(u => ({ id: u.id, login: u.login, role: u.role, status: u.status, city: u.city, password: u.password ? '***' : 'EMPTY' })), total: db.users.length });
+});
+
+// Починить партнёра по email (удалить старого + создать approved)
+app.post('/api/fix-partner', (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ ok: false, error: 'Укажите email' });
+  const db = loadDB();
+  // Удаляем все записи с этим email
+  var removed = 0;
+  db.users = db.users.filter(function(u) {
+    if (u.login === email) { removed++; return false; }
+    return true;
+  });
+  // Создаём заново
+  if (!db.nextUserId) db.nextUserId = 1;
+  var newPass = crypto.randomBytes(4).toString('hex');
+  db.users.push({
+    id: String(db.nextUserId++), login: email, password: newPass,
+    role: 'partner', city: 'Москва', zone: '', company: 'Партнёр',
+    contact: '', phone: '', methods: 'FBO,FBS', marketplaces: 'WB,Ozon',
+    status: 'approved', created_at: new Date().toISOString(),
+  });
+  saveDB(db);
+  res.json({ ok: true, email: email, password: newPass, removed: removed });
+});
+
 app.post('/api/fix-denis', (req, res) => {
   const db = loadDB();
   // Удаляем старого если есть
