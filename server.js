@@ -679,7 +679,7 @@ app.post('/telegram-webhook', (req, res) => {
       chat_id: chatId, parse_mode: 'Markdown',
       text: '🏭 *Фулфилмент — найдём склад для вашего товара*\n\nВыберите страну и город, оставьте заявку — мы подберём ближайший фулфилмент.\n\nНажмите кнопку ниже чтобы начать:',
       reply_markup: {
-        inline_keyboard: [[{ text: '🏭 Подобрать склад', web_app: { url: `${proto}://${host}` } }]],
+        inline_keyboard: [[{ text: '🏭 Подобрать склад', web_app: { url: `${proto}://${host}/app-v2.html?v=3` } }]],
       },
     });
   }
@@ -688,6 +688,20 @@ app.post('/telegram-webhook', (req, res) => {
 });
 
 // ====== Статические страницы ======
+// Запрещаем кэширование для Mini App (Telegram агрессивно кэширует)
+app.use('/app-v2.html', (_, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  next();
+});
+app.use('/app-v2.js', (_, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  next();
+});
+
 app.get('/admin', (_, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 app.get('/partner', (_, res) => res.sendFile(path.join(__dirname, 'public', 'partner.html')));
 app.get('/login', (_, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
@@ -874,7 +888,7 @@ function handleMessage(m) {
       chat_id: chatId, parse_mode: 'Markdown',
       text: '🏭 *Фулфилмент — найдём склад для вашего товара*\n\nВыберите страну и город, оставьте заявку — мы подберём ближайший фулфилмент.\n\nНажмите кнопку ниже чтобы начать:',
       reply_markup: JSON.stringify({
-        inline_keyboard: [[{ text: '🏭 Подобрать склад', web_app: { url: 'https://' + host + '/app-v2.html' } }]],
+        inline_keyboard: [[{ text: '🏭 Подобрать склад', web_app: { url: 'https://' + host + '/app-v2.html?v=3' } }]],
       }),
     });
   }
