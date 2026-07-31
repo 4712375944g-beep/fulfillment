@@ -1115,6 +1115,105 @@
     }
   };
 
+  // Маршруты (попутные перевозки) — Mini App ======
+  var miniRouteFilter = 'all';
+  var miniAllRoutes = [];
+
+  window.switchPartnerTab = function(tab) {
+    document.getElementById('ptab-orders').className = 'admin-tab' + (tab === 'orders' ? ' on' : '');
+    document.getElementById('ptab-routes').className = 'admin-tab' + (tab === 'routes' ? ' on' : '');
+    document.getElementById('partner-orders').className = tab === 'orders' ? '' : 'hidden';
+    document.getElementById('partner-routes').className = tab === 'routes' ? '' : 'hidden';
+    if (tab === 'routes') loadMiniRoutes();
+  };
+
+  window.filterRoutesMini = function(dir, btn) {
+    miniRouteFilter = dir;
+    document.querySelectorAll('#route-filter .admin-tab').forEach(function(b) { b.className = 'admin-tab'; });
+    btn.className = 'admin-tab on';
+    renderMiniRoutes();
+  };
+
+  function loadMiniRoutes() {
+    var list = document.getElementById('partner-routes-list');
+    list.innerHTML = '<div class="empty-state">Загрузка...</div>';
+
+    fetch('/api/routes?token=' + encodeURIComponent(TOKEN))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        miniAllRoutes = data.routes || [];
+        renderMiniRoutes();
+      })
+      .catch(function() {
+        list.innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
+      });
+  }
+
+  function renderMiniRoutes() {
+    var list = document.getElementById('partner-routes-list');
+    var routes = miniAllRoutes;
+
+    if (miniRouteFilter !== 'all') {
+      routes = routes.filter(function(r) { return r.direction === miniRouteFilter; });
+    }
+
+    if (!routes.length) {
+      list.innerHTML = '<div class="empty-state">🚛 Маршрутов пока нет</div>';
+      return;
+    }
+
+    list.innerHTML = routes.map(function(r) {
+      var dirCls = r.direction === 'везет' ? 'badge-drive' : 'badge-seek';
+      var dirTxt = r.direction === 'везет' ? '🚛 Везу' : '📦 Ищу';
+
+      var cargo = '';
+      if (r.direction === 'везет') {
+        var p = [];
+        if (r.pallets) p.push('поддонов: ' + r.pallets);
+        if (r.boxes) p.push('коробок: ' + r.boxes);
+        cargo = p.length ? '🚛 Мест: ' + p.join(', ') : '';
+      } else {
+        var p2 = [];
+        if (r.pallets) p2.push(r.pallets + ' подд.');
+        if (r.boxes) p2.push(r.boxes + ' кор. 60×40×40');
+        cargo = p2.length ? '📦 Груз: ' + p2.join(' + ') : '';
+      }
+
+      var mkt = '';
+      if (r.marketplaces && r.marketplaces.length) {
+        mkt = r.marketplaces.map(function(m) {
+          var c = 'mkt-badge-other';
+          if (m === 'WB') c = 'mkt-badge-wb';
+          else if (m === 'Ozon') c = 'mkt-badge-ozon';
+          else if (m === 'Yandex') c = 'mkt-badge-yandex';
+          return '<span class="mkt-badge ' + c + '">' + esc(r) + '</span>';
+        }).join('');
+      }
+
+      var contact = '';
+      if (r.contact_tg) contact += '<a href="https://t.me/' + esc(r.contact_tg) + '" target="_blank">@' + esc(r.contact_tg) + '</a>';
+      if (r.contact_phone) contact += '<span class="route-phone">' + esc(r.contact_phone) + '</span>';
+
+      var dateStr = r.date || '';
+      var dp = dateStr.split('-');
+      var months = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+      var df = dp.length === 3 ? dp[2] + ' ' + (months[parseInt(dp[1])-1]||dp[1]) + ' ' + dp[0] : dateStr;
+
+      return '<div class="route-card">' +
+        '<div class="route-top"><div>' +
+          '<span class="route-badge ' + dirCls + '">' + dirTxt + '</span>' +
+          ' <span class="route-name">' + esc(r.from_city) + ' <span class="route-arr">→</span> ' + esc(r.to_city) + '</span>' +
+          mkt +
+          '<div class="route-date">📅 ' + df + '</div>' +
+        '</div></div>' +
+        '<div class="route-bottom">' +
+          '<div><span class="route-cargo">' + cargo + '</span><span class="route-author"> · ' + esc(r.partner_name) + '</span></div>' +
+          '<div class="route-contact-col">' + contact + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
   // Запуск
   init();
 })();
