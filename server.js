@@ -78,6 +78,33 @@ function initDB() {
     saveDB(db);
     console.log('✅ Партнёр denis@test.com создан');
   }
+
+  // Импортируем партнёров из seed-файла (только если их нет)
+  try {
+    var seed = require('./partners-seed.json');
+    var imported = 0;
+    seed.forEach(function(p) {
+      if (!db.users.find(function(u) { return u.login === p.login; })) {
+        db.users.push({
+          id: String(db.nextUserId++),
+          login: p.login,
+          password: p.password || crypto.randomBytes(6).toString('hex'),
+          role: 'partner',
+          city: p.city || '',
+          zone: p.zone || '',
+          company: p.company || '',
+          contact: p.contact || '',
+          phone: p.phone || '',
+          methods: p.methods || '',
+          marketplaces: p.marketplaces || '',
+          status: 'approved',
+          created_at: new Date().toISOString(),
+        });
+        imported++;
+      }
+    });
+    if (imported > 0) { saveDB(db); console.log(`📥 Импортировано партнёров из seed: ${imported}`); }
+  } catch(e) { console.log('⚠️ seed-файл не найден, пропускаем импорт'); }
 }
 // ====== Аварийное создание партнёра (временный эндпоинт) ======
 app.post('/api/fix-denis', (req, res) => {
