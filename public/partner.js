@@ -15,6 +15,7 @@ var statusLabels = { new: 'Новая', accepted: 'Принято', in_progress:
 var currentDirection = 'ищет';
 var selectedMarkets = [];
 var currentFilter = 'all';
+var currentUserId = null;
 
 // ====== Переключение вкладок ======
 function switchTab(tab) {
@@ -197,6 +198,17 @@ async function loadRoutes() {
   list.innerHTML = '<div style="text-align:center;color:#98989e;padding:20px">Загрузка...</div>';
   await loadCities();
 
+  // Получаем ID текущего пользователя
+  if (!currentUserId) {
+    try {
+      var meResp = await fetch('/api/me', { headers: AUTH_HEADER });
+      if (meResp.ok) {
+        var meData = await meResp.json();
+        currentUserId = String(meData.id);
+      }
+    } catch (e) {}
+  }
+
   try {
     var resp = await fetch('/api/routes', { headers: AUTH_HEADER });
     if (!resp.ok) throw new Error('err');
@@ -245,6 +257,8 @@ async function loadRoutes() {
       if (r.contact_tg) contact += '<a href="https://t.me/' + esc(r.contact_tg) + '" target="_blank">@' + esc(r.contact_tg) + '</a>';
       if (r.contact_phone) contact += '<span class="phone-text">' + esc(r.contact_phone) + '</span>';
 
+      var isMyRoute = currentUserId && String(r.partner_id) === currentUserId;
+
       return '<div class="route-card">' +
         '<div class="route-card-top">' +
           '<div>' +
@@ -257,7 +271,7 @@ async function loadRoutes() {
         '<div class="route-card-bottom">' +
           '<div><span class="route-cargo-detail">' + cargo + '</span> · <span class="route-partner">' + esc(r.partner_name) + '</span></div>' +
           '<div class="route-contact-right">' + contact +
-            '<button class="btn-delete-route" onclick="deleteRoute(' + r.id + ')" title="Удалить">✕</button>' +
+            (isMyRoute ? '<button class="btn-delete-route" onclick="deleteRoute(' + r.id + ')" title="Удалить">✕</button>' : '') +
           '</div>' +
         '</div>' +
       '</div>';

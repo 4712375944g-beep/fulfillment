@@ -219,7 +219,7 @@ app.post('/api/login', (req, res) => {
 
 // ====== API: проверка токена ======
 app.get('/api/me', auth, (req, res) => {
-  res.json({ login: req.user.login, role: req.user.role, city: req.user.city, zone: req.user.zone });
+  res.json({ id: req.user.id, login: req.user.login, role: req.user.role, city: req.user.city, zone: req.user.zone });
 });
 
 // ====== API: панель приборов ======
