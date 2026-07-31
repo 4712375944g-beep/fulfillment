@@ -14,6 +14,7 @@ var statusLabels = { new: 'Новая', accepted: 'Принято', in_progress:
 // ====== Состояние формы ======
 var currentDirection = 'ищет';
 var selectedMarkets = [];
+var currentFilter = 'all';
 
 // ====== Переключение вкладок ======
 function switchTab(tab) {
@@ -174,6 +175,22 @@ async function createRoute() {
 
 function showErr(msg) { var e = document.getElementById('rt-error'); e.textContent = msg; e.style.display = 'block'; }
 
+// ====== Степпер +/- для груза ======
+function stepCargo(id, delta) {
+  var el = document.getElementById(id);
+  var val = parseInt(el.value) || 0;
+  val = Math.max(0, val + delta);
+  el.value = val;
+}
+
+// ====== Фильтр маршрутов ======
+function filterRoutes(dir, btn) {
+  currentFilter = dir;
+  document.querySelectorAll('#route-filter .filter-tab').forEach(function(b) { b.className = 'filter-tab'; });
+  btn.className = 'filter-tab active';
+  loadRoutes();
+}
+
 // ====== Загрузка маршрутов ======
 async function loadRoutes() {
   var list = document.getElementById('routes-list');
@@ -184,6 +201,12 @@ async function loadRoutes() {
     var resp = await fetch('/api/routes', { headers: AUTH_HEADER });
     if (!resp.ok) throw new Error('err');
     var routes = (await resp.json()).routes;
+
+    // Применяем фильтр
+    if (currentFilter !== 'all') {
+      routes = routes.filter(function(r) { return r.direction === currentFilter; });
+    }
+
     if (!routes || !routes.length) {
       list.innerHTML = '<div class="no-routes"><div class="icon">🚛</div><div class="text">Маршрутов пока нет</div></div>';
       return;

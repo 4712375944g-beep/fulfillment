@@ -351,6 +351,65 @@
     }
     .no-routes .icon { font-size: 40px; margin-bottom: 12px; }
     .no-routes .text { font-size: 15px; }
+
+    /* Фильтр маршрутов */
+    .filter-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .filter-tab {
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text2);
+      transition: all .2s;
+    }
+    .filter-tab.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .filter-tab:hover:not(.active) { border-color: var(--text2); }
+
+    /* Кнопки +/- */
+    .stepper {
+      display: flex;
+      align-items: center;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface2);
+      overflow: hidden;
+    }
+    .stepper button {
+      width: 40px;
+      height: 40px;
+      border: none;
+      background: transparent;
+      color: var(--blue);
+      font-size: 20px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .stepper button:hover { background: rgba(42,171,238,0.1); }
+    .stepper button:active { background: rgba(42,171,238,0.2); }
+    .stepper input {
+      width: 50px;
+      text-align: center;
+      border: none;
+      background: transparent;
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 600;
+      outline: none;
+      -moz-appearance: textfield;
+    }
+    .stepper input::-webkit-outer-spin-button,
+    .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   </style>
 </head>
 <body>
@@ -422,11 +481,19 @@
         <div class="cargo-row">
           <div class="cargo-field">
             <label id="lbl-pallets">Нужно отвезти поддонов, шт</label>
-            <input type="number" id="rt-pallets" min="0" value="0" placeholder="0">
+            <div class="stepper">
+              <button onclick="stepCargo('rt-pallets', -1)">−</button>
+              <input type="number" id="rt-pallets" min="0" value="0" readonly>
+              <button onclick="stepCargo('rt-pallets', 1)">+</button>
+            </div>
           </div>
           <div class="cargo-field">
             <label id="lbl-boxes">Нужно отвезти коробок 60×40×40, шт</label>
-            <input type="number" id="rt-boxes" min="0" value="0" placeholder="0">
+            <div class="stepper">
+              <button onclick="stepCargo('rt-boxes', -1)">−</button>
+              <input type="number" id="rt-boxes" min="0" value="0" readonly>
+              <button onclick="stepCargo('rt-boxes', 1)">+</button>
+            </div>
           </div>
         </div>
 
@@ -448,6 +515,12 @@
       </div>
 
       <!-- Список -->
+      <!-- Фильтр -->
+      <div class="filter-tabs" id="route-filter">
+        <button class="filter-tab active" onclick="filterRoutes('all', this)">Все</button>
+        <button class="filter-tab" onclick="filterRoutes('ищет', this)">📦 Ищут перевозку</button>
+        <button class="filter-tab" onclick="filterRoutes('везет', this)">🚛 Везут</button>
+      </div>
       <div id="routes-list"></div>
     </div>
   </div>
