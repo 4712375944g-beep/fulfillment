@@ -4,11 +4,8 @@ const { Pool } = require('pg');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  // Railway: SSL зависит от типа базы. Пробуем без явного ssl — pg сам решит.
-  // Если нужен SSL: Railway добавит ?sslmode=require в DATABASE_URL
-  ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('sslmode=require')
-    ? { rejectUnauthorized: false }
-    : false,
+  // Railway PostgreSQL ВСЕГДА требует SSL, даже для внутренних соединений
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
   connectionTimeoutMillis: 15000,
   max: 10,
 });

@@ -71,6 +71,24 @@ app.get('/health', async (_, res) => {
   res.json({ status: dbOk ? 'ok' : 'degraded', uptime: process.uptime(), db: dbOk ? 'connected' : 'disconnected' });
 });
 
+// Диагностика подключения к базе (только для отладки)
+app.get('/api/db-diag', async (_, res) => {
+  const info = {
+    has_url: !!process.env.DATABASE_URL,
+    url_preview: process.env.DATABASE_URL ? process.env.DATABASE_URL.replace(/\/\/.*?@/, '//***:***@').replace(/\?.*/, '?...') : 'MISSING',
+    ssl_enabled: !!process.env.DATABASE_URL,
+  };
+  try {
+    await db.query('SELECT 1 as test');
+    info.connected = true;
+  } catch (e) {
+    info.connected = false;
+    info.error = e.message;
+    info.code = e.code;
+  }
+  res.json(info);
+});
+
 // ====== API: регистрация партнёра ======
 app.post('/api/register', async (req, res) => {
   try {
