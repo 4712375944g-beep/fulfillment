@@ -321,7 +321,7 @@ app.post('/api/order', (req, res) => {
   const db = loadDB();
   const order = {
     id: db.nextId++, name, phone, link,
-    city: cityInfo.name, zone: zone || '', method: method || 'FBO',
+    city: cityInfo.name, zone: zone || '', method: Array.isArray(methods) ? methods[0] : (methods || 'FBO'),
     status: 'new',
     created_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
   };
