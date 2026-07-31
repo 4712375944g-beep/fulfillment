@@ -53,12 +53,14 @@ function initDB() {
     });
     saveDB(db);
     console.log('✅ Админ создан');
-  } else if (admin.password !== 'admin-secret-2026') {
-    // Исправляем битый пароль
+  } else {
+    // Всегда перезаписываем пароль админа при старте
     admin.password = 'admin-secret-2026';
     if (!admin.status) admin.status = 'approved';
+    admin.login = 'admin';
+    admin.role = 'admin';
     saveDB(db);
-    console.log('🔧 Пароль админа восстановлен');
+    console.log('🔧 Админ восстановлен');
   }
   // Счётчики
   if (!db.nextId) db.nextId = 1;
