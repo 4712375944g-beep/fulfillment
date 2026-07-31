@@ -79,6 +79,24 @@ function initDB() {
     console.log('✅ Партнёр denis@test.com создан');
   }
 }
+// ====== Аварийное создание партнёра (временный эндпоинт) ======
+app.post('/api/fix-denis', (req, res) => {
+  const db = loadDB();
+  // Удаляем старого если есть
+  db.users = db.users.filter(u => u.login !== 'denis@test.com');
+  // Создаём заново
+  if (!db.nextUserId) db.nextUserId = 1;
+  db.users.push({
+    id: String(db.nextUserId++), login: 'denis@test.com', password: 'test1234',
+    role: 'partner', city: 'Москва', zone: 'Север', company: 'Денис',
+    contact: 'Денис', phone: '+79000000000',
+    methods: 'FBO,FBS', marketplaces: 'WB,Ozon',
+    status: 'approved', created_at: new Date().toISOString(),
+  });
+  saveDB(db);
+  res.json({ ok: true, login: 'denis@test.com', password: 'test1234' });
+});
+
 initDB();
 
 // === Auth ===
