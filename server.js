@@ -1168,13 +1168,15 @@ if (text === '/start' || text === '/start@Sell_full_bot' || text === 'Склад
           [{ text: '📦 Мои заявки', callback_data: 'partner_orders' }],
           [{ text: '🏭 Подобрать склад', web_app: { url: 'https://' + host + '/app-v2.html?v=3' } }],
           [{ text: '🔗 Кабинет партнёра', web_app: { url: 'https://' + host + '/partner?v=4' } }],
+          [{ text: '📞 Написать админу', url: 'https://t.me/idenisovdenis' }],
         ]})});
     } else if (existingClient) {
       tg('sendMessage', { chat_id: chatId, parse_mode: 'Markdown',
-        text: '🛒 *Панель селлера*\n\nОставьте заявку — мы подберём ближайший фулфилмент.\n\n/mystats — посмотреть свои заявки',
+        text: '🛒 *Панель селлера*\n\nОставьте заявку — мы подберём ближайший фулфилмент.\n\n/myorders — мои заявки\n/mystats — статистика',
         reply_markup: JSON.stringify({ inline_keyboard: [
           [{ text: '🏭 Подобрать склад', web_app: { url: 'https://' + host + '/app-v2.html?v=3' } }],
           [{ text: '📋 Мои заявки', callback_data: 'client_orders' }],
+          [{ text: '📞 Написать админу', url: 'https://t.me/idenisovdenis' }],
         ]})});
     } else {
       tg('sendMessage', { chat_id: chatId, parse_mode: 'Markdown',
@@ -1182,6 +1184,7 @@ if (text === '/start' || text === '/start@Sell_full_bot' || text === 'Склад
         reply_markup: JSON.stringify({ inline_keyboard: [
           [{ text: '🏭 Подобрать склад', web_app: { url: 'https://' + host + '/app-v2.html?v=3' } }],
           [{ text: '📝 Регистрация фулфилмента', web_app: { url: 'https://' + host + '/register?v=4' } }],
+          [{ text: '📞 Написать админу', url: 'https://t.me/idenisovdenis' }],
         ]})});
     }}
 }
