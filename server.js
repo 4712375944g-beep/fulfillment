@@ -643,6 +643,34 @@ app.patch('/api/partner/orders/:id', auth, (req, res) => {
 
 // ====== Маршруты (попутные перевозки) ======
 // GET — все маршруты, у которых дата ещё не прошла
+// ====== Admin: все маршруты ======
+app.get('/api/admin/routes', auth, requireAdmin, (req, res) => {
+  const db = loadDB();
+  if (!db.routes) db.routes = [];
+  const routes = [...db.routes];
+  if (req.query.status) routes = routes.filter(r => r.status === req.query.status);
+  routes.sort((a, b) => b.id - a.id);
+  res.json({ routes: routes.slice(0, 100) });
+});
+
+app.patch('/api/admin/routes/:id', auth, requireAdmin, (req, res) => {
+  const db = loadDB();
+  if (!db.routes) db.routes = [];
+  const route = db.routes.find(r => r.id === +req.params.id);
+  if (!route) return res.status(404).json({ ok: false, error: 'Маршрут не найден' });
+  if (req.body.status) route.status = req.body.status;
+  saveDB(db);
+  res.json({ ok: true, route });
+});
+
+app.delete('/api/admin/routes/:id', auth, requireAdmin, (req, res) => {
+  const db = loadDB();
+  if (!db.routes) db.routes = [];
+  db.routes = db.routes.filter(r => r.id !== +req.params.id);
+  saveDB(db);
+  res.json({ ok: true });
+});
+
 app.get('/api/routes', auth, (req, res) => {
   const db = loadDB();
   if (!db.routes) db.routes = [];
