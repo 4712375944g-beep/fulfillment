@@ -76,7 +76,13 @@
     <div class="login-link">Уже есть аккаунт? <a href="/login">Войти</a></div>
   </div>
 
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
+    // Получаем Telegram user ID из Mini App
+    var tgUser = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp.initDataUnsafe.user : null;
+    var tgUserId = tgUser ? tgUser.id : null;
+
     let allCities = [];
     let selectedCityName = '';
 
@@ -165,6 +171,7 @@
         contact: form.contact.value.trim(),
         phone: form.phone.value.trim(),
         description: form.description.value.trim(),
+        tg_user_id: tgUserId,
       };
 
       try {

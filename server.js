@@ -188,7 +188,7 @@ app.get('/health', (_, res) => res.json({ status: 'ok', uptime: process.uptime()
 
 // ====== API: регистрация партнёра ======
 app.post('/api/register', (req, res) => {
-  const { email, password, company, city, zone, contact, phone, description, methods, marketplaces } = req.body;
+  const { email, password, company, city, zone, contact, phone, description, methods, marketplaces, tg_user_id } = req.body;
   if (!email || !password || !company || !city || !contact || !phone) {
     return res.status(400).json({ ok: false, error: 'Все поля обязательны' });
   }
@@ -208,6 +208,7 @@ app.post('/api/register', (req, res) => {
     methods: methodsStr, marketplaces: mktStr,
     description: description || '', status: 'pending',
     created_at: new Date().toISOString(),
+    chat_id: tg_user_id ? String(tg_user_id) : undefined,
   };
   db.users.push(user);
   saveDB(db);
