@@ -1055,19 +1055,32 @@ function handleMessage(m) {
     ].join('\n') });
   }
 
-  // /broadcast — рассылка админа всем пользователям
-  if (text.startsWith('/broadcast ') && String(chatId) === CHAT_ID) {
-    var broadcastMsg = text.slice('/broadcast '.length).trim();
-    if (!broadcastMsg) { tg('sendMessage', { chat_id: chatId, text: '⚠️ Напишите: /broadcast Текст сообщения' }); return; }
+  // /broadcast — рассылка админа
+  if (text.startsWith('/broadcast') && String(chatId) === CHAT_ID) {
+    var isPartners = text.startsWith('/broadcast_partners');
+    var isClients = text.startsWith('/broadcast_clients');
+    var cmdName = isPartners ? '/broadcast_partners' : (isClients ? '/broadcast_clients' : '/broadcast');
+    if (!isPartners && !isClients && !text.startsWith('/broadcast ')) {
+      tg('sendMessage', { chat_id: chatId, text: '📢 Команды рассылки:\n/broadcast Текст — всем\n/broadcast_partners Текст — фулфилментам\n/broadcast_clients Текст — селлерам' });
+      return;
+    }
+    var broadcastMsg = text.slice(cmdName.length).trim();
+    if (!broadcastMsg) { tg('sendMessage', { chat_id: chatId, text: '⚠️ Напишите: ' + cmdName + ' Текст' }); return; }
     var dbBC = loadDB();
-    var targets = dbBC.users.filter(function(u) { return u.chat_id && (u.role === 'partner' || u.role === 'client'); });
-    if (targets.length === 0) { tg('sendMessage', { chat_id: chatId, text: '⚠️ Нет пользователей с активированным ботом' }); return; }
+    var targets = dbBC.users.filter(function(u) {
+      if (!u.chat_id) return false;
+      if (isPartners) return u.role === 'partner';
+      if (isClients) return u.role === 'client';
+      return u.role === 'partner' || u.role === 'client';
+    });
+    if (targets.length === 0) { tg('sendMessage', { chat_id: chatId, text: '⚠️ Нет получателей с активированным ботом' }); return; }
+    var label = isPartners ? 'фулфилментам' : (isClients ? 'селлерам' : 'пользователям');
     var sent = 0;
     targets.forEach(function(u) {
-      tg('sendMessage', { chat_id: u.chat_id, parse_mode: 'HTML', text: '📢 <b>Сообщение от SellFull</b>\n\n' + broadcastMsg });
+      tg('sendMessage', { chat_id: u.chat_id, parse_mode: 'HTML', text: '📢 <b>SellFull</b>\n\n' + broadcastMsg });
       sent++;
     });
-    tg('sendMessage', { chat_id: chatId, text: '✅ Отправлено: ' + sent + ' из ' + targets.length + ' пользователей' });
+    tg('sendMessage', { chat_id: chatId, text: '✅ Отправлено ' + label + ': ' + sent + '/' + targets.length });
     return;
   }
 
