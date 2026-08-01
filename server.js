@@ -391,7 +391,7 @@ app.post('/api/order', (req, res) => {
   // Рассылаем уведомления партнёрам по городу
   const cityPartners = db.users.filter(u =>
     u.role === 'partner' && u.status === 'approved' &&
-    u.city === cityInfo.name && u.chat_id
+    u.city === cityInfo.name && u.chat_id && !u.notify_off
   );
   cityPartners.forEach(p => {
     tg('sendMessage', {
@@ -1098,7 +1098,18 @@ function handleMessage(m) {
     return;
   }
 
-// /mystats — статистика заявок
+// /togglenotify — вкл/выкл уведомления для партнёра
+  if (text === '/togglenotify' || text === '/togglenotify@Sell_full_bot') {
+    var dbTN = loadDB();
+    var partnerTN = dbTN.users.find(function(u) { return u.chat_id === String(chatId) && u.role === 'partner'; });
+    if (!partnerTN) { tg('sendMessage', { chat_id: chatId, text: '⚠️ Только для фулфилментов. Используйте /bind' }); return; }
+    partnerTN.notify_off = !partnerTN.notify_off;
+    saveDB(dbTN);
+    tg('sendMessage', { chat_id: chatId, text: partnerTN.notify_off ? '🔕 Уведомления ОТКЛЮЧЕНЫ' : '🔔 Уведомления ВКЛЮЧЕНЫ' });
+    return;
+  }
+
+  // /mystats — статистика заявок
   if (text === '/mystats' || text === '/mystats@Sell_full_bot') {
     var dbStats = loadDB();
     var userStats = dbStats.users.find(function(u) { return u.chat_id === String(chatId); });
@@ -1163,7 +1174,7 @@ if (text === '/start' || text === '/start@Sell_full_bot' || text === 'Склад
     var existingClient = dbStart.users.find(function(u) { return u.chat_id === String(chatId) && u.role === 'client'; });
     if (existingPartner) {
       tg('sendMessage', { chat_id: chatId, parse_mode: 'Markdown',
-        text: '🏭 *Панель фулфилмента*\n\nГород: ' + (existingPartner.city || '?') + (existingPartner.zone ? ' — ' + existingPartner.zone : '') + '\nСтатус: ✅ Активен' + (existingPartner.expires_at ? ' (до ' + existingPartner.expires_at + ')' : ''),
+        text: '🏭 *Панель фулфилмента*\n\nГород: ' + (existingPartner.city || '?') + (existingPartner.zone ? ' — ' + existingPartner.zone : '') + '\nСтатус: ✅ Активен' + (existingPartner.expires_at ? ' (до ' + existingPartner.expires_at + ')' : '') + (existingPartner.expires_at ? '\n' + (function(){var days=Math.ceil((new Date(existingPartner.expires_at)-new Date())/(86400000));return days<=3?'⚠️ Осталось '+days+' дн!':''})() : '') + '\n\n/togglenotify — вкл/выкл уведомления',
         reply_markup: JSON.stringify({ inline_keyboard: [
           [{ text: '📦 Мои заявки', callback_data: 'partner_orders' }],
           [{ text: '🏭 Подобрать склад', web_app: { url: 'https://' + host + '/app-v2.html?v=3' } }],
