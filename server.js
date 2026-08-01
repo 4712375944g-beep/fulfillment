@@ -1116,6 +1116,21 @@ function handleMessage(m) {
     return;
   }
 
+  // /myorders — список заявок селлера
+  if (text === '/myorders' || text === '/myorders@Sell_full_bot') {
+    var dbMO = loadDB();
+    var clientMO = dbMO.users.find(function(u) { return u.chat_id === String(chatId) && u.role === 'client'; });
+    if (!clientMO) { tg('sendMessage', { chat_id: chatId, text: '⚠️ Вы не зарегистрированы как селлер. Оставьте заявку через /start' }); return; }
+    var ordersMO = (dbMO.orders || []).filter(function(o) { return o.phone === clientMO.phone || o.phone === clientMO.login; });
+    if (ordersMO.length === 0) { tg('sendMessage', { chat_id: chatId, text: '📋 У вас пока нет заявок. Оставьте заявку через кнопку «Подобрать склад» в меню /start.' }); return; }
+    var statusEmoji = { new: '🆕', in_progress: '🔄', done: '✅', cancelled: '❌' };
+    var lines = ordersMO.map(function(o) {
+      return (statusEmoji[o.status]||'📦') + ' #' + o.id + ' — ' + (o.city||'?') + (o.zone?' ('+o.zone+')':'') + ' | ' + (o.method||'FBO') + ' | ' + o.created_at;
+    });
+    tg('sendMessage', { chat_id: chatId, parse_mode: 'HTML', text: '📋 <b>Мои заявки</b> (' + ordersMO.length + ' шт)\n\n' + lines.join('\n') });
+    return;
+  }
+
     // Авто-распознавание email: если пользователь прислал email без команды — предлагаем /bind
   var autoEmailMatch = text.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/);
   if (autoEmailMatch) {
