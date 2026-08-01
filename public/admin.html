@@ -32,7 +32,8 @@
     <div class="filters" style="margin-top:12px">
       <button class="partners-btn" onclick="showTab('dashboard')">📊 Панель</button>
       <button class="partners-btn" onclick="showTab('orders')">📦 Заявки</button>
-      <button class="partners-btn" style="background:#444" onclick="showTab('partners')">👥 Партнёры</button>
+      <button class="partners-btn" onclick="showTab('routes')">🚚 Маршруты</button>
+<button class="partners-btn" style="background:#444" onclick="showTab('partners')">👥 Партнёры</button>
       <button class="export-btn" onclick="exportCsv()">📥 CSV</button>
     </div>
 
@@ -57,6 +58,21 @@
       <table>
         <thead><tr><th>ID</th><th>Имя</th><th>Телефон</th><th>Ссылка</th><th>Город</th><th>Зона</th><th>Способ</th><th>Статус</th><th>Дата</th></tr></thead>
         <tbody id="orders-table"></tbody>
+      </table>
+    </div>
+
+    <div id="tab-routes" class="hidden">
+      <div class="filters" style="margin-top:20px">
+        <select id="filter-route-status" onchange="loadRoutes()">
+          <option value="">📊 Все статусы</option>
+          <option value="active">🟢 Активные</option>
+          <option value="inactive">⚫ Завершённые</option>
+        </select>
+        <span style="color:#888;font-size:13px" id="route-count"></span>
+      </div>
+      <table>
+        <thead><tr><th>ID</th><th>Откуда</th><th>Куда</th><th>Партнёр</th><th>Площадки</th><th>Груз</th><th>Дата</th><th>Статус</th></tr></thead>
+        <tbody id="routes-table"></tbody>
       </table>
     </div>
 

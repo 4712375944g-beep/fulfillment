@@ -88,6 +88,42 @@ function exportCsv() {
     });
 }
 
+// ====== Маршруты ======
+function loadRoutes() {
+  var status = document.getElementById('filter-route-status')?.value || '';
+  var url = '/api/admin/routes';
+  if (status === 'active') url += '?status=active';
+  if (status === 'inactive') url += '?status=inactive';
+  
+  fetch(url, { headers: { Authorization: 'Bearer ' + localStorage.getItem('ff_token') } })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var routes = data.routes || [];
+      document.getElementById('route-count').textContent = 'Всего: ' + routes.length;
+      var html = '';
+      routes.forEach(function(r) {
+        var platforms = (r.platforms || []).join(', ') || '—';
+        var cargo = r.pallets ? r.pallets + 'пал ' : '';
+        cargo += r.boxes ? r.boxes + 'кор' : '';
+        if (!cargo) cargo = '—';
+        var status = (r.status === 'active' || !r.status) ? '🟢 Активен' : '⚫ Завершён';
+        html += '<tr>' +
+          '<td>#' + r.id + '</td>' +
+          '<td>' + (r.from_city || '?') + '</td>' +
+          '<td>' + (r.to_city || '?') + '</td>' +
+          '<td>' + (r.partner_name || r.username || '—') + '</td>' +
+          '<td>' + platforms + '</td>' +
+          '<td>' + cargo + '</td>' +
+          '<td>' + (r.date || '—') + '</td>' +
+          '<td>' + status + '</td>' +
+          '</tr>';
+      });
+      if (!html) html = '<tr><td colspan="8" style="color:#888;text-align:center;padding:20px">Нет маршрутов</td></tr>';
+      document.getElementById('routes-table').innerHTML = html;
+    });
+}
+
+
 function loadPartners() {
   fetch(apiUrl('/api/admin/partners'))
     .then(function(r){ return r.json() }).then(function(d) {
@@ -197,13 +233,18 @@ function logout() {
 }
 
 function showTab(tab) {
-  document.getElementById('tab-dashboard').classList.toggle('hidden', tab !== 'dashboard');
-  document.getElementById('tab-orders').classList.toggle('hidden', tab !== 'orders');
-  document.getElementById('tab-partners').classList.toggle('hidden', tab !== 'partners');
-  if (tab === 'dashboard') loadDashboard();
+  var tabs = ['dashboard','orders','routes','partners'];
+  tabs.forEach(function(t) {
+    var el = document.getElementById('tab-'+t);
+    if (el) el.classList.toggle('hidden', t !== tab);
+  });
+  if (tab === 'routes') loadRoutes();
   if (tab === 'orders') loadOrders();
-  if (tab === 'partners') { loadPartners(); populateDD(); }
-}
+  if (tab === 'partners') loadPartners();
+  if (tab === 'dashboard') loadStats();
+  return;
+  // OLD showTab logic replaced above
+  var _old = 
 
 function loadDashboard() {
   fetch(apiUrl('/api/admin/health-check'))
