@@ -466,6 +466,49 @@ app.get('/api/admin/clients', auth, requireAdmin, (req, res) => {
   res.json({ clients, stats: { total: clients.length, with_chat: withChat, without_chat: clients.length - withChat } });
 });
 
+// ====== Экспорт: клиенты с Telegram (CSV) ======
+app.get('/api/admin/clients/export', auth, requireAdmin, (req, res) => {
+  const db = loadDB();
+  const clients = db.users.filter(u => u.role === 'client');
+  const rows = [['Email','Имя','Telegram ID','Telegram Username','Дата регистрации']];
+  clients.forEach(c => {
+    rows.push([
+      c.login || '',
+      c.company || c.name || '',
+      c.chat_id || '',
+      (c.tg_username ? '@' + c.tg_username : ''),
+      (c.created_at || '').slice(0, 10),
+    ]);
+  });
+  const csv = '\uFEFF' + rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
+  res.set('Content-Type', 'text/csv; charset=utf-8');
+  res.set('Content-Disposition', 'attachment; filename=clients.csv');
+  res.send(csv);
+});
+
+// ====== Экспорт: партнёры с Telegram (CSV) ======
+app.get('/api/admin/partners/export', auth, requireAdmin, (req, res) => {
+  const db = loadDB();
+  const partners = db.users.filter(u => u.role === 'partner');
+  const rows = [['Email','Город','Зона','Компания','Telegram ID','Telegram Username','Статус','Дата']];
+  partners.forEach(p => {
+    rows.push([
+      p.login || '',
+      p.city || '',
+      p.zone || '',
+      p.company || '',
+      p.chat_id || '',
+      (p.tg_username ? '@' + p.tg_username : ''),
+      p.status || 'approved',
+      (p.created_at || '').slice(0, 10),
+    ]);
+  });
+  const csv = '\uFEFF' + rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
+  res.set('Content-Type', 'text/csv; charset=utf-8');
+  res.set('Content-Disposition', 'attachment; filename=partners.csv');
+  res.send(csv);
+});
+
 app.post('/api/admin/partners', auth, requireAdmin, (req, res) => {
   if (!req.body.city) return res.status(400).json({ error: 'Город обязателен' });
   const db = loadDB();
