@@ -1055,6 +1055,22 @@ function handleMessage(m) {
     ].join('\n') });
   }
 
+  // /broadcast — рассылка админа всем пользователям
+  if (text.startsWith('/broadcast ') && String(chatId) === CHAT_ID) {
+    var broadcastMsg = text.slice('/broadcast '.length).trim();
+    if (!broadcastMsg) { tg('sendMessage', { chat_id: chatId, text: '⚠️ Напишите: /broadcast Текст сообщения' }); return; }
+    var dbBC = loadDB();
+    var targets = dbBC.users.filter(function(u) { return u.chat_id && (u.role === 'partner' || u.role === 'client'); });
+    if (targets.length === 0) { tg('sendMessage', { chat_id: chatId, text: '⚠️ Нет пользователей с активированным ботом' }); return; }
+    var sent = 0;
+    targets.forEach(function(u) {
+      tg('sendMessage', { chat_id: u.chat_id, parse_mode: 'HTML', text: '📢 <b>Сообщение от SellFull</b>\n\n' + broadcastMsg });
+      sent++;
+    });
+    tg('sendMessage', { chat_id: chatId, text: '✅ Отправлено: ' + sent + ' из ' + targets.length + ' пользователей' });
+    return;
+  }
+
   // Авто-распознавание email: если пользователь прислал email без команды — предлагаем /bind
   var autoEmailMatch = text.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/);
   if (autoEmailMatch) {
