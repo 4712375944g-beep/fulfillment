@@ -266,8 +266,10 @@ app.post('/api/login', (req, res) => {
 
   // Авто-привязка Telegram ID (если логин через Mini App)
   const tgUserId = req.body.tg_user_id;
+  const tgUsername = req.body.tg_username;
   if (user.role === 'partner' && tgUserId) {
     user.chat_id = String(tgUserId);
+    if (tgUsername) user.tg_username = tgUsername;
   }
 
   const token = crypto.randomBytes(24).toString('hex');
@@ -444,8 +446,24 @@ app.get('/api/admin/partners', auth, requireAdmin, (req, res) => {
     id: p.id, login: p.login, password: p.password, city: p.city, zone: p.zone,
     status: p.status || 'approved', company: p.company, contact: p.contact, phone: p.phone,
     created_at: p.created_at, expires_at: p.expires_at,
+    chat_id: p.chat_id || null,
+    tg_username: p.tg_username || null,
   }));
-  res.json({ partners, cities: CITIES });
+  const withChat = partners.filter(p => p.chat_id).length;
+  res.json({ partners, cities: CITIES, stats: { total: partners.length, with_chat: withChat, without_chat: partners.length - withChat } });
+});
+
+// ====== Admin: клиенты (селлеры) ======
+app.get('/api/admin/clients', auth, requireAdmin, (req, res) => {
+  const db = loadDB();
+  const clients = db.users.filter(u => u.role === 'client').map(c => ({
+    id: c.id, login: c.login, name: c.company || c.name || '',
+    created_at: c.created_at || '',
+    chat_id: c.chat_id || null,
+    tg_username: c.tg_username || null,
+  }));
+  const withChat = clients.filter(c => c.chat_id).length;
+  res.json({ clients, stats: { total: clients.length, with_chat: withChat, without_chat: clients.length - withChat } });
 });
 
 app.post('/api/admin/partners', auth, requireAdmin, (req, res) => {
@@ -897,6 +915,7 @@ function handleCallbackQuery(cb) {
 
 function handleMessage(m) {
   const chatId = m.chat.id;
+  const tgUsername = (m.from && m.from.username) ? m.from.username : null;
   const text = m.text.trim();
 
   // Ждём дату от админа
@@ -928,6 +947,7 @@ function handleMessage(m) {
       var partner = db.users.find(function(u) { return u.role === 'partner' && u.login === emailMatch[0]; });
       if (partner) {
         partner.chat_id = String(chatId);
+        if (tgUsername) partner.tg_username = tgUsername;
         saveDB(db);
         tg('sendMessage', { chat_id: chatId, parse_mode: 'HTML', text: '✅ <b>Готово!</b> Теперь вы будете получать уведомления о новых заявках в вашем городе.' });
       } else {
@@ -1000,6 +1020,7 @@ function handleMessage(m) {
     if (autoPartner && !autoPartner.chat_id) {
       // Нашли партнёра без привязки — привязываем автоматически
       autoPartner.chat_id = String(chatId);
+      if (tgUsername) autoPartner.tg_username = tgUsername;
       saveDB(dbAuto);
       tg('sendMessage', { chat_id: chatId, parse_mode: 'HTML', text: '✅ <b>Готово!</b> Ваш аккаунт <code>' + autoEmailMatch[0] + '</code> привязан к Telegram.\n\nТеперь вы будете получать уведомления о новых заявках в вашем городе.' });
       return;
