@@ -102,24 +102,27 @@ function loadRoutes() {
       document.getElementById('route-count').textContent = 'Всего: ' + routes.length;
       var html = '';
       routes.forEach(function(r) {
-        var platforms = (r.platforms || []).join(', ') || '—';
-        var cargo = r.pallets ? r.pallets + 'пал ' : '';
-        cargo += r.boxes ? r.boxes + 'кор' : '';
-        if (!cargo) cargo = '—';
-        var status = (r.status === 'active' || !r.status) ? '🟢 Активен' : '⚫ Завершён';
+        // Поддержка старого и нового формата маршрутов
+        var mkt = r.marketplaces || r.platforms || [];
+        var platforms = Array.isArray(mkt) ? mkt.join(', ') : String(mkt || '—');
+        var cargo = (r.pallets ? r.pallets + 'пал ' : '') + (r.boxes ? r.boxes + 'кор' : '') || '—';
+        var direction = r.direction || r.status || '';
+        var statusLabel = direction === 'ищет' ? '🔍 Ищет' : direction === 'везет' ? '🚛 Везёт' : (r.status || '🟢 Активен');
         html += '<tr>' +
           '<td>#' + r.id + '</td>' +
           '<td>' + (r.from_city || '?') + '</td>' +
           '<td>' + (r.to_city || '?') + '</td>' +
-          '<td>' + (r.partner_name || r.username || '—') + '</td>' +
+          '<td>' + (r.partner_name || r.username || r.contact_tg || '—') + '</td>' +
           '<td>' + platforms + '</td>' +
           '<td>' + cargo + '</td>' +
           '<td>' + (r.date || '—') + '</td>' +
-          '<td>' + status + '</td>' +
+          '<td>' + statusLabel + '</td>' +
           '</tr>';
       });
       if (!html) html = '<tr><td colspan="8" style="color:#888;text-align:center;padding:20px">Нет маршрутов</td></tr>';
       document.getElementById('routes-table').innerHTML = html;
+    }).catch(function(err) {
+      document.getElementById('routes-table').innerHTML = '<tr><td colspan="8" style="color:#f44;text-align:center;padding:20px">Ошибка загрузки</td></tr>';
     });
 }
 
