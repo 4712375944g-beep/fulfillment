@@ -946,13 +946,11 @@ function handleCallbackQuery(cb) {
     }
     delete pendingCustomDate[chatId];
   }
-  else if (cb.data.endsWith(':custom')) {
+else if (cb.data.endsWith(':custom')) {
     const userId = cb.data.slice(3).split(':')[0];
     pendingCustomDate[chatId] = userId;
-    tg('editMessageText', {
-      chat_id: chatId, message_id: msgId, parse_mode: 'HTML',
-      text: (msg.text || '') + '\n\n📆 <b>Введите дату в формате ГГГГ-ММ-ДД</b>\n<i>Например: 2026-10-29</i>',
-    });
+    tg('editMessageText', { chat_id: chatId, message_id: msgId, parse_mode: 'HTML',
+      text: (msg.text || '') + '\n\n📆 <b>Введите дату в формате ГГГГ-ММ-ДД</b>\n<i>Например: 2026-10-29</i>' });
   }
   else if (cb.data === 'partner_orders') {
     var dbPo = loadDB();
@@ -1100,7 +1098,35 @@ function handleMessage(m) {
     return;
   }
 
-  // Авто-распознавание email: если пользователь прислал email без команды — предлагаем /bind
+// /mystats — статистика заявок
+  if (text === '/mystats' || text === '/mystats@Sell_full_bot') {
+    var dbStats = loadDB();
+    var userStats = dbStats.users.find(function(u) { return u.chat_id === String(chatId); });
+    if (!userStats) { tg('sendMessage', { chat_id: chatId, text: '⚠️ Ваш аккаунт не привязан. Используйте /bind' }); return; }
+    if (userStats.role === 'partner') {
+      var partnerOrders = (dbStats.orders || []).filter(function(o) { return o.city === userStats.city && (!userStats.zone || o.zone === userStats.zone); });
+      var statusCount = { new: 0, in_progress: 0, done: 0, cancelled: 0 };
+      partnerOrders.forEach(function(o) { statusCount[o.status] = (statusCount[o.status] || 0) + 1; });
+      tg('sendMessage', { chat_id: chatId, parse_mode: 'HTML', text: [
+        '📊 <b>Статистика фулфилмента</b>', '', '📍 ' + (userStats.city || '?') + (userStats.zone ? ' — ' + userStats.zone : ''), '',
+        '📦 Всего заявок: ' + partnerOrders.length, '🆕 Новых: ' + (statusCount.new || 0),
+        '🔄 В работе: ' + (statusCount.in_progress || 0), '✅ Выполнено: ' + (statusCount.done || 0),
+        '❌ Отменено: ' + (statusCount.cancelled || 0),
+      ].join('\n') });
+    } else if (userStats.role === 'client') {
+      var clientOrders = (dbStats.orders || []).filter(function(o) { return o.phone === userStats.phone || o.phone === userStats.login; });
+      tg('sendMessage', { chat_id: chatId, parse_mode: 'HTML', text: '📋 <b>Ваши заявки</b>\n\n📦 Всего: ' + clientOrders.length + '\n' + (clientOrders.length === 0 ? 'Нет заявок' : '') });
+      if (clientOrders.length > 0) {
+        clientOrders.slice(-5).forEach(function(o) {
+          var se = { new: '🆕', in_progress: '🔄', done: '✅', cancelled: '❌' };
+          tg('sendMessage', { chat_id: chatId, parse_mode: 'HTML', text: [se[o.status] || '📦', '📍 ' + o.city + (o.zone ? ' — ' + o.zone : ''), '📦 ' + (o.method || 'FBO'), '📅 ' + o.created_at].join('  |  ') });
+        });
+      }
+    }
+    return;
+  }
+
+    // Авто-распознавание email: если пользователь прислал email без команды — предлагаем /bind
   var autoEmailMatch = text.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/);
   if (autoEmailMatch) {
     var dbAuto = loadDB();
@@ -1124,91 +1150,34 @@ function handleMessage(m) {
     return;
   }
 
-  // /start и кнопка "Склады" — разные меню для партнёра и селлера
-  if (text === '/start' || text === '/start@Sell_full_bot' || text === 'Склады') {
+  // /start и кнопка "Склады"
+if (text === '/start' || text === '/start@Sell_full_bot' || text === 'Склады') {
     var host = process.env.RAILWAY_PUBLIC_DOMAIN || 'fulfillment-production-26aa.up.railway.app';
     var dbStart = loadDB();
     var existingPartner = dbStart.users.find(function(u) { return u.chat_id === String(chatId) && u.role === 'partner'; });
     var existingClient = dbStart.users.find(function(u) { return u.chat_id === String(chatId) && u.role === 'client'; });
-
     if (existingPartner) {
-      // Меню для фулфилмента
-      tg('sendMessage', {
-        chat_id: chatId, parse_mode: 'Markdown',
+      tg('sendMessage', { chat_id: chatId, parse_mode: 'Markdown',
         text: '🏭 *Панель фулфилмента*\n\nГород: ' + (existingPartner.city || '?') + (existingPartner.zone ? ' — ' + existingPartner.zone : '') + '\nСтатус: ✅ Активен' + (existingPartner.expires_at ? ' (до ' + existingPartner.expires_at + ')' : ''),
-        reply_markup: JSON.stringify({
-          inline_keyboard: [
-            [{ text: '📦 Мои заявки', callback_data: 'partner_orders' }],
-            [{ text: '🏭 Подобрать склад', web_app: { url: 'https://' + host + '/app-v2.html?v=3' } }],
-            [{ text: '🔗 Кабинет партнёра', web_app: { url: 'https://' + host + '/partner?v=4' } }],
-          ],
-        }),
-      });
+        reply_markup: JSON.stringify({ inline_keyboard: [
+          [{ text: '📦 Мои заявки', callback_data: 'partner_orders' }],
+          [{ text: '🏭 Подобрать склад', web_app: { url: 'https://' + host + '/app-v2.html?v=3' } }],
+          [{ text: '🔗 Кабинет партнёра', web_app: { url: 'https://' + host + '/partner?v=4' } }],
+        ]})});
     } else if (existingClient) {
-      // Меню для селлера
-      tg('sendMessage', {
-        chat_id: chatId, parse_mode: 'Markdown',
-        text: '🛒 *Панель селлера*\n\nОставьте заявку — мы подберём ближайший фулфилмент под ваш товар.\n\n/mystats — посмотреть свои заявки',
-        reply_markup: JSON.stringify({
-          inline_keyboard: [
-            [{ text: '🏭 Подобрать склад', web_app: { url: 'https://' + host + '/app-v2.html?v=3' } }],
-            [{ text: '📋 Мои заявки', callback_data: 'client_orders' }],
-          ],
-        }),
-      });
+      tg('sendMessage', { chat_id: chatId, parse_mode: 'Markdown',
+        text: '🛒 *Панель селлера*\n\nОставьте заявку — мы подберём ближайший фулфилмент.\n\n/mystats — посмотреть свои заявки',
+        reply_markup: JSON.stringify({ inline_keyboard: [
+          [{ text: '🏭 Подобрать склад', web_app: { url: 'https://' + host + '/app-v2.html?v=3' } }],
+          [{ text: '📋 Мои заявки', callback_data: 'client_orders' }],
+        ]})});
     } else {
-      // Меню для нового пользователя
-      tg('sendMessage', {
-        chat_id: chatId, parse_mode: 'Markdown',
+      tg('sendMessage', { chat_id: chatId, parse_mode: 'Markdown',
         text: '🏭 *Фулфилмент — найдём склад для вашего товара*\n\nВыберите страну и город, оставьте заявку — мы подберём ближайший фулфилмент.\n\n*Для партнёров:*\n/bind — привязать Telegram к аккаунту\n/reset — восстановить пароль',
-        reply_markup: JSON.stringify({
-          inline_keyboard: [
-            [{ text: '🏭 Подобрать склад', web_app: { url: 'https://' + host + '/app-v2.html?v=3' } }],
-            [{ text: '📝 Регистрация фулфилмента', web_app: { url: 'https://' + host + '/register?v=4' } }],
-          ],
-        }),
-      });
-    }
-  }
-
-  // /mystats — статистика заявок (для фулфилментов и селлеров)
-  if (text === '/mystats' || text === '/mystats@Sell_full_bot') {
-    var dbStats = loadDB();
-    var userStats = dbStats.users.find(function(u) { return u.chat_id === String(chatId); });
-    if (!userStats) { tg('sendMessage', { chat_id: chatId, text: '⚠️ Ваш аккаунт не привязан. Используйте /bind' }); return; }
-
-    if (userStats.role === 'partner') {
-      var partnerOrders = (dbStats.orders || []).filter(function(o) { return o.city === userStats.city && (!userStats.zone || o.zone === userStats.zone); });
-      var statusCount = { new: 0, in_progress: 0, done: 0, cancelled: 0 };
-      partnerOrders.forEach(function(o) { statusCount[o.status] = (statusCount[o.status] || 0) + 1; });
-      tg('sendMessage', { chat_id: chatId, parse_mode: 'HTML', text: [
-        '📊 <b>Статистика фулфилмента</b>', '',
-        '📍 ' + (userStats.city || '?') + (userStats.zone ? ' — ' + userStats.zone : ''), '',
-        '📦 Всего заявок: ' + partnerOrders.length,
-        '🆕 Новых: ' + (statusCount.new || 0),
-        '🔄 В работе: ' + (statusCount.in_progress || 0),
-        '✅ Выполнено: ' + (statusCount.done || 0),
-        '❌ Отменено: ' + (statusCount.cancelled || 0),
-      ].join('\n') });
-    } else if (userStats.role === 'client') {
-      var clientOrders = (dbStats.orders || []).filter(function(o) { return o.phone === userStats.phone || o.phone === userStats.login; });
-      tg('sendMessage', { chat_id: chatId, parse_mode: 'HTML', text: [
-        '📋 <b>Ваши заявки</b>', '',
-        '📦 Всего: ' + clientOrders.length,
-        clientOrders.length === 0 ? 'Нет заявок' : '',
-      ].join('\n') });
-      if (clientOrders.length > 0) {
-        clientOrders.slice(-5).forEach(function(o) {
-          var statusEmoji = { new: '🆕', in_progress: '🔄', done: '✅', cancelled: '❌' };
-          tg('sendMessage', { chat_id: chatId, parse_mode: 'HTML', text: [
-            statusEmoji[o.status] || '📦',
-            '📍 ' + o.city + (o.zone ? ' — ' + o.zone : ''),
-            '📦 ' + (o.method || 'FBO'),
-            '📅 ' + o.created_at,
-          ].join('  |  ') });
-        });
-      }
-    }
-  }
-// deploy trigger 2026-08-01T12:23:58Z
+        reply_markup: JSON.stringify({ inline_keyboard: [
+          [{ text: '🏭 Подобрать склад', web_app: { url: 'https://' + host + '/app-v2.html?v=3' } }],
+          [{ text: '📝 Регистрация фулфилмента', web_app: { url: 'https://' + host + '/register?v=4' } }],
+        ]})});
+    }}
 }
+// deploy trigger 2026-08-01T12:23:58Z
