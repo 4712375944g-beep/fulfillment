@@ -879,6 +879,14 @@ app.use('/app-v2.js', (_, res, next) => {
   next();
 });
 
+// Запрещаем кэширование для админки
+app.use('/admin', (_, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  next();
+});
+
 app.get('/admin', (_, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 app.get('/partner', (_, res) => res.sendFile(path.join(__dirname, 'public', 'partner.html')));
 app.get('/login', (_, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
