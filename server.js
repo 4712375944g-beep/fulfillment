@@ -991,15 +991,42 @@ function handleMessage(m) {
     ].join('\n') });
   }
 
+  // Авто-распознавание email: если пользователь прислал email без команды — предлагаем /bind
+  var autoEmailMatch = text.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/);
+  if (autoEmailMatch) {
+    var dbAuto = loadDB();
+    var autoPartner = dbAuto.users.find(function(u) { return u.role === 'partner' && u.login === autoEmailMatch[0]; });
+    if (autoPartner && !autoPartner.chat_id) {
+      // Нашли партнёра без привязки — привязываем автоматически
+      autoPartner.chat_id = String(chatId);
+      saveDB(dbAuto);
+      tg('sendMessage', { chat_id: chatId, parse_mode: 'HTML', text: '✅ <b>Готово!</b> Ваш аккаунт <code>' + autoEmailMatch[0] + '</code> привязан к Telegram.\n\nТеперь вы будете получать уведомления о новых заявках в вашем городе.' });
+      return;
+    }
+    if (autoPartner && autoPartner.chat_id) {
+      // Уже привязан
+      tg('sendMessage', { chat_id: chatId, parse_mode: 'HTML', text: 'ℹ️ Этот email уже привязан к Telegram.\n\nИспользуйте /start чтобы открыть подбор складов.' });
+      return;
+    }
+    // Email не найден — предлагаем регистрацию
+    var hostAuto = process.env.RAILWAY_PUBLIC_DOMAIN || 'fulfillment-production-26aa.up.railway.app';
+    tg('sendMessage', { chat_id: chatId, parse_mode: 'HTML', text: '⚠️ Партнёр с email <code>' + autoEmailMatch[0] + '</code> не найден.\n\nЕсли вы ещё не регистрировались — перейдите по ссылке ниже и заполните форму. После одобрения заявки отправьте боту команду /bind для привязки Telegram.', reply_markup: JSON.stringify({ inline_keyboard: [[{ text: '📝 Зарегистрироваться как фулфилмент', web_app: { url: 'https://' + hostAuto + '/register?v=4' } }]] }) });
+    return;
+  }
+
   // /start и кнопка "Склады"
   if (text === '/start' || text === '/start@Sell_full_bot' || text === 'Склады') {
-    const host = process.env.RAILWAY_PUBLIC_DOMAIN || 'fulfillment-production-26aa.up.railway.app';
+    var host = process.env.RAILWAY_PUBLIC_DOMAIN || 'fulfillment-production-26aa.up.railway.app';
     tg('sendMessage', {
       chat_id: chatId, parse_mode: 'Markdown',
-      text: '🏭 *Фулфилмент — найдём склад для вашего товара*\n\nВыберите страну и город, оставьте заявку — мы подберём ближайший фулфилмент.\n\nНажмите кнопку ниже чтобы начать:',
+      text: '🏭 *Фулфилмент — найдём склад для вашего товара*\n\nВыберите страну и город, оставьте заявку — мы подберём ближайший фулфилмент.\n\n*Для партнёров:*\n/bind — привязать Telegram к аккаунту\n/reset — восстановить пароль',
       reply_markup: JSON.stringify({
-        inline_keyboard: [[{ text: '🏭 Подобрать склад', web_app: { url: 'https://' + host + '/app-v2.html?v=3' } }]],
+        inline_keyboard: [
+          [{ text: '🏭 Подобрать склад', web_app: { url: 'https://' + host + '/app-v2.html?v=3' } }],
+          [{ text: '📝 Регистрация фулфилмента', web_app: { url: 'https://' + host + '/register?v=4' } }],
+        ],
       }),
     });
   }
 }
+// deploy trigger 2026-08-01T12:23:58Z

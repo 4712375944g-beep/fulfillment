@@ -177,7 +177,7 @@
         if (result.ok) {
           form.classList.add('hidden');
           document.querySelector('.sub').classList.add('hidden');
-          okEl.innerHTML = '✅ <b>Заявка отправлена!</b><br><br>После активации аккаунта вы сможете войти с email <b>' + data.email + '</b> и вашим паролем.<br><br><a href="/login" style="color:#4da3ff">Страница входа</a>';
+          okEl.innerHTML = '✅ <b>Заявка отправлена!</b><br><br>После активации аккаунта вы сможете войти с email <b>' + data.email + '</b> и вашим паролем.<br><br><a href="/login" style="color:#4da3ff">Страница входа</a><br><br>📱 <b>Важно:</b> после одобрения заявки отправьте боту <a href="https://t.me/Sell_full_bot" target="_blank" style="color:#4da3ff">@Sell_full_bot</a> команду <code>/bind</code> чтобы привязать Telegram и получать уведомления о заявках.';
           okEl.classList.remove('hidden');
         } else {
           errEl.textContent = result.error || 'Ошибка';
