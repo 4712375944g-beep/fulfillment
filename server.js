@@ -1181,3 +1181,4 @@ if (text === '/start' || text === '/start@Sell_full_bot' || text === 'Склад
     }}
 }
 // deploy trigger 2026-08-01T12:23:58Z
+// redeploy trigger 1785593533
