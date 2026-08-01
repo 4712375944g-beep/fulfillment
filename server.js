@@ -401,6 +401,44 @@ app.post('/api/order', (req, res) => {
   });
 });
 
+// ====== Admin: поставки ======
+app.get('/api/admin/deliveries', auth, requireAdmin, (req, res) => {
+  const db = loadDB();
+  if (!db.deliveries) db.deliveries = [];
+  let deliveries = [...db.deliveries];
+  if (req.query.status) deliveries = deliveries.filter(d => d.status === req.query.status);
+  deliveries.sort((a, b) => b.id - a.id);
+  res.json({ deliveries: deliveries.slice(0, 100) });
+});
+
+app.post('/api/admin/deliveries', auth, requireAdmin, (req, res) => {
+  const { title, from_city, to_city, partner_name, description } = req.body;
+  if (!title || !from_city || !to_city) return res.status(400).json({ ok: false, error: 'Название, откуда и куда обязательны' });
+  const db = loadDB();
+  if (!db.deliveries) db.deliveries = [];
+  if (!db.nextDeliveryId) db.nextDeliveryId = 1;
+  const delivery = {
+    id: db.nextDeliveryId++, title, from_city, to_city,
+    partner_name: partner_name || '', description: description || '',
+    status: 'created', created_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
+  };
+  db.deliveries.push(delivery);
+  saveDB(db);
+  res.json({ ok: true, delivery });
+});
+
+app.patch('/api/admin/deliveries/:id', auth, requireAdmin, (req, res) => {
+  const validStatuses = ['created', 'in_transit', 'delivered', 'cancelled'];
+  if (!validStatuses.includes(req.body.status)) return res.status(400).json({ ok: false, error: 'Неверный статус: ' + (req.body.status || 'пусто') + '. Допустимые: ' + validStatuses.join(', ') });
+  const db = loadDB();
+  if (!db.deliveries) db.deliveries = [];
+  const delivery = db.deliveries.find(d => d.id === +req.params.id);
+  if (!delivery) return res.status(404).json({ ok: false, error: 'Поставка не найдена' });
+  delivery.status = req.body.status;
+  saveDB(db);
+  res.json({ ok: true, delivery });
+});
+
 // ====== Admin: заявки ======
 app.get('/api/admin/orders', auth, requireAdmin, (req, res) => {
   const db = loadDB();
