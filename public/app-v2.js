@@ -106,8 +106,6 @@
   var elFormName = document.getElementById('form-name');
   var elFormPhone = document.getElementById('form-phone');
   var elFormLink = document.getElementById('form-link');
-  var elFormCompany = document.getElementById('form-company');
-  var elFormEmail = document.getElementById('form-email');
   var elFormDescription = document.getElementById('form-description');
   var elFormCityKey = document.getElementById('form-city-key');
   var elFormZone = document.getElementById('form-zone');
@@ -506,8 +504,6 @@
     // Очищаем поля формы
     elFormName.value = '';
     elFormPhone.value = '';
-    if (elFormCompany) elFormCompany.value = '';
-    if (elFormEmail) elFormEmail.value = '';
     elFormLink.value = '';
     if (elFormDescription) elFormDescription.value = '';
     elOrderFbo.checked = false;
@@ -540,8 +536,6 @@
   function submitOrder() {
     var name = elFormName.value.trim();
     var phone = elFormPhone.value.trim();
-    var company = elFormCompany ? elFormCompany.value.trim() : '';
-    var email = elFormEmail ? elFormEmail.value.trim() : '';
     var link = elFormLink.value.trim();
     var description = elFormDescription ? elFormDescription.value.trim() : '';
     var cityKey = elFormCityKey.value;
@@ -581,8 +575,6 @@
       body: JSON.stringify({
         name: name,
         phone: phone,
-        company: company,
-        email: email,
         link: link,
         description: description,
         city: cityKey,

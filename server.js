@@ -350,7 +350,7 @@ app.get('/api/cities', (req, res) => {
 
 // ====== API: заявка клиента ======
 app.post('/api/order', (req, res) => {
-  const { name, phone, company, email, link, description, city, zone, methods, marketplaces } = req.body;
+  const { name, phone, link, description, city, zone, methods, marketplaces } = req.body;
   if (!name || !phone || !link || !city || !methods) {
     return res.status(400).json({ ok: false, error: 'Все поля обязательны' });
   }
@@ -359,7 +359,7 @@ app.post('/api/order', (req, res) => {
 
   const db = loadDB();
   const order = {
-    id: db.nextId++, name, phone, company: company || '', email: email || '', link,
+    id: db.nextId++, name, phone, link,
     description: description || '',
     city: cityInfo.name, zone: zone || '', method: Array.isArray(methods) ? methods[0] : (methods || 'FBO'),
     status: 'new',
@@ -379,8 +379,6 @@ app.post('/api/order', (req, res) => {
       '',
       `👤 <b>Имя:</b> ${esc(order.name)}`,
       `📞 <b>Телефон:</b> ${esc(order.phone)}`,
-      `🏢 <b>Компания:</b> ${esc(order.company)}`,
-      `📧 <b>Email:</b> ${esc(order.email)}`,
       `🔗 <b>Ссылка:</b> ${esc(order.link)}`,
       `📝 <b>Описание:</b> ${esc(order.description)}`,
       `📍 <b>Город/зона:</b> ${order.city}${zoneStr}`,
