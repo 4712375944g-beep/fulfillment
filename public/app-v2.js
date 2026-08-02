@@ -106,8 +106,9 @@
   var elFormName = document.getElementById('form-name');
   var elFormPhone = document.getElementById('form-phone');
   var elFormLink = document.getElementById('form-link');
-  var elFormMethod = document.getElementById('form-method');
-  var elFormMarketplace = document.getElementById('form-marketplace');
+  var elFormCompany = document.getElementById('form-company');
+  var elFormEmail = document.getElementById('form-email');
+  var elFormDescription = document.getElementById('form-description');
   var elFormCityKey = document.getElementById('form-city-key');
   var elFormZone = document.getElementById('form-zone');
   var elFormSubmit = document.getElementById('form-submit-btn');
@@ -505,7 +506,10 @@
     // Очищаем поля формы
     elFormName.value = '';
     elFormPhone.value = '';
+    if (elFormCompany) elFormCompany.value = '';
+    if (elFormEmail) elFormEmail.value = '';
     elFormLink.value = '';
+    if (elFormDescription) elFormDescription.value = '';
     elOrderFbo.checked = false;
     elOrderFbs.checked = false;
     elOrderDbs.checked = false;
@@ -513,8 +517,11 @@
     elOrderOzon.checked = false;
     elOrderYandex.checked = false;
     elOrderOther.checked = false;
+    // Сбрасываем визуальное состояние чипсов
+    resetAllChips();
     if (elConsentPd) elConsentPd.checked = false;
     if (elConsentContact) elConsentContact.checked = false;
+    resetAllConsent();
     updConsent();
 
     // Скрываем статус
@@ -533,7 +540,10 @@
   function submitOrder() {
     var name = elFormName.value.trim();
     var phone = elFormPhone.value.trim();
+    var company = elFormCompany ? elFormCompany.value.trim() : '';
+    var email = elFormEmail ? elFormEmail.value.trim() : '';
     var link = elFormLink.value.trim();
+    var description = elFormDescription ? elFormDescription.value.trim() : '';
     var cityKey = elFormCityKey.value;
     var zone = elFormZone.value;
 
@@ -552,11 +562,11 @@
 
     // Валидация
     if (!name || !phone || !link || methods.length === 0 || mkt.length === 0) {
-      showFormError('Заполните все поля');
+      showFormError('Заполните все обязательные поля');
       return;
     }
     if (!elConsentPd.checked || !elConsentContact.checked) {
-      showFormError('Заполните все поля');
+      showFormError('Примите условия оферты и согласие на обработку данных');
       return;
     }
 
@@ -571,7 +581,10 @@
       body: JSON.stringify({
         name: name,
         phone: phone,
+        company: company,
+        email: email,
         link: link,
+        description: description,
         city: cityKey,
         zone: zone,
         methods: methods.join(','),
@@ -599,6 +612,74 @@
     elFormStatus.textContent = msg;
     elFormStatus.className = 'status err';
     elFormStatus.classList.remove('hidden');
+  }
+
+  // ==================== Toggle chip buttons ====================
+
+  // Переключение чипсов способа доставки (FBO/FBS/DBS)
+  window.toggleChk = function(label, cbId) {
+    var cb = document.getElementById(cbId);
+    if (!cb) return;
+    cb.checked = !cb.checked;
+    if (cb.checked) {
+      label.classList.add('sel');
+      label.querySelector('.chk-box').textContent = '☑';
+    } else {
+      label.classList.remove('sel');
+      label.querySelector('.chk-box').textContent = '☐';
+    }
+  };
+
+  // Переключение чипсов маркетплейсов (WB/Ozon/Yandex/Other)
+  window.toggleMktOrder = function(label, val, cbId) {
+    var cb = document.getElementById(cbId);
+    if (!cb) return;
+    cb.checked = !cb.checked;
+    // Сбрасываем все классы
+    label.className = 'mkt-chip';
+    if (cb.checked) {
+      var selCls = 'sel-';
+      if (val === 'WB') selCls += 'wb';
+      else if (val === 'Ozon') selCls += 'ozon';
+      else if (val === 'Yandex') selCls += 'yandex';
+      else selCls += 'other';
+      label.classList.add(selCls);
+    }
+  };
+
+  // Переключение галочек согласия
+  window.toggleConsent = function(label, cbId) {
+    var cb = document.getElementById(cbId);
+    if (!cb) return;
+    cb.checked = !cb.checked;
+    if (cb.checked) {
+      label.classList.add('sel');
+      label.querySelector('.consent-box').textContent = '☑';
+    } else {
+      label.classList.remove('sel');
+      label.querySelector('.consent-box').textContent = '☐';
+    }
+    updConsent();
+  };
+
+  // Сброс всех чипсов
+  function resetAllChips() {
+    ['chk-order-fbo','chk-order-fbs','chk-order-dbs'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) { el.classList.remove('sel'); var b = el.querySelector('.chk-box'); if (b) b.textContent = '☐'; }
+    });
+    ['mkt-order-wb','mkt-order-ozon','mkt-order-yandex','mkt-order-other'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) { el.className = 'mkt-chip'; }
+    });
+  }
+
+  // Сброс галочек согласия
+  function resetAllConsent() {
+    ['chk-consent-pd','chk-consent-contact'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) { el.classList.remove('sel'); var b = el.querySelector('.consent-box'); if (b) b.textContent = '☐'; }
+    });
   }
 
   // ==================== Экран успеха ====================

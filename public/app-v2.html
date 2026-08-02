@@ -150,8 +150,14 @@
     .chk.sel { border-color:var(--blue); background:rgba(42,171,238,0.1); color:var(--blue); }
 
     .consent-group { background:var(--surface); border-radius:12px; padding:14px; }
-    .consent-group .chk { border:none; padding:6px 0; font-size:12px; width:100%; }
+    .consent-group .chk { border:none; padding:6px 0; font-size:12px; width:100%; cursor:pointer; }
     .consent-group .chk.sel { background:transparent; color:var(--green); }
+    .chk-box { margin-right:6px; font-size:16px; display:inline-block; width:20px; text-align:center; }
+    .chk.sel .chk-box { color:var(--blue); }
+    .mkt-chip .chk-box { margin-right:4px; font-size:14px; }
+    .mkt-chip.sel-wb .chk-box, .mkt-chip.sel-ozon .chk-box, .mkt-chip.sel-yandex .chk-box, .mkt-chip.sel-other .chk-box { display:none; }
+    .consent-box { margin-right:6px; font-size:18px; display:inline-block; width:22px; text-align:center; color:var(--text2); }
+    .consent-chk.sel .consent-box { color:var(--green); }
 
     /* ==== SUCCESS ==== */
     .success-screen { text-align:center; padding:40px 20px; }
@@ -378,30 +384,33 @@
   <p class="subtitle" id="form-subtitle"></p>
   <input class="inp" id="form-name" placeholder="Ваше имя" autocomplete="name">
   <input class="inp" id="form-phone" type="tel" placeholder="Телефон" autocomplete="tel">
+  <input class="inp" id="form-company" placeholder="Название компании / бренд">
+  <input class="inp" id="form-email" type="email" placeholder="Email" autocomplete="email">
   <input class="inp" id="form-link" placeholder="Ссылка на товар" autocomplete="url">
+  <textarea class="inp" id="form-description" placeholder="Опишите задачу (необязательно)" rows="2" style="resize:vertical;font-family:inherit"></textarea>
 
   <div class="chk-group">
     <span class="chk-label">📦 Способ доставки</span>
     <div class="chk-row">
-      <label class="chk" id="chk-order-fbo"><input type="checkbox" id="order-fbo"> FBO</label>
-      <label class="chk" id="chk-order-fbs"><input type="checkbox" id="order-fbs"> FBS</label>
-      <label class="chk" id="chk-order-dbs"><input type="checkbox" id="order-dbs"> DBS</label>
+      <label class="chk" id="chk-order-fbo" onclick="toggleChk(this,'order-fbo')"><span class="chk-box">☐</span><input type="checkbox" id="order-fbo"> FBO</label>
+      <label class="chk" id="chk-order-fbs" onclick="toggleChk(this,'order-fbs')"><span class="chk-box">☐</span><input type="checkbox" id="order-fbs"> FBS</label>
+      <label class="chk" id="chk-order-dbs" onclick="toggleChk(this,'order-dbs')"><span class="chk-box">☐</span><input type="checkbox" id="order-dbs"> DBS</label>
     </div>
   </div>
 
   <div class="chk-group">
     <span class="chk-label">🏪 Площадка</span>
     <div class="mkt-row" id="order-mkt">
-      <label class="mkt-chip" id="mkt-order-wb"><input type="checkbox" id="order-wb"> 🟣 WB</label>
-      <label class="mkt-chip" id="mkt-order-ozon"><input type="checkbox" id="order-ozon"> 🔵 Ozon</label>
-      <label class="mkt-chip" id="mkt-order-yandex"><input type="checkbox" id="order-yandex"> 🟡 Яндекс</label>
-      <label class="mkt-chip" id="mkt-order-other"><input type="checkbox" id="order-other"> ⚪ Другое</label>
+      <label class="mkt-chip" id="mkt-order-wb" onclick="toggleMktOrder(this,'WB','order-wb')"><span class="chk-box">☐</span><input type="checkbox" id="order-wb"> 🟣 WB</label>
+      <label class="mkt-chip" id="mkt-order-ozon" onclick="toggleMktOrder(this,'Ozon','order-ozon')"><span class="chk-box">☐</span><input type="checkbox" id="order-ozon"> 🔵 Ozon</label>
+      <label class="mkt-chip" id="mkt-order-yandex" onclick="toggleMktOrder(this,'Yandex','order-yandex')"><span class="chk-box">☐</span><input type="checkbox" id="order-yandex"> 🟡 Яндекс</label>
+      <label class="mkt-chip" id="mkt-order-other" onclick="toggleMktOrder(this,'Другое','order-other')"><span class="chk-box">☐</span><input type="checkbox" id="order-other"> ⚪ Другое</label>
     </div>
   </div>
 
   <div class="chk-group consent-group">
-    <label class="chk consent-chk" id="chk-consent-pd"><input type="checkbox" id="order-consent-pd"> Принимаю <a href="/oferta.html" target="_blank" style="color:var(--blue)">условия оферты</a> и согласен на обработку данных</label>
-    <label class="chk consent-chk" id="chk-consent-contact"><input type="checkbox" id="order-consent-contact"> Согласен на передачу контактов партнёрам</label>
+    <label class="chk consent-chk" id="chk-consent-pd" onclick="toggleConsent(this,'order-consent-pd')"><span class="consent-box">☐</span><input type="checkbox" id="order-consent-pd"> Принимаю <a href="/oferta.html" target="_blank" style="color:var(--blue);text-decoration:underline">условия оферты</a> и согласен на обработку данных</label>
+    <label class="chk consent-chk" id="chk-consent-contact" onclick="toggleConsent(this,'order-consent-contact')"><span class="consent-box">☐</span><input type="checkbox" id="order-consent-contact"> Согласен на передачу контактов партнёрам</label>
   </div>
 
   <input type="hidden" id="form-city-key" value="">
