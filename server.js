@@ -44,6 +44,7 @@ function initDB() {
   const db = loadDB();
   if (!db.users) db.users = [];
   if (!db.tokens) db.tokens = {};
+  if (!db.analytics) db.analytics = { events: [] };
   // Всегда гарантируем: админ есть, пароль правильный
   const admin = db.users.find(u => u.role === 'admin');
   if (!admin) {
@@ -185,6 +186,43 @@ function tg(method, body) {
 
 // === Health ===
 app.get('/health', (_, res) => res.json({ status: 'ok', uptime: process.uptime() }));
+
+// ====== Аналитика: запись события ======
+app.post('/api/analytics/event', (req, res) => {
+  const { type, user_id } = req.body;
+  if (!type || !['bot_start','miniapp_open'].includes(type)) {
+    return res.status(400).json({ ok: false, error: 'Неверный тип события' });
+  }
+  const db = loadDB();
+  if (!db.analytics) db.analytics = { events: [] };
+  db.analytics.events.push({
+    type: type,
+    user_id: String(user_id || 'anon'),
+    ip: req.ip || req.get('x-forwarded-for') || '',
+    ts: new Date().toISOString(),
+  });
+  // Храним последние 10 000 событий чтобы не раздувать базу
+  if (db.analytics.events.length > 10000) {
+    db.analytics.events = db.analytics.events.slice(-5000);
+  }
+  saveDB(db);
+  res.json({ ok: true });
+});
+
+// ====== Аналитика: статистика для админа ======
+app.get('/api/admin/analytics', auth, requireAdmin, (req, res) => {
+  const db = loadDB();
+  const events = db.analytics ? db.analytics.events : [];
+  const botStarts = events.filter(e => e.type === 'bot_start');
+  const miniOpens = events.filter(e => e.type === 'miniapp_open');
+  // Уникальные — по user_id (исключая 'anon')
+  const uniqueBotUsers = new Set(botStarts.map(e => e.user_id).filter(id => id !== 'anon'));
+  const uniqueMiniUsers = new Set(miniOpens.map(e => e.user_id).filter(id => id !== 'anon'));
+  res.json({
+    bot_start: { total: botStarts.length, unique: uniqueBotUsers.size },
+    miniapp_open: { total: miniOpens.length, unique: uniqueMiniUsers.size },
+  });
+});
 
 // ====== API: регистрация партнёра ======
 app.post('/api/register', (req, res) => {
@@ -852,6 +890,16 @@ app.post('/telegram-webhook', (req, res) => {
 
   // /start
   if (text === '/start' || text === '/start@Sell_full_bot') {
+    // Запись аналитики: запуск бота
+    var dbA = loadDB();
+    if (!dbA.analytics) dbA.analytics = { events: [] };
+    dbA.analytics.events.push({
+      type: 'bot_start',
+      user_id: String(chatId),
+      ts: new Date().toISOString(),
+    });
+    saveDB(dbA);
+
     const host = req.get('host');
     const proto = req.protocol || 'https';
     tg('sendMessage', {
@@ -1244,6 +1292,16 @@ function handleMessage(m) {
 
   // /start и кнопка "Склады"
 if (text === '/start' || text === '/start@Sell_full_bot' || text === 'Склады') {
+    // Запись аналитики: запуск бота
+    var dbAnalytics = loadDB();
+    if (!dbAnalytics.analytics) dbAnalytics.analytics = { events: [] };
+    dbAnalytics.analytics.events.push({
+      type: 'bot_start',
+      user_id: String(chatId),
+      ts: new Date().toISOString(),
+    });
+    saveDB(dbAnalytics);
+
     var host = process.env.RAILWAY_PUBLIC_DOMAIN || 'fulfillment-production-26aa.up.railway.app';
     var dbStart = loadDB();
     var existingPartner = dbStart.users.find(function(u) { return u.chat_id === String(chatId) && u.role === 'partner'; });

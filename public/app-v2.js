@@ -159,6 +159,12 @@
   // ==================== Инициализация ====================
 
   function init() {
+    // Запись аналитики: открытие Mini App
+    fetch('/api/analytics/event', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'miniapp_open', user_id: String(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user ? window.Telegram.WebApp.initDataUnsafe.user.id : 'anon') }),
+    }).catch(function() {});
+
     // Telegram WebApp
     try {
       var tg = window.Telegram && window.Telegram.WebApp;

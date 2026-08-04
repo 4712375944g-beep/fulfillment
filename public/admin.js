@@ -23,16 +23,26 @@ function populateDD() {
 }
 
 function loadStats() {
+  // Статистика заявок
   fetch(apiUrl('/api/admin/stats'))
     .then(function(r){ return r.json() }).then(function(d) {
       var s = d.stats;
       document.getElementById('stats').innerHTML =
-        '<div class="stat-card"><div class="number">' + (s.total || 0) + '</div><div class="label">Всего</div></div>' +
+        '<div class="stat-card"><div class="number">' + (s.total || 0) + '</div><div class="label">Заявок всего</div></div>' +
         '<div class="stat-card"><div class="number">' + (s.new || 0) + '</div><div class="label">Новые</div></div>' +
         '<div class="stat-card"><div class="number">' + (s.accepted || 0) + '</div><div class="label">Принято</div></div>' +
         '<div class="stat-card"><div class="number">' + (s.in_progress || 0) + '</div><div class="label">В работе</div></div>' +
         '<div class="stat-card"><div class="number">' + (s.done || 0) + '</div><div class="label">Готово</div></div>' +
         '<div class="stat-card"><div class="number">' + (s.cancelled || 0) + '</div><div class="label">Отказ</div></div>';
+    });
+  // Аналитика: запуски
+  fetch(apiUrl('/api/admin/analytics'))
+    .then(function(r){ return r.json() }).then(function(a) {
+      var bs = a.bot_start || { total: 0, unique: 0 };
+      var mo = a.miniapp_open || { total: 0, unique: 0 };
+      document.getElementById('dashboard-cards').innerHTML =
+        '<div class="dash-card ok"><h3>🤖 Запусков бота</h3><div class="value ok">' + bs.total + '</div><div class="detail">Уникальных: ' + bs.unique + '</div></div>' +
+        '<div class="dash-card ok"><h3>📱 Открытий Mini App</h3><div class="value ok">' + mo.total + '</div><div class="detail">Уникальных: ' + mo.unique + '</div></div>';
     });
 }
 
