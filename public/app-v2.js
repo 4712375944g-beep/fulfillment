@@ -180,6 +180,8 @@
     fetchCities();
     // Привязываем события
     bindEvents();
+    // Валидация обязательных полей при потере фокуса
+    addBlurValidation();
     // Стилизация select-ов
     styleSelects();
   }
@@ -515,17 +517,19 @@
     elOrderOther.checked = false;
     // Сбрасываем визуальное состояние чипсов
     resetAllChips();
+    // Сбрасываем красные обводки полей
+    [elFormName, elFormPhone, elFormLink].forEach(function(el) { el.classList.remove('req-empty'); });
     if (elConsentPd) elConsentPd.checked = false;
     if (elConsentContact) elConsentContact.checked = false;
     resetAllConsent();
     updConsent();
 
-    // Скрываем статус
+    // Скрываем статус и разблокируем кнопку
     elFormStatus.classList.add('hidden');
     elFormStatus.textContent = '';
-
-    // Разблокируем кнопку
-    elFormSubmit.disabled = false;
+    
+    // Кнопка изначально неактивна — разблокируется при заполнении обязательных полей
+    elFormSubmit.disabled = true;
     elFormSubmit.textContent = 'Отправить заявку';
 
     showScreen(elForm);
@@ -554,9 +558,19 @@
     if (elOrderYandex.checked) mkt.push('Yandex');
     if (elOrderOther.checked) mkt.push('Другое');
 
-    // Валидация
-    if (!name || !phone || !link || methods.length === 0 || mkt.length === 0) {
-      showFormError('Заполните все обязательные поля');
+    // Валидация с конкретными сообщениями и подсветкой полей
+    var errors = [];
+    // Сбрасываем красные обводки
+    [elFormName, elFormPhone, elFormLink].forEach(function(el) { el.classList.remove('req-empty'); });
+    
+    if (!name) { errors.push('Укажите имя'); elFormName.classList.add('req-empty'); }
+    if (!phone) { errors.push('Укажите телефон'); elFormPhone.classList.add('req-empty'); }
+    if (!link) { errors.push('Укажите ссылку на товар или SKU'); elFormLink.classList.add('req-empty'); }
+    if (methods.length === 0) { errors.push('Выберите способ доставки (FBO/FBS/DBS)'); }
+    if (mkt.length === 0) { errors.push('Выберите площадку (WB/Ozon/Яндекс/Другое)'); }
+    
+    if (errors.length > 0) {
+      showFormError(errors.join('. ') + '.');
       return;
     }
     if (!elConsentPd.checked || !elConsentContact.checked) {
@@ -812,18 +826,35 @@
       return;
     }
 
-    // Собираем методы
+    // Собираем методы и маркетплейсы ДО валидации
     var methods = [];
     if (elRegFbo.checked) methods.push('FBO');
     if (elRegFbs.checked) methods.push('FBS');
     if (elRegDbs.checked) methods.push('DBS');
 
-    // Собираем маркетплейсы
     var mkt = [];
     if (elRegWb.checked) mkt.push('WB');
     if (elRegOzon.checked) mkt.push('Ozon');
     if (elRegYandex.checked) mkt.push('Yandex');
     if (elRegOther.checked) mkt.push('Другое');
+
+    // Валидация с конкретными сообщениями
+    var errors = [];
+    if (!email) errors.push('Укажите email');
+    if (!pass) errors.push('Укажите пароль');
+    else if (pass.length < 4) errors.push('Пароль должен быть от 4 символов');
+    if (!company) errors.push('Укажите название компании');
+    if (!city) errors.push('Укажите город');
+    if (!contact) errors.push('Укажите контактное лицо');
+    if (!phone) errors.push('Укажите телефон');
+    if (methods.length === 0) errors.push('Выберите метод работы (FBO/FBS/DBS)');
+    if (mkt.length === 0) errors.push('Выберите маркетплейс (WB/Ozon/Яндекс/Другое)');
+    
+    if (errors.length > 0) {
+      elRegError.textContent = errors.join('. ') + '.';
+      elRegError.classList.remove('hidden');
+      return;
+    }
 
     elRegSubmit.disabled = true;
     elRegSubmit.textContent = 'Отправка...';
@@ -1182,7 +1213,8 @@
     document.getElementById('atab-partners').addEventListener('click', function(){switchAdminTab('partners')});
   }
 
-  // Блокировка кнопки отправки без согласий
+  // Блокировка кнопки отправки — проверяет согласия
+  // Полная проверка всех обязательных полей происходит при submit
   window.updConsent = function() {
     var b = document.getElementById('form-submit-btn');
     var pd = document.getElementById('order-consent-pd');
@@ -1192,6 +1224,25 @@
       b.style.opacity = b.disabled ? '0.5' : '1';
     }
   };
+
+  // Подсветка пустых обязательных полей при потере фокуса
+  function addBlurValidation() {
+    [elFormName, elFormPhone, elFormLink].forEach(function(el) {
+      el.addEventListener('blur', function() {
+        if (!el.value.trim()) {
+          el.classList.add('req-empty');
+        } else {
+          el.classList.remove('req-empty');
+        }
+      });
+      // При вводе — сразу убираем красную обводку
+      el.addEventListener('input', function() {
+        if (el.value.trim()) {
+          el.classList.remove('req-empty');
+        }
+      });
+    });
+  }
 
   // Маршруты (попутные перевозки) — Mini App ======
   var miniRouteFilter = 'all';

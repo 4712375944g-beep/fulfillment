@@ -189,8 +189,11 @@ app.get('/health', (_, res) => res.json({ status: 'ok', uptime: process.uptime()
 // ====== API: регистрация партнёра ======
 app.post('/api/register', (req, res) => {
   const { email, password, company, city, zone, contact, phone, description, methods, marketplaces, tg_user_id } = req.body;
-  if (!email || !password || !company || !city || !contact || !phone) {
-    return res.status(400).json({ ok: false, error: 'Все поля обязательны' });
+  // Нормализуем методы и маркетплейсы перед проверкой
+  const methodsStr = Array.isArray(methods) ? methods.join(',') : (methods || '');
+  const mktStr = Array.isArray(marketplaces) ? marketplaces.join(',') : (marketplaces || '');
+  if (!email || !password || !company || !city || !contact || !phone || !methodsStr || !mktStr) {
+    return res.status(400).json({ ok: false, error: 'Все поля обязательны (email, пароль, компания, город, контакт, телефон, метод, маркетплейс)' });
   }
   if (password.length < 4) return res.status(400).json({ ok: false, error: 'Пароль от 4 символов' });
 
@@ -198,9 +201,6 @@ app.post('/api/register', (req, res) => {
   if (db.users.find(u => u.login === email)) {
     return res.status(400).json({ ok: false, error: 'Этот email уже зарегистрирован' });
   }
-
-  const methodsStr = Array.isArray(methods) ? methods.join(',') : (methods || '');
-  const mktStr = Array.isArray(marketplaces) ? marketplaces.join(',') : (marketplaces || '');
 
   const user = {
     id: String(db.nextUserId++), login: email, password, role: 'partner',
@@ -351,8 +351,8 @@ app.get('/api/cities', (req, res) => {
 // ====== API: заявка клиента ======
 app.post('/api/order', (req, res) => {
   const { name, phone, link, description, city, zone, methods, marketplaces } = req.body;
-  if (!name || !phone || !link || !city || !methods) {
-    return res.status(400).json({ ok: false, error: 'Все поля обязательны' });
+  if (!name || !phone || !link || !city || !methods || !marketplaces) {
+    return res.status(400).json({ ok: false, error: 'Все поля обязательны (имя, телефон, ссылка, город, метод, маркетплейс)' });
   }
   const cityInfo = CITIES[city];
   if (!cityInfo) return res.status(400).json({ ok: false, error: 'Город не найден' });
@@ -858,7 +858,7 @@ app.post('/telegram-webhook', (req, res) => {
       chat_id: chatId, parse_mode: 'Markdown',
       text: '🏭 *Фулфилмент — найдём склад для вашего товара*\n\nВыберите страну и город, оставьте заявку — мы подберём ближайший фулфилмент.\n\nНажмите кнопку ниже чтобы начать:',
       reply_markup: {
-        inline_keyboard: [[{ text: '🏭 Подобрать склад', web_app: { url: `${proto}://${host}/app-v2.html?v=3` } }]],
+        inline_keyboard: [[{ text: '🏭 Подобрать склад', web_app: { url: `${proto}://${host}/app-v2.html?v=4` } }]],
       },
     });
   }
@@ -1238,7 +1238,7 @@ function handleMessage(m) {
     }
     // Email не найден — предлагаем регистрацию
     var hostAuto = process.env.RAILWAY_PUBLIC_DOMAIN || 'fulfillment-production-26aa.up.railway.app';
-    tg('sendMessage', { chat_id: chatId, parse_mode: 'HTML', text: '⚠️ Партнёр с email <code>' + autoEmailMatch[0] + '</code> не найден.\n\nЕсли вы ещё не регистрировались — перейдите по ссылке ниже и заполните форму. После одобрения заявки отправьте боту команду /bind для привязки Telegram.', reply_markup: JSON.stringify({ inline_keyboard: [[{ text: '📝 Зарегистрироваться как фулфилмент', web_app: { url: 'https://' + hostAuto + '/register?v=4' } }]] }) });
+    tg('sendMessage', { chat_id: chatId, parse_mode: 'HTML', text: '⚠️ Партнёр с email <code>' + autoEmailMatch[0] + '</code> не найден.\n\nЕсли вы ещё не регистрировались — перейдите по ссылке ниже и заполните форму. После одобрения заявки отправьте боту команду /bind для привязки Telegram.', reply_markup: JSON.stringify({ inline_keyboard: [[{ text: '📝 Зарегистрироваться как фулфилмент', web_app: { url: 'https://' + hostAuto + '/register?v=5' } }]] }) });
     return;
   }
 
@@ -1253,15 +1253,15 @@ if (text === '/start' || text === '/start@Sell_full_bot' || text === 'Склад
         text: '🏭 *Панель фулфилмента*\n\nГород: ' + (existingPartner.city || '?') + (existingPartner.zone ? ' — ' + existingPartner.zone : '') + '\nСтатус: ✅ Активен' + (existingPartner.expires_at ? ' (до ' + existingPartner.expires_at + ')' : '') + (existingPartner.expires_at ? '\n' + (function(){var days=Math.ceil((new Date(existingPartner.expires_at)-new Date())/(86400000));return days<=3?'⚠️ Осталось '+days+' дн!':''})() : '') + '\n\n/togglenotify — вкл/выкл уведомления',
         reply_markup: JSON.stringify({ inline_keyboard: [
           [{ text: '📦 Мои заявки', callback_data: 'partner_orders' }],
-          [{ text: '🏭 Подобрать склад', web_app: { url: 'https://' + host + '/app-v2.html?v=3' } }],
-          [{ text: '🔗 Кабинет партнёра', web_app: { url: 'https://' + host + '/partner?v=4' } }],
+          [{ text: '🏭 Подобрать склад', web_app: { url: 'https://' + host + '/app-v2.html?v=4' } }],
+          [{ text: '🔗 Кабинет партнёра', web_app: { url: 'https://' + host + '/partner?v=5' } }],
           [{ text: '📞 Написать админу', url: 'https://t.me/idenisovdenis' }],
         ]})});
     } else if (existingClient) {
       tg('sendMessage', { chat_id: chatId, parse_mode: 'Markdown',
         text: '🛒 *Панель селлера*\n\nОставьте заявку — мы подберём ближайший фулфилмент.\n\n/myorders — мои заявки\n/mystats — статистика',
         reply_markup: JSON.stringify({ inline_keyboard: [
-          [{ text: '🏭 Подобрать склад', web_app: { url: 'https://' + host + '/app-v2.html?v=3' } }],
+          [{ text: '🏭 Подобрать склад', web_app: { url: 'https://' + host + '/app-v2.html?v=4' } }],
           [{ text: '📋 Мои заявки', callback_data: 'client_orders' }],
           [{ text: '📞 Написать админу', url: 'https://t.me/idenisovdenis' }],
         ]})});
@@ -1269,8 +1269,8 @@ if (text === '/start' || text === '/start@Sell_full_bot' || text === 'Склад
       tg('sendMessage', { chat_id: chatId, parse_mode: 'Markdown',
         text: '🏭 *Фулфилмент — найдём склад для вашего товара*\n\nВыберите страну и город, оставьте заявку — мы подберём ближайший фулфилмент.\n\n*Для партнёров:*\n/bind — привязать Telegram к аккаунту\n/reset — восстановить пароль',
         reply_markup: JSON.stringify({ inline_keyboard: [
-          [{ text: '🏭 Подобрать склад', web_app: { url: 'https://' + host + '/app-v2.html?v=3' } }],
-          [{ text: '📝 Регистрация фулфилмента', web_app: { url: 'https://' + host + '/register?v=4' } }],
+          [{ text: '🏭 Подобрать склад', web_app: { url: 'https://' + host + '/app-v2.html?v=4' } }],
+          [{ text: '📝 Регистрация фулфилмента', web_app: { url: 'https://' + host + '/register?v=5' } }],
           [{ text: '📞 Написать админу', url: 'https://t.me/idenisovdenis' }],
         ]})});
     }}

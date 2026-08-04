@@ -37,7 +37,33 @@
     .city-dropdown .city-item:hover { background: #2a2a2a; }
     .city-dropdown .city-item.selected { background: #1a2a3a; color: #4da3ff; }
     .city-dropdown .city-item:last-child { border-bottom: none; }
-    .city-selected { color: #4da3ff; font-size: 13px; margin-top: 4px; min-height: 18px; }
+        .city-selected { color: #4da3ff; font-size: 13px; margin-top: 4px; min-height: 18px; }
+    /* Чипсы методов и маркетплейсов */
+    .chk-label { font-size: 12px; color: #888; margin-bottom: 4px; display: block; text-transform: uppercase; letter-spacing: 0.3px; }
+    .chk-label .star { color: #ff3b30; }
+    .chk-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+    .chk {
+      display: flex; align-items: center; gap: 6px; padding: 8px 13px; border-radius: 20px;
+      border: 1px solid #444; font-size: 13px; cursor: pointer; color: #aaa;
+      transition: all .15s; user-select: none; background: transparent;
+    }
+    .chk input { display: none; }
+    .chk.sel { border-color: #4da3ff; background: rgba(42,171,238,0.1); color: #4da3ff; }
+    .chk-box { margin-right: 4px; font-size: 16px; display: inline-block; width: 20px; text-align: center; }
+    .chk.sel .chk-box { color: #4da3ff; }
+    .mkt-label { font-size: 12px; color: #888; margin-bottom: 4px; display: block; text-transform: uppercase; letter-spacing: 0.3px; }
+    .mkt-label .star { color: #ff3b30; }
+    .mkt-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+    .mkt-chip {
+      padding: 7px 13px; border-radius: 20px; font-size: 13px; font-weight: 500;
+      cursor: pointer; border: 1px solid #444; background: transparent;
+      color: #aaa; transition: all .2s; user-select: none;
+    }
+    .mkt-chip input { display: none; }
+    .mkt-chip.sel-wb { background: rgba(139,111,230,0.2); border-color:#8b6fe6; color:#c4b5ff; }
+    .mkt-chip.sel-ozon { background: rgba(0,91,255,0.2); border-color:#005bff; color:#6ba3ff; }
+    .mkt-chip.sel-yandex { background: rgba(252,224,0,0.15); border-color:#fce000; color:#fce000; }
+    .mkt-chip.sel-other { background: rgba(255,255,255,0.06); border-color:#666; color:#ccc; }
   </style>
 </head>
 <body class="reg-page">
@@ -68,6 +94,22 @@
       <label>Контактное лицо <input type="text" name="contact" placeholder="Иван Иванов" required /></label>
       <label>Телефон <input type="tel" name="phone" placeholder="+7 999 123-45-67" required /></label>
       <label>Описание <textarea name="description" placeholder="Кратко о вашем складе: мощность, адрес, условия..."></textarea></label>
+
+      <div class="chk-label"><span class="star">*</span> 📦 Методы работы</div>
+      <div class="chk-row" id="reg-methods">
+        <label class="chk" onclick="toggleRegChk(this,'reg-fbo')"><span class="chk-box">☐</span><input type="checkbox" id="reg-fbo"> FBO</label>
+        <label class="chk" onclick="toggleRegChk(this,'reg-fbs')"><span class="chk-box">☐</span><input type="checkbox" id="reg-fbs"> FBS</label>
+        <label class="chk" onclick="toggleRegChk(this,'reg-dbs')"><span class="chk-box">☐</span><input type="checkbox" id="reg-dbs"> DBS</label>
+      </div>
+
+      <div class="mkt-label"><span class="star">*</span> 🏪 Маркетплейсы</div>
+      <div class="mkt-row" id="reg-markets">
+        <label class="mkt-chip" onclick="toggleRegMkt(this,'WB','reg-wb')"><span class="chk-box">☐</span><input type="checkbox" id="reg-wb"> 🟣 WB</label>
+        <label class="mkt-chip" onclick="toggleRegMkt(this,'Ozon','reg-ozon')"><span class="chk-box">☐</span><input type="checkbox" id="reg-ozon"> 🔵 Ozon</label>
+        <label class="mkt-chip" onclick="toggleRegMkt(this,'Yandex','reg-yandex')"><span class="chk-box">☐</span><input type="checkbox" id="reg-yandex"> 🟡 Яндекс</label>
+        <label class="mkt-chip" onclick="toggleRegMkt(this,'Другое','reg-other')"><span class="chk-box">☐</span><input type="checkbox" id="reg-other"> ⚪ Другое</label>
+      </div>
+
       <button type="submit" class="btn">Зарегистрироваться</button>
     </form>
 
@@ -82,6 +124,36 @@
     // Получаем Telegram user ID из Mini App
     var tgUser = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp.initDataUnsafe.user : null;
     var tgUserId = tgUser ? tgUser.id : null;
+
+    // Чипсы методов (FBO/FBS/DBS)
+    window.toggleRegChk = function(label, cbId) {
+      var cb = document.getElementById(cbId);
+      if (!cb) return;
+      cb.checked = !cb.checked;
+      if (cb.checked) {
+        label.classList.add('sel');
+        label.querySelector('.chk-box').textContent = '☑';
+      } else {
+        label.classList.remove('sel');
+        label.querySelector('.chk-box').textContent = '☐';
+      }
+    };
+
+    // Чипсы маркетплейсов
+    window.toggleRegMkt = function(label, val, cbId) {
+      var cb = document.getElementById(cbId);
+      if (!cb) return;
+      cb.checked = !cb.checked;
+      label.className = 'mkt-chip';
+      if (cb.checked) {
+        var cls = 'sel-';
+        if (val === 'WB') cls += 'wb';
+        else if (val === 'Ozon') cls += 'ozon';
+        else if (val === 'Yandex') cls += 'yandex';
+        else cls += 'other';
+        label.classList.add(cls);
+      }
+    };
 
     let allCities = [];
     let selectedCityName = '';
@@ -162,6 +234,30 @@
       btn.disabled = true; btn.textContent = 'Отправка...';
       errEl.classList.add('hidden'); okEl.classList.add('hidden');
 
+      // Собираем методы и маркетплейсы
+      var methods = [];
+      if (document.getElementById('reg-fbo').checked) methods.push('FBO');
+      if (document.getElementById('reg-fbs').checked) methods.push('FBS');
+      if (document.getElementById('reg-dbs').checked) methods.push('DBS');
+
+      var mkt = [];
+      if (document.getElementById('reg-wb').checked) mkt.push('WB');
+      if (document.getElementById('reg-ozon').checked) mkt.push('Ozon');
+      if (document.getElementById('reg-yandex').checked) mkt.push('Yandex');
+      if (document.getElementById('reg-other').checked) mkt.push('Другое');
+
+      // Валидация
+      if (methods.length === 0) {
+        errEl.textContent = 'Выберите метод работы (FBO/FBS/DBS)';
+        errEl.classList.remove('hidden');
+        return;
+      }
+      if (mkt.length === 0) {
+        errEl.textContent = 'Выберите маркетплейс (WB/Ozon/Яндекс/Другое)';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
       const data = {
         email: form.email.value.trim(),
         password: form.password.value,
@@ -171,6 +267,8 @@
         contact: form.contact.value.trim(),
         phone: form.phone.value.trim(),
         description: form.description.value.trim(),
+        methods: methods,
+        marketplaces: mkt,
         tg_user_id: tgUserId,
       };
 

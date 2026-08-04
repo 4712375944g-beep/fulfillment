@@ -64,6 +64,9 @@
     }
     .inp:focus { border-color: var(--blue); }
     .inp::placeholder { color: var(--text2); }
+    .inp.req-empty { border-color: var(--red); }
+    .inp-label { font-size: 12px; color: var(--text2); margin-bottom: 4px; display: block; }
+    .inp-label .star { color: var(--red); }
 
     .pass-wrap { position:relative; margin-bottom:10px; }
     .pass-wrap .inp { margin-bottom:0; padding-right:44px; }
@@ -382,13 +385,17 @@
   <button class="btn-back" id="form-back-btn">← Назад</button>
   <h2>📦 Заявка на фулфилмент</h2>
   <p class="subtitle" id="form-subtitle"></p>
+  <div class="inp-label"><span class="star">*</span> Имя</div>
   <input class="inp" id="form-name" placeholder="Ваше имя" autocomplete="name">
+  <div class="inp-label"><span class="star">*</span> Телефон</div>
   <input class="inp" id="form-phone" type="tel" placeholder="Телефон" autocomplete="tel">
+  <div class="inp-label"><span class="star">*</span> Ссылка на товар или SKU</div>
   <input class="inp" id="form-link" placeholder="Ссылка на товар или SKU" autocomplete="url">
-  <textarea class="inp" id="form-description" placeholder="Опишите задачу (необязательно)" rows="2" style="resize:vertical;font-family:inherit"></textarea>
+  <div class="inp-label">Описание (необязательно)</div>
+  <textarea class="inp" id="form-description" placeholder="Опишите задачу" rows="2" style="resize:vertical;font-family:inherit"></textarea>
 
   <div class="chk-group">
-    <span class="chk-label">📦 Способ доставки</span>
+    <span class="chk-label"><span class="star">*</span> 📦 Способ доставки</span>
     <div class="chk-row">
       <label class="chk" id="chk-order-fbo" onclick="toggleChk(this,'order-fbo')"><span class="chk-box">☐</span><input type="checkbox" id="order-fbo"> FBO</label>
       <label class="chk" id="chk-order-fbs" onclick="toggleChk(this,'order-fbs')"><span class="chk-box">☐</span><input type="checkbox" id="order-fbs"> FBS</label>
@@ -397,7 +404,7 @@
   </div>
 
   <div class="chk-group">
-    <span class="chk-label">🏪 Площадка</span>
+    <span class="chk-label"><span class="star">*</span> 🏪 Площадка</span>
     <div class="mkt-row" id="order-mkt">
       <label class="mkt-chip" id="mkt-order-wb" onclick="toggleMktOrder(this,'WB','order-wb')"><span class="chk-box">☐</span><input type="checkbox" id="order-wb"> 🟣 WB</label>
       <label class="mkt-chip" id="mkt-order-ozon" onclick="toggleMktOrder(this,'Ozon','order-ozon')"><span class="chk-box">☐</span><input type="checkbox" id="order-ozon"> 🔵 Ozon</label>
