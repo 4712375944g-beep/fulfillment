@@ -221,14 +221,53 @@ app.post('/api/analytics/event', (req, res) => {
 app.get('/api/admin/analytics', auth, requireAdmin, (req, res) => {
   const db = loadDB();
   const events = db.analytics ? db.analytics.events : [];
-  const botStarts = events.filter(e => e.type === 'bot_start');
-  const miniOpens = events.filter(e => e.type === 'miniapp_open');
-  // Уникальные — по user_id (исключая 'anon')
-  const uniqueBotUsers = new Set(botStarts.map(e => e.user_id).filter(id => id !== 'anon'));
-  const uniqueMiniUsers = new Set(miniOpens.map(e => e.user_id).filter(id => id !== 'anon'));
+  const period = req.query.period || 'all';
+
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+  const yesterday = new Date(now - 86400000).toISOString().slice(0, 10);
+  const weekAgo = new Date(now - 7 * 86400000).toISOString().slice(0, 10);
+
+  const filterByPeriod = (e) => {
+    const day = (e.ts || e.created_at || '').slice(0, 10);
+    if (period === 'today') return day === today;
+    if (period === 'yesterday') return day === yesterday;
+    if (period === 'week') return day >= weekAgo;
+    return true;
+  };
+
+  const filtered = events.filter(filterByPeriod);
+  const botStarts = filtered.filter(e => e.type === 'bot_start');
+  const miniOpens = filtered.filter(e => e.type === 'miniapp_open');
+
+  const uniqueBotUsers = new Set(botStarts.map(e => e.user_id).filter(id => id && id !== 'anon'));
+  const uniqueMiniUsers = new Set(miniOpens.map(e => e.user_id).filter(id => id && id !== 'anon'));
+
+  // Разбивка по дням для bot_start
+  const byDay = {};
+  events.filter(e => e.type === 'bot_start').forEach(e => {
+    const day = (e.ts || e.created_at || '').slice(0, 10);
+    if (day && day >= weekAgo) {
+      if (!byDay[day]) byDay[day] = { total: 0, unique: new Set() };
+      byDay[day].total++;
+      if (e.user_id && e.user_id !== 'anon') byDay[day].unique.add(e.user_id);
+    }
+  });
+  const daily = Object.entries(byDay).sort().map(([day, d]) => ({
+    date: day, total: d.total, unique: d.unique.size
+  }));
+
   res.json({
+    period: period,
     bot_start: { total: botStarts.length, unique: uniqueBotUsers.size },
     miniapp_open: { total: miniOpens.length, unique: uniqueMiniUsers.size },
+    daily_breakdown: daily,
+    total_all_time: {
+      bot_start: events.filter(e => e.type === 'bot_start').length,
+      bot_start_unique: new Set(events.filter(e => e.type === 'bot_start').map(e => e.user_id).filter(id => id && id !== 'anon')).size,
+      miniapp_open: events.filter(e => e.type === 'miniapp_open').length,
+      miniapp_open_unique: new Set(events.filter(e => e.type === 'miniapp_open').map(e => e.user_id).filter(id => id && id !== 'anon')).size,
+    }
   });
 });
 
