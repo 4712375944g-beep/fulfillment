@@ -5,7 +5,7 @@ const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const BOT_TOKEN = process.env.BOT_TOKEN || '8910902974:AAGXpQxvrAGf194qFRPIrjF0Rd50dqxixdo';
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN || '8910902974:AAGXpQxvrAGf194qFRPIrjF0Rd50dqxixdo';
 const CHAT_ID = process.env.CHAT_ID || '336948942';
 // Если есть папка /data (Railway Volume) — храним там, иначе локально
 const DATA_DIR = fs.existsSync('/data') ? '/data' : __dirname;
@@ -176,13 +176,21 @@ function requireAdmin(req, res, next) {
 }
 
 // === Telegram helpers ===
-function tg(method, body) {
-  return fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${method}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  }).catch(() => {});
+async function tg(method, body) {
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${method}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    return await res.json();
+  } catch(e) {
+    return null;
+  }
 }
+
+// Буфер подтверждения рассылки — защита от случайных/взломанных broadcast
+let pendingBroadcast = null;
 
 // === Health ===
 app.get('/health', (_, res) => res.json({ status: 'ok', uptime: process.uptime() }));
@@ -506,6 +514,66 @@ app.get('/api/admin/stats', auth, requireAdmin, (req, res) => {
   const stats = { total: db.orders.length, new: 0, accepted: 0, in_progress: 0, done: 0, cancelled: 0 };
   db.orders.forEach(o => { stats[o.status] = (stats[o.status] || 0) + 1; });
   res.json({ stats });
+});
+
+
+// ====== Admin: рассылка через API (защищённый канал) ======
+app.post('/api/admin/broadcast', auth, requireAdmin, (req, res) => {
+  const { text, filter } = req.body; // filter: 'all' | 'partners' | 'clients'
+  if (!text || typeof text !== 'string' || text.trim().length === 0) {
+    return res.status(400).json({ ok: false, error: 'Текст рассылки обязателен' });
+  }
+  const db = loadDB();
+  var targets = db.users.filter(function(u) {
+    if (!u.chat_id) return false;
+    if (filter === 'partners') return u.role === 'partner';
+    if (filter === 'clients') return u.role === 'client';
+    return u.role === 'partner' || u.role === 'client';
+  });
+  if (targets.length === 0) return res.json({ ok: false, error: 'Нет получателей' });
+
+  var sent = 0, fail = 0;
+  if (!db.broadcast_log) db.broadcast_log = [];
+  var logEntry = { ts: new Date().toISOString(), msg: text, filter: filter || 'all', messages: [] };
+
+  var promises = targets.map(function(u) {
+    return tg('sendMessage', { chat_id: u.chat_id, parse_mode: 'HTML', text: '📢 <b>SellFull</b>\n\n' + text }).then(function(r) {
+      if (r && r.ok) { sent++; logEntry.messages.push({ chat_id: u.chat_id, message_id: r.result.message_id }); }
+      else fail++;
+    });
+  });
+
+  Promise.all(promises).then(function() {
+    db.broadcast_log.push(logEntry);
+    if (db.broadcast_log.length > 50) db.broadcast_log = db.broadcast_log.slice(-50);
+    saveDB(db);
+    res.json({ ok: true, sent: sent, failed: fail, total: targets.length, logId: db.broadcast_log.length - 1 });
+  }).catch(function(e) {
+    res.status(500).json({ ok: false, error: 'Ошибка отправки: ' + e.message });
+  });
+});
+
+app.get('/api/admin/broadcast/log', auth, requireAdmin, (req, res) => {
+  const db = loadDB();
+  res.json({ log: db.broadcast_log || [] });
+});
+
+app.post('/api/admin/broadcast/undo', auth, requireAdmin, (req, res) => {
+  const { logId } = req.body;
+  const db = loadDB();
+  if (!db.broadcast_log || !db.broadcast_log[logId]) {
+    return res.status(404).json({ ok: false, error: 'Рассылка не найдена' });
+  }
+  var entry = db.broadcast_log[logId];
+  var delCount = 0;
+  var promises = entry.messages.map(function(m) {
+    return tg('deleteMessage', { chat_id: m.chat_id, message_id: m.message_id }).then(function(r) {
+      if (r && r.ok) delCount++;
+    });
+  });
+  Promise.all(promises).then(function() {
+    res.json({ ok: true, deleted: delCount, total: entry.messages.length });
+  });
 });
 
 app.get('/api/admin/export', auth, requireAdmin, (req, res) => {
@@ -1193,17 +1261,92 @@ function handleMessage(m) {
     ].join('\n') });
   }
 
-  // /broadcast — рассылка админа
+  // /broadcast — рассылка админа (с подтверждением и сохранением message_id)
   if (text.startsWith('/broadcast') && String(chatId) === CHAT_ID) {
     var isPartners = text.startsWith('/broadcast_partners');
     var isClients = text.startsWith('/broadcast_clients');
     var cmdName = isPartners ? '/broadcast_partners' : (isClients ? '/broadcast_clients' : '/broadcast');
-    if (!isPartners && !isClients && !text.startsWith('/broadcast ')) {
-      tg('sendMessage', { chat_id: chatId, text: '📢 Команды рассылки:\n/broadcast Текст — всем\n/broadcast_partners Текст — фулфилментам\n/broadcast_clients Текст — селлерам' });
+
+    // Шаг 1: проверяем, не запрос ли подтверждения
+    if (pendingBroadcast && String(chatId) === CHAT_ID && text.trim().toUpperCase() === 'ПОДТВЕРЖДАЮ') {
+      var pb = pendingBroadcast;
+      pendingBroadcast = null;
+      var dbBC = loadDB();
+      var targets = dbBC.users.filter(function(u) {
+        if (!u.chat_id) return false;
+        if (pb.isPartners) return u.role === 'partner';
+        if (pb.isClients) return u.role === 'client';
+        return u.role === 'partner' || u.role === 'client';
+      });
+      if (targets.length === 0) {
+        tg('sendMessage', { chat_id: chatId, text: '⚠️ Нет получателей с активированным ботом' });
+        return;
+      }
+      var label = pb.isPartners ? 'фулфилментам' : (pb.isClients ? 'селлерам' : 'пользователям');
+      var sent = 0;
+      var fail = 0;
+      // Сохраняем message_id для возможности удаления
+      if (!dbBC.broadcast_log) dbBC.broadcast_log = [];
+      var logEntry = { ts: new Date().toISOString(), msg: pb.broadcastMsg, label: label, messages: [] };
+
+      var sendPromises = targets.map(function(u) {
+        return tg('sendMessage', { chat_id: u.chat_id, parse_mode: 'HTML', text: '📢 <b>SellFull</b>\n\n' + pb.broadcastMsg }).then(function(r) {
+          if (r && r.ok) {
+            sent++;
+            logEntry.messages.push({ chat_id: u.chat_id, message_id: r.result.message_id });
+          } else {
+            fail++;
+          }
+        });
+      });
+
+      Promise.all(sendPromises).then(function() {
+        dbBC.broadcast_log.push(logEntry);
+        if (dbBC.broadcast_log.length > 50) dbBC.broadcast_log = dbBC.broadcast_log.slice(-50);
+        saveDB(dbBC);
+        tg('sendMessage', { chat_id: chatId, parse_mode: 'HTML',
+          text: '✅ <b>Отправлено</b> ' + label + ': ' + sent + '/' + targets.length + (fail ? '\n❌ Ошибок: ' + fail : '') +
+                '\n\n📋 ID рассылки: <code>' + (dbBC.broadcast_log.length - 1) + '</code>\nДля отмены: /broadcast_undo ' + (dbBC.broadcast_log.length - 1) });
+      });
       return;
     }
+
+    // Шаг 1: отмена предыдущей рассылки
+    if (text.startsWith('/broadcast_undo') && String(chatId) === CHAT_ID) {
+      var undoId = parseInt(text.slice(15).trim());
+      if (isNaN(undoId)) { tg('sendMessage', { chat_id: chatId, text: '⚠️ Укажите ID рассылки: /broadcast_undo НОМЕР' }); return; }
+      var dbU = loadDB();
+      if (!dbU.broadcast_log || !dbU.broadcast_log[undoId]) {
+        tg('sendMessage', { chat_id: chatId, text: '⚠️ Рассылка #' + undoId + ' не найдена' }); return;
+      }
+      var entry = dbU.broadcast_log[undoId];
+      var delCount = 0;
+      var delPromises = entry.messages.map(function(m) {
+        return tg('deleteMessage', { chat_id: m.chat_id, message_id: m.message_id }).then(function(r) {
+          if (r && r.ok) delCount++;
+        });
+      });
+      Promise.all(delPromises).then(function() {
+        tg('sendMessage', { chat_id: chatId, text: '🗑 Удалено: ' + delCount + '/' + entry.messages.length + ' сообщений рассылки #' + undoId });
+      });
+      return;
+    }
+
+    // Шаг 2: показываем справку или сохраняем pending
+    if (!isPartners && !isClients && !text.startsWith('/broadcast ')) {
+      tg('sendMessage', { chat_id: chatId, parse_mode: 'HTML', text:
+        '📢 <b>Рассылка (подтверждение)</b>\n\n' +
+        '/broadcast Текст — всем\n' +
+        '/broadcast_partners Текст — фулфилментам\n' +
+        '/broadcast_clients Текст — селлерам\n\n' +
+        'После команды нужно написать <b>ПОДТВЕРЖДАЮ</b> (заглавными) для отправки.\n' +
+        '/broadcast_undo НОМЕР — удалить рассылку' });
+      return;
+    }
+
     var broadcastMsg = text.slice(cmdName.length).trim();
     if (!broadcastMsg) { tg('sendMessage', { chat_id: chatId, text: '⚠️ Напишите: ' + cmdName + ' Текст' }); return; }
+
     var dbBC = loadDB();
     var targets = dbBC.users.filter(function(u) {
       if (!u.chat_id) return false;
@@ -1213,12 +1356,23 @@ function handleMessage(m) {
     });
     if (targets.length === 0) { tg('sendMessage', { chat_id: chatId, text: '⚠️ Нет получателей с активированным ботом' }); return; }
     var label = isPartners ? 'фулфилментам' : (isClients ? 'селлерам' : 'пользователям');
-    var sent = 0;
-    targets.forEach(function(u) {
-      tg('sendMessage', { chat_id: u.chat_id, parse_mode: 'HTML', text: '📢 <b>SellFull</b>\n\n' + broadcastMsg });
-      sent++;
-    });
-    tg('sendMessage', { chat_id: chatId, text: '✅ Отправлено ' + label + ': ' + sent + '/' + targets.length });
+
+    // Сохраняем pending и запрашиваем подтверждение
+    pendingBroadcast = { broadcastMsg: broadcastMsg, isPartners: isPartners, isClients: isClients, time: Date.now() };
+    tg('sendMessage', { chat_id: chatId, parse_mode: 'HTML', text:
+      '⚠️ <b>Подтвердите рассылку</b>\n\n' +
+      '📤 Получателей: <b>' + targets.length + '</b> ' + label + '\n' +
+      '📝 Текст: ' + broadcastMsg.substring(0, 200) + (broadcastMsg.length > 200 ? '...' : '') + '\n\n' +
+      'Напишите <b>ПОДТВЕРЖДАЮ</b> для отправки.\nЛюбое другое сообщение — отмена.' });
+
+    // Автоочистка pending через 2 минуты
+    var pbRef = pendingBroadcast;
+    setTimeout(function() {
+      if (pendingBroadcast === pbRef) {
+        pendingBroadcast = null;
+        tg('sendMessage', { chat_id: chatId, text: '⏰ Время подтверждения истекло. Рассылка отменена.' });
+      }
+    }, 120000);
     return;
   }
 
